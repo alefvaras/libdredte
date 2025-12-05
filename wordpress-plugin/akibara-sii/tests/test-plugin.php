@@ -343,6 +343,28 @@ class AkibaraTestSuite {
             strpos($mainFile, 'intval') !== false,
             "Uso de intval() para enteros"
         );
+
+        // Verificar campo Acteco (obligatorio SII)
+        $configFile = file_get_contents(dirname(__DIR__) . '/admin/views/configuracion.php');
+        $this->assert(
+            strpos($configFile, 'emisor_acteco') !== false,
+            "Campo Acteco en configuracion.php"
+        );
+        $this->assert(
+            strpos($mainFile, 'akibara_emisor_acteco') !== false,
+            "Opción Acteco en get_emisor_config()"
+        );
+
+        // Verificar certificados por ambiente
+        $this->assert(
+            strpos($configFile, 'cert_ambiente') !== false,
+            "Selector de ambiente para certificado"
+        );
+        $this->assert(
+            strpos($configFile, 'akibara_cert_certificacion_file') !== false ||
+            strpos($configFile, "akibara_cert_{\$cert_ambiente}_file") !== false,
+            "Certificados separados por ambiente"
+        );
     }
 
     private function testViews() {

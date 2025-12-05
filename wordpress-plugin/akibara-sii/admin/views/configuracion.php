@@ -7,6 +7,7 @@ if (isset($_POST['akibara_save_config']) && wp_verify_nonce($_POST['_wpnonce'], 
     update_option('akibara_emisor_rut', sanitize_text_field($_POST['emisor_rut']));
     update_option('akibara_emisor_razon_social', sanitize_text_field($_POST['emisor_razon_social']));
     update_option('akibara_emisor_giro', sanitize_text_field($_POST['emisor_giro']));
+    update_option('akibara_emisor_acteco', sanitize_text_field($_POST['emisor_acteco']));
     update_option('akibara_emisor_direccion', sanitize_text_field($_POST['emisor_direccion']));
     update_option('akibara_emisor_comuna', sanitize_text_field($_POST['emisor_comuna']));
 
@@ -26,6 +27,7 @@ if (isset($_POST['akibara_save_config']) && wp_verify_nonce($_POST['_wpnonce'], 
 // Procesar certificado
 if (isset($_POST['akibara_upload_cert']) && wp_verify_nonce($_POST['_wpnonce'], 'akibara_config')) {
     if (!empty($_FILES['certificado']['tmp_name'])) {
+        $cert_ambiente = sanitize_text_field($_POST['cert_ambiente'] ?? 'certificacion');
         $upload_dir = wp_upload_dir();
         $cert_dir = $upload_dir['basedir'] . '/akibara-sii/certs/';
 
@@ -35,12 +37,19 @@ if (isset($_POST['akibara_upload_cert']) && wp_verify_nonce($_POST['_wpnonce'], 
             file_put_contents($cert_dir . '.htaccess', 'deny from all');
         }
 
-        $cert_file = $cert_dir . 'certificado.p12';
+        // Nombre del archivo incluye ambiente para permitir certificados separados
+        $cert_filename = 'certificado_' . $cert_ambiente . '.p12';
+        $cert_file = $cert_dir . $cert_filename;
 
         if (move_uploaded_file($_FILES['certificado']['tmp_name'], $cert_file)) {
+            // Guardar con nombres que espera class-sii-client.php
+            update_option("akibara_cert_{$cert_ambiente}_file", $cert_filename);
+            update_option("akibara_cert_{$cert_ambiente}_password", base64_encode(sanitize_text_field($_POST['cert_password'])));
+
+            // Mantener compatibilidad con nombre antiguo
             update_option('akibara_cert_path', $cert_file);
-            update_option('akibara_cert_password', sanitize_text_field($_POST['cert_password']));
-            echo '<div class="notice notice-success"><p>Certificado subido correctamente.</p></div>';
+
+            echo '<div class="notice notice-success"><p>Certificado para ambiente <strong>' . strtoupper($cert_ambiente) . '</strong> subido correctamente.</p></div>';
         } else {
             echo '<div class="notice notice-error"><p>Error al subir el certificado.</p></div>';
         }
@@ -51,6 +60,7 @@ if (isset($_POST['akibara_upload_cert']) && wp_verify_nonce($_POST['_wpnonce'], 
 $emisor_rut = get_option('akibara_emisor_rut', '');
 $emisor_razon = get_option('akibara_emisor_razon_social', '');
 $emisor_giro = get_option('akibara_emisor_giro', '');
+$emisor_acteco = get_option('akibara_emisor_acteco', '');
 $emisor_direccion = get_option('akibara_emisor_direccion', '');
 $emisor_comuna = get_option('akibara_emisor_comuna', '');
 $ambiente = get_option('akibara_ambiente', 'certificacion');
@@ -60,6 +70,10 @@ $rut_envia = get_option('akibara_rut_envia', '');
 $envio_automatico = get_option('akibara_envio_automatico', 0);
 $rcof_automatico = get_option('akibara_rcof_automatico', 0);
 $cert_path = get_option('akibara_cert_path', '');
+
+// Certificados por ambiente
+$cert_certificacion_file = get_option('akibara_cert_certificacion_file', '');
+$cert_produccion_file = get_option('akibara_cert_produccion_file', '');
 ?>
 
 <div class="wrap akibara-configuracion">
@@ -102,6 +116,15 @@ $cert_path = get_option('akibara_cert_path', '');
                             <input type="text" id="emisor_giro" name="emisor_giro"
                                    value="<?php echo esc_attr($emisor_giro); ?>"
                                    class="large-text" required>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th><label for="emisor_acteco">Codigo Actividad Economica</label></th>
+                        <td>
+                            <input type="text" id="emisor_acteco" name="emisor_acteco"
+                                   value="<?php echo esc_attr($emisor_acteco); ?>"
+                                   class="regular-text" placeholder="Ej: 477390" required>
+                            <p class="description">Codigo de 6 digitos del SII. <a href="https://www.sii.cl/ayudas/ayudas_por_servicios/1956-702-2348.html" target="_blank">Consultar codigos</a></p>
                         </td>
                     </tr>
                     <tr>
@@ -178,17 +201,31 @@ $cert_path = get_option('akibara_cert_path', '');
             <div class="card">
                 <h2>Certificado Digital</h2>
 
-                <?php if ($cert_path && file_exists($cert_path)): ?>
-                <div class="notice notice-success inline">
-                    <p><span class="dashicons dashicons-yes-alt"></span> Certificado cargado: <?php echo basename($cert_path); ?></p>
+                <!-- Estado de certificados por ambiente -->
+                <div class="cert-status-grid">
+                    <div class="cert-status-box <?php echo $cert_certificacion_file ? 'ok' : 'missing'; ?>">
+                        <span class="dashicons dashicons-<?php echo $cert_certificacion_file ? 'yes-alt' : 'warning'; ?>"></span>
+                        <strong>Certificacion</strong>
+                        <span><?php echo $cert_certificacion_file ? esc_html($cert_certificacion_file) : 'No cargado'; ?></span>
+                    </div>
+                    <div class="cert-status-box <?php echo $cert_produccion_file ? 'ok' : 'missing'; ?>">
+                        <span class="dashicons dashicons-<?php echo $cert_produccion_file ? 'yes-alt' : 'warning'; ?>"></span>
+                        <strong>Produccion</strong>
+                        <span><?php echo $cert_produccion_file ? esc_html($cert_produccion_file) : 'No cargado'; ?></span>
+                    </div>
                 </div>
-                <?php else: ?>
-                <div class="notice notice-warning inline">
-                    <p><span class="dashicons dashicons-warning"></span> No hay certificado cargado</p>
-                </div>
-                <?php endif; ?>
 
                 <table class="form-table">
+                    <tr>
+                        <th><label for="cert_ambiente">Ambiente del Certificado</label></th>
+                        <td>
+                            <select id="cert_ambiente" name="cert_ambiente" class="regular-text">
+                                <option value="certificacion">Certificacion (Pruebas)</option>
+                                <option value="produccion">Produccion</option>
+                            </select>
+                            <p class="description">Selecciona el ambiente para el certificado que vas a subir</p>
+                        </td>
+                    </tr>
                     <tr>
                         <th><label for="certificado">Archivo Certificado (.p12)</label></th>
                         <td>
@@ -286,4 +323,37 @@ jQuery(document).ready(function($) {
 .tab-content { display: none; }
 .tab-content.active { display: block; }
 .notice.inline { margin: 15px 0; }
+
+/* Certificados grid */
+.cert-status-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 15px;
+    margin-bottom: 20px;
+}
+.cert-status-box {
+    padding: 15px;
+    border-radius: 8px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 5px;
+}
+.cert-status-box.ok {
+    background: #d1fae5;
+    color: #065f46;
+}
+.cert-status-box.missing {
+    background: #fef3c7;
+    color: #92400e;
+}
+.cert-status-box .dashicons {
+    font-size: 24px;
+    width: 24px;
+    height: 24px;
+}
+.cert-status-box span:last-child {
+    font-size: 12px;
+    opacity: 0.8;
+}
 </style>
