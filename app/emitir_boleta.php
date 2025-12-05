@@ -15,7 +15,7 @@
 
 declare(strict_types=1);
 
-use Derafu\Certificate\Contract\CertificateServiceInterface;
+use Derafu\Certificate\Service\CertificateLoader;
 use libredte\lib\Core\Application;
 use libredte\lib\Core\Package\Billing\Component\Integration\Enum\SiiAmbiente;
 use libredte\lib\Core\Package\Billing\Component\Integration\Support\SiiRequest;
@@ -86,7 +86,7 @@ try {
     echo "OK\n";
 
     // Obtener servicios
-    $certificateService = $app->getService(CertificateServiceInterface::class);
+    $certificateLoader = new CertificateLoader();
     $billingPackage = $app->getPackageRegistry()->getBillingPackage();
     $documentComponent = $billingPackage->getDocumentComponent();
     $identifierComponent = $billingPackage->getIdentifierComponent();
@@ -94,7 +94,7 @@ try {
 
     // Cargar certificado
     echo "Cargando certificado digital... ";
-    $certificate = $certificateService->load(
+    $certificate = $certificateLoader->loadFromFile(
         $certificadoPath,
         $config['certificado_password']
     );

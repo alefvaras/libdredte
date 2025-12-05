@@ -1,39 +1,36 @@
 <?php
 
 /**
- * Configuración del Emisor (tu empresa)
- *
- * IMPORTANTE: Completa estos datos con la información de tu empresa.
- * Estos datos deben coincidir con los del CAF que subas.
+ * Configuración del Emisor - AKIBARA SPA
  */
 
 return [
-    // RUT del emisor (sin puntos, con guión y dígito verificador)
-    'RUTEmisor' => '76192083-3', // CAMBIAR por tu RUT
+    // RUT del emisor
+    'RUTEmisor' => '78274225-6',
 
     // Razón social del emisor
-    'RznSoc' => 'MI EMPRESA EJEMPLO SPA', // CAMBIAR por tu razón social
+    'RznSoc' => 'AKIBARA SPA',
 
     // Giro del emisor
-    'GiroEmis' => 'TECNOLOGIA E INFORMATICA', // CAMBIAR por tu giro
+    'GiroEmis' => 'VENTA AL POR MENOR DE LIBROS Y OTROS PRODUCTOS',
 
     // Código de actividad económica principal
-    'Acteco' => 620200, // CAMBIAR por tu código de actividad
+    'Acteco' => 476101,
 
     // Dirección del emisor
-    'DirOrigen' => 'CALLE EJEMPLO 123', // CAMBIAR por tu dirección
+    'DirOrigen' => 'BARTOLO SOTO 3700 DP 1402 PISO 14',
 
     // Comuna del emisor
-    'CmnaOrigen' => 'Santiago', // CAMBIAR por tu comuna
+    'CmnaOrigen' => 'San Miguel',
 
-    // Ciudad del emisor
-    'CdgSIISucur' => null, // Código sucursal SII (null si es casa matriz)
+    // Código sucursal SII (null si es casa matriz)
+    'CdgSIISucur' => null,
 
-    // Teléfono (opcional)
-    'Telefono' => null,
+    // Teléfono
+    'Telefono' => '942806106',
 
-    // Correo electrónico (opcional pero recomendado)
-    'CorreoEmisor' => null,
+    // Correo electrónico
+    'CorreoEmisor' => 'contacto@akibara.cl',
 
     // Código vendedor (opcional)
     'CdgVendedor' => null,

@@ -19,7 +19,7 @@ return [
 
     // Contraseña del certificado digital (.p12)
     // IMPORTANTE: Cambia esto por la contraseña real de tu certificado
-    'certificado_password' => 'tu_password_aqui',
+    'certificado_password' => '5605',
 
     // Configuración del SII
     'sii' => [
