@@ -2,3 +2,4 @@
 caf_*.xml
 app/output/*.xml
 wordpress/
+wordpress-plugin/akibara-sii/cli/smtp_config.php
