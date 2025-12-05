@@ -16,6 +16,11 @@ class Akibara_SII_Client {
     private $app;
     private $certificate_loader;
 
+    // Configuración de reintentos
+    const MAX_RETRIES = 4;
+    const INITIAL_DELAY_MS = 2000; // 2 segundos
+    const MAX_DELAY_MS = 16000; // 16 segundos
+
     public function __construct() {
         // Solo inicializar si LibreDTE está disponible
         if (class_exists('libredte\lib\Core\Application')) {
@@ -25,6 +30,51 @@ class Akibara_SII_Client {
             );
             $this->certificate_loader = new CertificateLoader();
         }
+    }
+
+    /**
+     * Ejecutar operación con reintentos y backoff exponencial
+     *
+     * @param callable $operation Operación a ejecutar
+     * @param string $operationName Nombre de la operación (para logs)
+     * @return mixed Resultado de la operación
+     * @throws Exception Si falla después de todos los reintentos
+     */
+    private function executeWithRetry(callable $operation, string $operationName = 'operación') {
+        $lastException = null;
+        $delay = self::INITIAL_DELAY_MS;
+
+        for ($attempt = 1; $attempt <= self::MAX_RETRIES; $attempt++) {
+            try {
+                return $operation();
+            } catch (Exception $e) {
+                $lastException = $e;
+                $errorMessage = $e->getMessage();
+
+                // Verificar si es un error de conexión que merece reintento
+                $isConnectionError = (
+                    stripos($errorMessage, 'connection') !== false ||
+                    stripos($errorMessage, 'timeout') !== false ||
+                    stripos($errorMessage, 'reset') !== false ||
+                    stripos($errorMessage, 'upstream') !== false ||
+                    stripos($errorMessage, 'network') !== false ||
+                    stripos($errorMessage, 'curl') !== false
+                );
+
+                if (!$isConnectionError || $attempt >= self::MAX_RETRIES) {
+                    throw $e;
+                }
+
+                // Log del reintento
+                error_log("Akibara SII: Reintento $attempt/$attempt de $operationName - Error: $errorMessage");
+
+                // Esperar con backoff exponencial
+                usleep($delay * 1000);
+                $delay = min($delay * 2, self::MAX_DELAY_MS);
+            }
+        }
+
+        throw $lastException;
     }
 
     /**
@@ -234,7 +284,7 @@ class Akibara_SII_Client {
     }
 
     /**
-     * Enviar documento al SII
+     * Enviar documento al SII (con reintentos automáticos)
      */
     public function enviar_documento($xml, $ambiente = 'certificacion') {
         if (!$this->app) {
@@ -263,21 +313,27 @@ class Akibara_SII_Client {
                 ]
             );
 
-            // Autenticar
-            $token = $siiWorker->authenticate($siiRequest);
+            // Autenticar con reintentos
+            $token = $this->executeWithRetry(
+                fn() => $siiWorker->authenticate($siiRequest),
+                'autenticación SII'
+            );
 
             // Crear documento XML
             $xmlDocument = new \Derafu\Xml\XmlDocument();
             $xmlDocument->loadXml($xml);
 
-            // Enviar
+            // Enviar con reintentos
             $emisor = Akibara_Boletas::get_emisor_config();
-            $trackId = $siiWorker->sendXmlDocument(
-                request: $siiRequest,
-                doc: $xmlDocument,
-                company: $emisor['RUTEmisor'],
-                compress: false,
-                retry: 3
+            $trackId = $this->executeWithRetry(
+                fn() => $siiWorker->sendXmlDocument(
+                    request: $siiRequest,
+                    doc: $xmlDocument,
+                    company: $emisor['RUTEmisor'],
+                    compress: false,
+                    retry: 1
+                ),
+                'envío documento SII'
             );
 
             return [
@@ -290,7 +346,7 @@ class Akibara_SII_Client {
     }
 
     /**
-     * Consultar estado de documento
+     * Consultar estado de documento (con reintentos automáticos)
      */
     public function consultar_estado($track_id, $ambiente = 'certificacion') {
         if (!$this->app) {
@@ -316,10 +372,15 @@ class Akibara_SII_Client {
             );
 
             $emisor = Akibara_Boletas::get_emisor_config();
-            $response = $siiWorker->checkXmlDocumentSentStatus(
-                request: $siiRequest,
-                trackId: $track_id,
-                company: $emisor['RUTEmisor']
+
+            // Consultar con reintentos
+            $response = $this->executeWithRetry(
+                fn() => $siiWorker->checkXmlDocumentSentStatus(
+                    request: $siiRequest,
+                    trackId: $track_id,
+                    company: $emisor['RUTEmisor']
+                ),
+                'consulta estado SII'
             );
 
             $data = $response->getData();
