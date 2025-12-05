@@ -1,0 +1,6 @@
+# Ignore uploads and cache directories
+uploads/
+var/
+
+# Ignore composer vendor directory (installed locally)
+vendor/
