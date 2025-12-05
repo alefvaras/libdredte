@@ -3,27 +3,10 @@ if (!defined('ABSPATH')) exit;
 
 $ambiente = get_option('libredte_ambiente', 'certificacion');
 
-// RCOF solo disponible en produccion
-if ($ambiente !== 'produccion'):
-?>
-<div class="wrap">
-    <h1>RCOF - Reporte de Consumo de Folios</h1>
-    <div class="notice notice-warning">
-        <p><strong>RCOF no disponible en ambiente de certificacion.</strong></p>
-        <p>El RCOF (Reporte de Consumo de Folios) solo debe enviarse en ambiente de <strong>produccion</strong>.</p>
-        <p>En certificacion, el Set de Pruebas y las boletas se envian directamente sin necesidad de RCOF.</p>
-        <p>
-            <a href="<?php echo admin_url('admin.php?page=libredte-configuracion'); ?>" class="button">
-                Ir a Configuracion
-            </a>
-        </p>
-    </div>
-</div>
-<?php
-return;
-endif;
+// RCOF disponible en ambos ambientes:
+// - Certificacion: Para enviar junto con el Set de Pruebas
+// - Produccion: Para el envio diario obligatorio
 
-// Aqui empieza el RCOF para produccion
 global $wpdb;
 $table_rcof = $wpdb->prefix . 'libredte_rcof';
 $table_boletas = $wpdb->prefix . 'libredte_boletas';

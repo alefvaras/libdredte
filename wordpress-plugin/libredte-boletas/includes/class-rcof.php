@@ -1,7 +1,9 @@
 <?php
 /**
  * Clase para gestión del RCOF (Reporte de Consumo de Folios)
- * IMPORTANTE: Solo disponible en ambiente de PRODUCCIÓN
+ * Disponible en ambos ambientes:
+ * - Certificación: Para enviar junto con el Set de Pruebas
+ * - Producción: Para el envío diario obligatorio
  */
 
 if (!defined('ABSPATH')) {
@@ -19,24 +21,16 @@ class LibreDTE_RCOF {
     }
 
     /**
-     * Verifica si RCOF está habilitado (solo en producción)
+     * Obtiene el ambiente actual
      */
-    public function is_enabled() {
-        $ambiente = get_option('libredte_ambiente', 'certificacion');
-        return ($ambiente === 'produccion');
+    public function get_ambiente() {
+        return get_option('libredte_ambiente', 'certificacion');
     }
 
     /**
      * Genera el RCOF para una fecha específica
      */
     public function generar_rcof($fecha = null) {
-        if (!$this->is_enabled()) {
-            return array(
-                'success' => false,
-                'error' => 'RCOF solo disponible en ambiente de producción'
-            );
-        }
-
         if ($fecha === null) {
             $fecha = date('Y-m-d');
         }
@@ -238,13 +232,6 @@ class LibreDTE_RCOF {
      * Envía el RCOF al SII
      */
     public function enviar_rcof($rcof_id) {
-        if (!$this->is_enabled()) {
-            return array(
-                'success' => false,
-                'error' => 'RCOF solo disponible en ambiente de producción'
-            );
-        }
-
         global $wpdb;
         $table = $wpdb->prefix . 'libredte_rcof';
 
@@ -339,10 +326,11 @@ class LibreDTE_RCOF {
     }
 
     /**
-     * Ejecuta el envío automático de RCOF
+     * Ejecuta el envío automático de RCOF (solo producción)
      */
     public function ejecutar_envio_automatico() {
-        if (!$this->is_enabled()) {
+        // El envío automático diario solo aplica en producción
+        if ($this->get_ambiente() !== 'produccion') {
             return;
         }
 
