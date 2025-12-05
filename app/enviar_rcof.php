@@ -294,7 +294,7 @@ try {
         $signatureNS = 'http://www.w3.org/2000/09/xmldsig#';
 
         // Crear SignedInfo como fragmento para poder canonicalizar correctamente
-        $signedInfoXml = '<SignedInfo xmlns="' . $signatureNS . '">'
+        $signedInfoXml = '<SignedInfo xmlns="' . $signatureNS . '" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">'
             . '<CanonicalizationMethod Algorithm="http://www.w3.org/TR/2001/REC-xml-c14n-20010315"/>'
             . '<SignatureMethod Algorithm="http://www.w3.org/2000/09/xmldsig#rsa-sha1"/>'
             . '<Reference URI="#' . $referenceId . '">'
