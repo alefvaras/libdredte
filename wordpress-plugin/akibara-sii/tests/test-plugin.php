@@ -365,6 +365,17 @@ class AkibaraTestSuite {
             strpos($configFile, "akibara_cert_{\$cert_ambiente}_file") !== false,
             "Certificados separados por ambiente"
         );
+
+        // Verificar que CAF y certificados usen AKIBARA_SII_UPLOADS (no wp_upload_dir)
+        $cafFile = file_get_contents(dirname(__DIR__) . '/admin/views/caf.php');
+        $this->assert(
+            strpos($cafFile, 'AKIBARA_SII_UPLOADS') !== false,
+            "CAF usa AKIBARA_SII_UPLOADS"
+        );
+        $this->assert(
+            strpos($configFile, 'AKIBARA_SII_UPLOADS') !== false,
+            "Certificado usa AKIBARA_SII_UPLOADS"
+        );
     }
 
     private function testViews() {

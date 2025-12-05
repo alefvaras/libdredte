@@ -28,8 +28,8 @@ if (isset($_POST['akibara_save_config']) && wp_verify_nonce($_POST['_wpnonce'], 
 if (isset($_POST['akibara_upload_cert']) && wp_verify_nonce($_POST['_wpnonce'], 'akibara_config')) {
     if (!empty($_FILES['certificado']['tmp_name'])) {
         $cert_ambiente = sanitize_text_field($_POST['cert_ambiente'] ?? 'certificacion');
-        $upload_dir = wp_upload_dir();
-        $cert_dir = $upload_dir['basedir'] . '/akibara-sii/certs/';
+        // Usar AKIBARA_SII_UPLOADS para consistencia con class-sii-client.php
+        $cert_dir = AKIBARA_SII_UPLOADS . 'certs/';
 
         if (!file_exists($cert_dir)) {
             wp_mkdir_p($cert_dir);
