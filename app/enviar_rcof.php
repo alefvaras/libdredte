@@ -386,20 +386,28 @@ try {
     }
     $signatureValue = base64_encode($signature);
 
-    // 7. Actualizar SignatureValue y reconstruir XML
-    $signatureData['Signature']['SignatureValue'] = wordwrap($signatureValue, 64, "\n", true);
+    // 7. Actualizar SignatureValue y reconstruir XML (sin line breaks como LibreDTE)
+    $signatureData['Signature']['SignatureValue'] = $signatureValue; // Sin wordwrap
 
     $signatureXmlDoc = new XmlDocument();
     $signatureXmlDoc->formatOutput = false;
     $arrayToXml($signatureData, $signatureXmlDoc);
 
-    // 8. Agregar firma al documento original
-    $signatureNode = $dom->importNode($signatureXmlDoc->documentElement, true);
-    $dom->documentElement->appendChild($signatureNode);
+    // Obtener XML de firma en formato compacto (sin espacios ni saltos de línea)
+    $signatureXml = $signatureXmlDoc->saveXML($signatureXmlDoc->documentElement);
+
+    // 8. Agregar firma usando reemplazo de string (como hace LibreDTE)
+    // Primero agregar un placeholder
+    $placeholder = $dom->createElement('Signature');
+    $dom->documentElement->appendChild($placeholder);
+
+    // Guardar XML y reemplazar placeholder con firma real
+    $xmlWithPlaceholder = $dom->saveXML();
+    $xmlSigned = str_replace('<Signature/>', $signatureXml, $xmlWithPlaceholder);
 
     // 9. Crear XmlDocument final
     $xmlDocumentSigned = new XmlDocument();
-    $xmlDocumentSigned->loadXml($dom->saveXML());
+    $xmlDocumentSigned->loadXml($xmlSigned);
     echo "OK\n";
 
     // Guardar XML del RCOF
