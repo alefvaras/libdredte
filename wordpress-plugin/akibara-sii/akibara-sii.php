@@ -47,6 +47,11 @@ class Akibara_SII {
         require_once AKIBARA_SII_PATH . 'includes/class-sii-client.php';
         require_once AKIBARA_SII_PATH . 'includes/class-boleta.php';
         require_once AKIBARA_SII_PATH . 'includes/class-rcof.php';
+
+        // WooCommerce integration (carga condicional)
+        if (class_exists('WooCommerce') || in_array('woocommerce/woocommerce.php', apply_filters('active_plugins', get_option('active_plugins')))) {
+            require_once AKIBARA_SII_PATH . 'includes/class-woocommerce-integration.php';
+        }
     }
 
     private function init_hooks() {
