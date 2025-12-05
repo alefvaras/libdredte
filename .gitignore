@@ -1,3 +1,4 @@
 *.p12
 caf_*.xml
 app/output/*.xml
+wordpress/
