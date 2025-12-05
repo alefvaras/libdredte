@@ -36,8 +36,10 @@ return [
     'CdgVendedor' => null,
 
     // Autorización DTE del SII (requerido para envío)
+    // Para CERTIFICACION: 2014-08-22 / 80
+    // Para PRODUCCION: usar fecha/numero de resolución real del SII
     'autorizacionDte' => [
-        'fechaResolucion' => '2025-11-18',
-        'numeroResolucion' => 0,
+        'fechaResolucion' => '2014-08-22',
+        'numeroResolucion' => 80,
     ],
 ];

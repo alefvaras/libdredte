@@ -47,6 +47,7 @@ $emisor = [
     'DirOrigen' => 'BARTOLO SOTO 3700 DP 1402 PISO 14',
     'CmnaOrigen' => 'San Miguel',
     'Acteco' => 476101,
+    'CdgSIISucur' => false,
 ];
 
 $autorizacionConfig = [
