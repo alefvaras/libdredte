@@ -10,6 +10,7 @@ use Derafu\Certificate\Service\CertificateLoader;
 use libredte\lib\Core\Application;
 use libredte\lib\Core\Package\Billing\Component\Integration\Enum\SiiAmbiente;
 use libredte\lib\Core\Package\Billing\Component\Integration\Support\SiiRequest;
+use libredte\lib\Core\Package\Billing\Component\TradingParties\Entity\AutorizacionDte;
 
 echo "=== Generador de Boleta Electrónica ===\n\n";
 
@@ -17,19 +18,21 @@ echo "=== Generador de Boleta Electrónica ===\n\n";
 $config = require __DIR__ . '/config/config.php';
 $ambiente = SiiAmbiente::CERTIFICACION;
 
-// Datos del emisor (con autorización DTE para ambiente certificación)
+// Datos del emisor (sin autorizacionDte - se asigna después al objeto)
 $emisor = [
     'RUTEmisor' => '78274225-6',
-    'RznSocEmisor' => 'AKIBARA SPA',
-    'GiroEmisor' => 'SERVICIO DE SOPORTE INFORMATICO Y TELECOMUNICACIONES',
-    'DirOrigen' => 'SANTIAGO',
-    'CmnaOrigen' => 'SANTIAGO',
-    'Acteco' => 620100,
-    'CdgSIISucur' => null,
-    'autorizacionDte' => [
-        'fechaResolucion' => '2014-08-22', // Fecha resolución certificación
-        'numeroResolucion' => 80,           // Número resolución certificación
-    ],
+    'RznSoc' => 'AKIBARA SPA',
+    'GiroEmis' => 'VENTA AL POR MENOR DE LIBROS Y OTROS PRODUCTOS',
+    'DirOrigen' => 'BARTOLO SOTO 3700 DP 1402 PISO 14',
+    'CmnaOrigen' => 'San Miguel',
+    'Acteco' => 476101,
+    'CdgSIISucur' => false,
+];
+
+// Configuración de autorización DTE para certificación (se usa para Carátula)
+$autorizacionConfig = [
+    'fechaResolucion' => '2014-08-22',
+    'numeroResolucion' => 80,
 ];
 
 // Folio a usar (2048 - último disponible)
@@ -63,7 +66,7 @@ $boleta_data = [
 
 echo "Configuración:\n";
 echo "  Ambiente: certificacion (maullin.sii.cl)\n";
-echo "  Emisor: {$emisor['RUTEmisor']} - {$emisor['RznSocEmisor']}\n";
+echo "  Emisor: {$emisor['RUTEmisor']} - {$emisor['RznSoc']}\n";
 echo "  Folio: $folio\n";
 echo "  Receptor: 66666666-6 - CLIENTE DE PRUEBA PLUGIN\n";
 echo "  Total Bruto: $" . number_format(2 * 5000) . "\n\n";
@@ -105,6 +108,15 @@ try {
         certificate: $certificate
     );
 
+    // Asignar autorización DTE al emisor (para generar Carátula correctamente)
+    if ($documentBag->getEmisor()) {
+        $autorizacionDte = new AutorizacionDte(
+            $autorizacionConfig['fechaResolucion'],
+            (int) $autorizacionConfig['numeroResolucion']
+        );
+        $documentBag->getEmisor()->setAutorizacionDte($autorizacionDte);
+    }
+
     $documento = $documentBag->getDocument();
     echo "  Boleta generada correctamente!\n";
     echo "  Monto Total: $" . number_format($documento->getMontoTotal()) . "\n";
@@ -135,14 +147,19 @@ try {
     $token = $siiWorker->authenticate($siiRequest);
     echo "  Autenticación exitosa!\n";
 
-    // Crear sobre con la boleta
+    // Crear sobre manualmente (como en emitir_set_pruebas.php)
     $dispatcherWorker = $documentComponent->getDispatcherWorker();
-    $envelope = $dispatcherWorker->create($documentBag);
+    $envelope = new \libredte\lib\Core\Package\Billing\Component\Document\Support\DocumentEnvelope();
+    $envelope->addDocument($documentBag);
+    $envelope->setCertificate($certificate);
+
+    // Normalizar para generar carátula y XML
+    $envelope = $dispatcherWorker->normalize($envelope);
 
     // Guardar sobre
     $xmlEnvelope = $envelope->getXmlDocument();
     $sobre_file = $config['paths']['output'] . "sobre_boleta_39_F{$folio}.xml";
-    file_put_contents($sobre_file, $xmlEnvelope->getXml());
+    file_put_contents($sobre_file, $xmlEnvelope->saveXML());
     echo "  Sobre guardado: $sobre_file\n";
 
     // Enviar sobre

@@ -1,31 +1,31 @@
 <?php
 /**
- * Plugin Name: LibreDTE Boletas
- * Plugin URI: https://github.com/libredte
- * Description: Emisión de Boletas Electrónicas para Chile usando LibreDTE
+ * Plugin Name: Akibara SII
+ * Plugin URI: https://akibara.cl
+ * Description: Emisión de Boletas Electrónicas para Chile
  * Version: 1.0.0
  * Author: AKIBARA SPA
  * License: GPL v2 or later
- * Text Domain: libredte-boletas
+ * Text Domain: akibara-sii
  */
 
 defined('ABSPATH') || exit;
 
 // Constantes del plugin
-define('LIBREDTE_BOLETAS_VERSION', '1.0.0');
-define('LIBREDTE_BOLETAS_PATH', plugin_dir_path(__FILE__));
-define('LIBREDTE_BOLETAS_URL', plugin_dir_url(__FILE__));
-define('LIBREDTE_BOLETAS_UPLOADS', LIBREDTE_BOLETAS_PATH . 'uploads/');
+define('AKIBARA_SII_VERSION', '1.0.0');
+define('AKIBARA_SII_PATH', plugin_dir_path(__FILE__));
+define('AKIBARA_SII_URL', plugin_dir_url(__FILE__));
+define('AKIBARA_SII_UPLOADS', AKIBARA_SII_PATH . 'uploads/');
 
-// Autoloader de LibreDTE
-if (file_exists(LIBREDTE_BOLETAS_PATH . 'vendor/autoload.php')) {
-    require_once LIBREDTE_BOLETAS_PATH . 'vendor/autoload.php';
+// Autoloader de dependencias
+if (file_exists(AKIBARA_SII_PATH . 'vendor/autoload.php')) {
+    require_once AKIBARA_SII_PATH . 'vendor/autoload.php';
 }
 
 /**
  * Clase principal del plugin
  */
-class LibreDTE_Boletas {
+class Akibara_SII {
 
     private static $instance = null;
 
@@ -42,11 +42,11 @@ class LibreDTE_Boletas {
     }
 
     private function includes() {
-        require_once LIBREDTE_BOLETAS_PATH . 'includes/class-database.php';
-        require_once LIBREDTE_BOLETAS_PATH . 'includes/class-admin.php';
-        require_once LIBREDTE_BOLETAS_PATH . 'includes/class-sii-client.php';
-        require_once LIBREDTE_BOLETAS_PATH . 'includes/class-boleta.php';
-        require_once LIBREDTE_BOLETAS_PATH . 'includes/class-rcof.php';
+        require_once AKIBARA_SII_PATH . 'includes/class-database.php';
+        require_once AKIBARA_SII_PATH . 'includes/class-admin.php';
+        require_once AKIBARA_SII_PATH . 'includes/class-sii-client.php';
+        require_once AKIBARA_SII_PATH . 'includes/class-boleta.php';
+        require_once AKIBARA_SII_PATH . 'includes/class-rcof.php';
     }
 
     private function init_hooks() {
@@ -58,28 +58,28 @@ class LibreDTE_Boletas {
         add_action('admin_enqueue_scripts', [$this, 'admin_scripts']);
 
         // AJAX handlers
-        add_action('wp_ajax_libredte_emitir_boleta', [$this, 'ajax_emitir_boleta']);
-        add_action('wp_ajax_libredte_enviar_boleta', [$this, 'ajax_enviar_boleta']);
-        add_action('wp_ajax_libredte_detalle_boleta', [$this, 'ajax_detalle_boleta']);
-        add_action('wp_ajax_libredte_consultar_estado', [$this, 'ajax_consultar_estado']);
-        add_action('wp_ajax_libredte_consultar_masivo', [$this, 'ajax_consultar_masivo']);
-        add_action('wp_ajax_libredte_enviar_pendientes', [$this, 'ajax_enviar_pendientes']);
-        add_action('wp_ajax_libredte_enviar_rcof', [$this, 'ajax_enviar_rcof']);
-        add_action('wp_ajax_libredte_consultar_rcof', [$this, 'ajax_consultar_rcof']);
-        add_action('wp_ajax_libredte_upload_caf', [$this, 'ajax_upload_caf']);
-        add_action('wp_ajax_libredte_upload_certificado', [$this, 'ajax_upload_certificado']);
+        add_action('wp_ajax_akibara_emitir_boleta', [$this, 'ajax_emitir_boleta']);
+        add_action('wp_ajax_akibara_enviar_boleta', [$this, 'ajax_enviar_boleta']);
+        add_action('wp_ajax_akibara_detalle_boleta', [$this, 'ajax_detalle_boleta']);
+        add_action('wp_ajax_akibara_consultar_estado', [$this, 'ajax_consultar_estado']);
+        add_action('wp_ajax_akibara_consultar_masivo', [$this, 'ajax_consultar_masivo']);
+        add_action('wp_ajax_akibara_enviar_pendientes', [$this, 'ajax_enviar_pendientes']);
+        add_action('wp_ajax_akibara_enviar_rcof', [$this, 'ajax_enviar_rcof']);
+        add_action('wp_ajax_akibara_consultar_rcof', [$this, 'ajax_consultar_rcof']);
+        add_action('wp_ajax_akibara_upload_caf', [$this, 'ajax_upload_caf']);
+        add_action('wp_ajax_akibara_upload_certificado', [$this, 'ajax_upload_certificado']);
     }
 
     public function activate() {
-        LibreDTE_Database::create_tables();
+        Akibara_Database::create_tables();
 
         // Crear directorio de uploads si no existe
-        if (!file_exists(LIBREDTE_BOLETAS_UPLOADS)) {
-            wp_mkdir_p(LIBREDTE_BOLETAS_UPLOADS);
+        if (!file_exists(AKIBARA_SII_UPLOADS)) {
+            wp_mkdir_p(AKIBARA_SII_UPLOADS);
         }
 
         // Proteger directorio con .htaccess
-        $htaccess = LIBREDTE_BOLETAS_UPLOADS . '.htaccess';
+        $htaccess = AKIBARA_SII_UPLOADS . '.htaccess';
         if (!file_exists($htaccess)) {
             file_put_contents($htaccess, "deny from all\n");
         }
@@ -92,72 +92,72 @@ class LibreDTE_Boletas {
     }
 
     public function init() {
-        load_plugin_textdomain('libredte-boletas', false, dirname(plugin_basename(__FILE__)) . '/languages');
+        load_plugin_textdomain('akibara-sii', false, dirname(plugin_basename(__FILE__)) . '/languages');
     }
 
     public function admin_menu() {
         add_menu_page(
-            __('LibreDTE Boletas', 'libredte-boletas'),
-            __('Boletas DTE', 'libredte-boletas'),
+            __('Akibara SII', 'akibara-sii'),
+            __('Boletas', 'akibara-sii'),
             'manage_options',
-            'libredte-boletas',
-            [LibreDTE_Admin::instance(), 'render_dashboard'],
+            'akibara-sii',
+            [Akibara_Admin::instance(), 'render_dashboard'],
             'dashicons-media-spreadsheet',
             30
         );
 
         add_submenu_page(
-            'libredte-boletas',
-            __('Dashboard', 'libredte-boletas'),
-            __('Dashboard', 'libredte-boletas'),
+            'akibara-sii',
+            __('Dashboard', 'akibara-sii'),
+            __('Dashboard', 'akibara-sii'),
             'manage_options',
-            'libredte-boletas',
-            [LibreDTE_Admin::instance(), 'render_dashboard']
+            'akibara-sii',
+            [Akibara_Admin::instance(), 'render_dashboard']
         );
 
         add_submenu_page(
-            'libredte-boletas',
-            __('Nueva Boleta', 'libredte-boletas'),
-            __('Nueva Boleta', 'libredte-boletas'),
+            'akibara-sii',
+            __('Nueva Boleta', 'akibara-sii'),
+            __('Nueva Boleta', 'akibara-sii'),
             'manage_options',
-            'libredte-nueva-boleta',
-            [LibreDTE_Admin::instance(), 'render_nueva_boleta']
+            'akibara-nueva-boleta',
+            [Akibara_Admin::instance(), 'render_nueva_boleta']
         );
 
         add_submenu_page(
-            'libredte-boletas',
-            __('Historial', 'libredte-boletas'),
-            __('Historial', 'libredte-boletas'),
+            'akibara-sii',
+            __('Historial', 'akibara-sii'),
+            __('Historial', 'akibara-sii'),
             'manage_options',
-            'libredte-historial',
-            [LibreDTE_Admin::instance(), 'render_historial']
+            'akibara-historial',
+            [Akibara_Admin::instance(), 'render_historial']
         );
 
         add_submenu_page(
-            'libredte-boletas',
-            __('Configuración', 'libredte-boletas'),
-            __('Configuración', 'libredte-boletas'),
+            'akibara-sii',
+            __('Configuración', 'akibara-sii'),
+            __('Configuración', 'akibara-sii'),
             'manage_options',
-            'libredte-configuracion',
-            [LibreDTE_Admin::instance(), 'render_configuracion']
+            'akibara-configuracion',
+            [Akibara_Admin::instance(), 'render_configuracion']
         );
 
         add_submenu_page(
-            'libredte-boletas',
-            __('CAF / Folios', 'libredte-boletas'),
-            __('CAF / Folios', 'libredte-boletas'),
+            'akibara-sii',
+            __('CAF / Folios', 'akibara-sii'),
+            __('CAF / Folios', 'akibara-sii'),
             'manage_options',
-            'libredte-caf',
-            [LibreDTE_Admin::instance(), 'render_caf']
+            'akibara-caf',
+            [Akibara_Admin::instance(), 'render_caf']
         );
 
         add_submenu_page(
-            'libredte-boletas',
-            __('RCOF', 'libredte-boletas'),
-            __('RCOF', 'libredte-boletas'),
+            'akibara-sii',
+            __('RCOF', 'akibara-sii'),
+            __('RCOF', 'akibara-sii'),
             'manage_options',
-            'libredte-rcof',
-            [LibreDTE_Admin::instance(), 'render_rcof']
+            'akibara-rcof',
+            [Akibara_Admin::instance(), 'render_rcof']
         );
     }
 
@@ -167,34 +167,34 @@ class LibreDTE_Boletas {
         }
 
         wp_enqueue_style(
-            'libredte-admin',
-            LIBREDTE_BOLETAS_URL . 'assets/css/admin.css',
+            'akibara-admin',
+            AKIBARA_SII_URL . 'assets/css/admin.css',
             [],
-            LIBREDTE_BOLETAS_VERSION
+            AKIBARA_SII_VERSION
         );
 
         wp_enqueue_script(
-            'libredte-admin',
-            LIBREDTE_BOLETAS_URL . 'assets/js/admin.js',
+            'akibara-admin',
+            AKIBARA_SII_URL . 'assets/js/admin.js',
             ['jquery'],
-            LIBREDTE_BOLETAS_VERSION,
+            AKIBARA_SII_VERSION,
             true
         );
 
-        wp_localize_script('libredte-admin', 'libredteAjax', [
+        wp_localize_script('akibara-admin', 'akibaraAjax', [
             'ajaxurl' => admin_url('admin-ajax.php'),
-            'nonce' => wp_create_nonce('libredte_nonce'),
+            'nonce' => wp_create_nonce('akibara_nonce'),
         ]);
     }
 
     public function ajax_emitir_boleta() {
-        check_ajax_referer('libredte_nonce', 'nonce');
+        check_ajax_referer('akibara_nonce', 'nonce');
 
         if (!current_user_can('manage_options')) {
             wp_send_json_error(['message' => 'Sin permisos']);
         }
 
-        $boleta = new LibreDTE_Boleta();
+        $boleta = new Akibara_Boleta();
         $result = $boleta->emitir($_POST);
 
         if (is_wp_error($result)) {
@@ -205,13 +205,13 @@ class LibreDTE_Boletas {
     }
 
     public function ajax_enviar_rcof() {
-        check_ajax_referer('libredte_nonce', 'nonce');
+        check_ajax_referer('akibara_nonce', 'nonce');
 
         if (!current_user_can('manage_options')) {
             wp_send_json_error(['message' => 'Sin permisos']);
         }
 
-        $rcof = new LibreDTE_RCOF();
+        $rcof = new Akibara_RCOF();
         $result = $rcof->enviar($_POST);
 
         if (is_wp_error($result)) {
@@ -222,7 +222,7 @@ class LibreDTE_Boletas {
     }
 
     public function ajax_upload_caf() {
-        check_ajax_referer('libredte_nonce', 'nonce');
+        check_ajax_referer('akibara_nonce', 'nonce');
 
         if (!current_user_can('manage_options')) {
             wp_send_json_error(['message' => 'Sin permisos']);
@@ -233,7 +233,7 @@ class LibreDTE_Boletas {
         }
 
         $file = $_FILES['caf_file'];
-        $upload_dir = LIBREDTE_BOLETAS_UPLOADS . 'caf/';
+        $upload_dir = AKIBARA_SII_UPLOADS . 'caf/';
 
         if (!file_exists($upload_dir)) {
             wp_mkdir_p($upload_dir);
@@ -244,7 +244,7 @@ class LibreDTE_Boletas {
 
         if (move_uploaded_file($file['tmp_name'], $filepath)) {
             // Validar y procesar CAF
-            $sii = new LibreDTE_SII_Client();
+            $sii = new Akibara_SII_Client();
             $caf_info = $sii->parse_caf($filepath);
 
             if (is_wp_error($caf_info)) {
@@ -253,7 +253,7 @@ class LibreDTE_Boletas {
             }
 
             // Guardar en base de datos
-            LibreDTE_Database::save_caf([
+            Akibara_Database::save_caf([
                 'tipo_dte' => $caf_info['tipo'],
                 'folio_desde' => $caf_info['desde'],
                 'folio_hasta' => $caf_info['hasta'],
@@ -273,7 +273,7 @@ class LibreDTE_Boletas {
     }
 
     public function ajax_upload_certificado() {
-        check_ajax_referer('libredte_nonce', 'nonce');
+        check_ajax_referer('akibara_nonce', 'nonce');
 
         if (!current_user_can('manage_options')) {
             wp_send_json_error(['message' => 'Sin permisos']);
@@ -287,7 +287,7 @@ class LibreDTE_Boletas {
         $ambiente = sanitize_text_field($_POST['ambiente'] ?? 'certificacion');
 
         $file = $_FILES['cert_file'];
-        $upload_dir = LIBREDTE_BOLETAS_UPLOADS . 'certs/';
+        $upload_dir = AKIBARA_SII_UPLOADS . 'certs/';
 
         if (!file_exists($upload_dir)) {
             wp_mkdir_p($upload_dir);
@@ -298,7 +298,7 @@ class LibreDTE_Boletas {
 
         if (move_uploaded_file($file['tmp_name'], $filepath)) {
             // Validar certificado
-            $sii = new LibreDTE_SII_Client();
+            $sii = new Akibara_SII_Client();
             $cert_info = $sii->validate_certificate($filepath, $password);
 
             if (is_wp_error($cert_info)) {
@@ -307,8 +307,8 @@ class LibreDTE_Boletas {
             }
 
             // Guardar configuración
-            update_option("libredte_cert_{$ambiente}_file", $filename);
-            update_option("libredte_cert_{$ambiente}_password", base64_encode($password));
+            update_option("akibara_cert_{$ambiente}_file", $filename);
+            update_option("akibara_cert_{$ambiente}_password", base64_encode($password));
 
             wp_send_json_success([
                 'message' => 'Certificado cargado correctamente',
@@ -323,14 +323,14 @@ class LibreDTE_Boletas {
      * AJAX: Enviar boleta al SII
      */
     public function ajax_enviar_boleta() {
-        check_ajax_referer('libredte_nonce', 'nonce');
+        check_ajax_referer('akibara_nonce', 'nonce');
 
         if (!current_user_can('manage_options')) {
             wp_send_json_error('Sin permisos');
         }
 
         $id = intval($_POST['id']);
-        $boleta = new LibreDTE_Boleta();
+        $boleta = new Akibara_Boleta();
         $result = $boleta->enviar_al_sii($id);
 
         if (is_wp_error($result)) {
@@ -344,7 +344,7 @@ class LibreDTE_Boletas {
      * AJAX: Obtener detalle de boleta
      */
     public function ajax_detalle_boleta() {
-        check_ajax_referer('libredte_nonce', 'nonce');
+        check_ajax_referer('akibara_nonce', 'nonce');
 
         if (!current_user_can('manage_options')) {
             wp_send_json_error('Sin permisos');
@@ -353,7 +353,7 @@ class LibreDTE_Boletas {
         global $wpdb;
         $id = intval($_POST['id']);
         $boleta = $wpdb->get_row($wpdb->prepare(
-            "SELECT * FROM {$wpdb->prefix}libredte_boletas WHERE id = %d",
+            "SELECT * FROM {$wpdb->prefix}akibara_boletas WHERE id = %d",
             $id
         ), ARRAY_A);
 
@@ -368,14 +368,14 @@ class LibreDTE_Boletas {
      * AJAX: Consultar estado en SII
      */
     public function ajax_consultar_estado() {
-        check_ajax_referer('libredte_nonce', 'nonce');
+        check_ajax_referer('akibara_nonce', 'nonce');
 
         if (!current_user_can('manage_options')) {
             wp_send_json_error('Sin permisos');
         }
 
         $id = intval($_POST['id']);
-        $boleta = new LibreDTE_Boleta();
+        $boleta = new Akibara_Boleta();
         $result = $boleta->consultar_estado_sii($id);
 
         if (is_wp_error($result)) {
@@ -389,14 +389,14 @@ class LibreDTE_Boletas {
      * AJAX: Consultar estado masivo
      */
     public function ajax_consultar_masivo() {
-        check_ajax_referer('libredte_nonce', 'nonce');
+        check_ajax_referer('akibara_nonce', 'nonce');
 
         if (!current_user_can('manage_options')) {
             wp_send_json_error('Sin permisos');
         }
 
         $ids = array_map('intval', $_POST['ids']);
-        $boleta = new LibreDTE_Boleta();
+        $boleta = new Akibara_Boleta();
 
         $resultados = array('aceptadas' => 0, 'rechazadas' => 0, 'pendientes' => 0);
 
@@ -416,7 +416,7 @@ class LibreDTE_Boletas {
      * AJAX: Enviar boletas pendientes
      */
     public function ajax_enviar_pendientes() {
-        check_ajax_referer('libredte_nonce', 'nonce');
+        check_ajax_referer('akibara_nonce', 'nonce');
 
         if (!current_user_can('manage_options')) {
             wp_send_json_error('Sin permisos');
@@ -424,10 +424,10 @@ class LibreDTE_Boletas {
 
         global $wpdb;
         $pendientes = $wpdb->get_results(
-            "SELECT id FROM {$wpdb->prefix}libredte_boletas WHERE estado_sii = 'generado'"
+            "SELECT id FROM {$wpdb->prefix}akibara_boletas WHERE estado_sii = 'generado'"
         );
 
-        $boleta = new LibreDTE_Boleta();
+        $boleta = new Akibara_Boleta();
         $enviadas = 0;
 
         foreach ($pendientes as $p) {
@@ -444,14 +444,14 @@ class LibreDTE_Boletas {
      * AJAX: Consultar estado RCOF
      */
     public function ajax_consultar_rcof() {
-        check_ajax_referer('libredte_nonce', 'nonce');
+        check_ajax_referer('akibara_nonce', 'nonce');
 
         if (!current_user_can('manage_options')) {
             wp_send_json_error('Sin permisos');
         }
 
         $id = intval($_POST['id']);
-        $rcof = new LibreDTE_RCOF();
+        $rcof = new Akibara_RCOF();
         $result = $rcof->consultar_estado($id);
 
         if (is_wp_error($result)) {
@@ -462,20 +462,26 @@ class LibreDTE_Boletas {
     }
 
     /**
-     * Obtener configuración del emisor
+     * Obtener configuración del emisor (sin autorizacionDte para XML)
      */
     public static function get_emisor_config() {
         return [
-            'RUTEmisor' => get_option('libredte_emisor_rut', ''),
-            'RznSoc' => get_option('libredte_emisor_razon_social', ''),
-            'GiroEmis' => get_option('libredte_emisor_giro', ''),
-            'Acteco' => get_option('libredte_emisor_acteco', ''),
-            'DirOrigen' => get_option('libredte_emisor_direccion', ''),
-            'CmnaOrigen' => get_option('libredte_emisor_comuna', ''),
-            'autorizacionDte' => [
-                'fechaResolucion' => get_option('libredte_fecha_resolucion', ''),
-                'numeroResolucion' => get_option('libredte_numero_resolucion', 0),
-            ],
+            'RUTEmisor' => get_option('akibara_emisor_rut', ''),
+            'RznSoc' => get_option('akibara_emisor_razon_social', ''),
+            'GiroEmis' => get_option('akibara_emisor_giro', ''),
+            'Acteco' => get_option('akibara_emisor_acteco', ''),
+            'DirOrigen' => get_option('akibara_emisor_direccion', ''),
+            'CmnaOrigen' => get_option('akibara_emisor_comuna', ''),
+        ];
+    }
+
+    /**
+     * Obtener configuración de autorización DTE (para Carátula)
+     */
+    public static function get_autorizacion_config() {
+        return [
+            'fechaResolucion' => get_option('akibara_resolucion_fecha', '2014-08-22'),
+            'numeroResolucion' => (int) get_option('akibara_resolucion_numero', 80),
         ];
     }
 
@@ -483,7 +489,7 @@ class LibreDTE_Boletas {
      * Obtener ambiente actual
      */
     public static function get_ambiente() {
-        return get_option('libredte_ambiente', 'certificacion');
+        return get_option('akibara_ambiente', 'certificacion');
     }
 
     /**
@@ -494,13 +500,13 @@ class LibreDTE_Boletas {
         if ($ambiente !== 'produccion') {
             return false;
         }
-        return get_option('libredte_rcof_enabled', false);
+        return get_option('akibara_rcof_enabled', false);
     }
 }
 
 // Inicializar plugin
-function libredte_boletas() {
-    return LibreDTE_Boletas::instance();
+function akibara_boletas() {
+    return Akibara_SII::instance();
 }
 
-add_action('plugins_loaded', 'libredte_boletas');
+add_action('plugins_loaded', 'akibara_boletas');

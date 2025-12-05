@@ -2,10 +2,10 @@
 if (!defined('ABSPATH')) exit;
 
 global $wpdb;
-$table_caf = $wpdb->prefix . 'libredte_caf';
+$table_caf = $wpdb->prefix . 'akibara_caf';
 
 // Procesar subida de CAF
-if (isset($_POST['libredte_upload_caf']) && wp_verify_nonce($_POST['_wpnonce'], 'libredte_caf')) {
+if (isset($_POST['akibara_upload_caf']) && wp_verify_nonce($_POST['_wpnonce'], 'akibara_caf')) {
     if (!empty($_FILES['caf_file']['tmp_name'])) {
         $xml_content = file_get_contents($_FILES['caf_file']['tmp_name']);
 
@@ -47,9 +47,9 @@ if (isset($_POST['libredte_upload_caf']) && wp_verify_nonce($_POST['_wpnonce'], 
                 ));
 
                 // Actualizar folio actual si es necesario
-                $folio_actual = get_option('libredte_folio_actual_' . $caf_data['tipo_dte'], 0);
+                $folio_actual = get_option('akibara_folio_actual_' . $caf_data['tipo_dte'], 0);
                 if ($folio_actual < $caf_data['folio_desde']) {
-                    update_option('libredte_folio_actual_' . $caf_data['tipo_dte'], $caf_data['folio_desde']);
+                    update_option('akibara_folio_actual_' . $caf_data['tipo_dte'], $caf_data['folio_desde']);
                 }
 
                 echo '<div class="notice notice-success"><p>CAF cargado correctamente. Folios: ' .
@@ -98,7 +98,7 @@ $cafs = $wpdb->get_results(
 );
 
 // Calcular estadisticas de folios
-$folio_actual = get_option('libredte_folio_actual_39', 0);
+$folio_actual = get_option('akibara_folio_actual_39', 0);
 $total_folios = 0;
 $folios_usados = 0;
 $folios_disponibles = 0;
@@ -115,7 +115,7 @@ foreach ($cafs as $caf) {
 }
 
 // Contar boletas emitidas
-$table_boletas = $wpdb->prefix . 'libredte_boletas';
+$table_boletas = $wpdb->prefix . 'akibara_boletas';
 $folios_usados = $wpdb->get_var("SELECT COUNT(*) FROM $table_boletas WHERE tipo_dte = 39");
 
 // Alerta de folios bajos
@@ -190,7 +190,7 @@ $alerta_folios = ($folios_disponibles > 0 && $folios_disponibles < 50);
     <div class="card">
         <h2>Subir Nuevo CAF</h2>
         <form method="post" enctype="multipart/form-data">
-            <?php wp_nonce_field('libredte_caf'); ?>
+            <?php wp_nonce_field('akibara_caf'); ?>
             <table class="form-table">
                 <tr>
                     <th><label for="caf_file">Archivo CAF (.xml)</label></th>
@@ -204,7 +204,7 @@ $alerta_folios = ($folios_disponibles > 0 && $folios_disponibles < 50);
                 </tr>
             </table>
             <p class="submit">
-                <button type="submit" name="libredte_upload_caf" class="button button-primary">
+                <button type="submit" name="akibara_upload_caf" class="button button-primary">
                     <span class="dashicons dashicons-upload"></span> Subir CAF
                 </button>
             </p>

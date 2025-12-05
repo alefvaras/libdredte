@@ -5,16 +5,16 @@
 
 defined('ABSPATH') || exit;
 
-class LibreDTE_Boleta {
+class Akibara_Boleta {
 
     private $sii_client;
     private $ambiente;
     private $emisor;
 
     public function __construct() {
-        $this->sii_client = new LibreDTE_SII_Client();
-        $this->ambiente = LibreDTE_Boletas::get_ambiente();
-        $this->emisor = LibreDTE_Boletas::get_emisor_config();
+        $this->sii_client = new Akibara_SII_Client();
+        $this->ambiente = Akibara_Boletas::get_ambiente();
+        $this->emisor = Akibara_Boletas::get_emisor_config();
     }
 
     /**
@@ -31,7 +31,7 @@ class LibreDTE_Boleta {
         }
 
         // Obtener siguiente folio
-        $folio = LibreDTE_Database::get_siguiente_folio(39, $this->ambiente);
+        $folio = Akibara_Database::get_siguiente_folio(39, $this->ambiente);
         if (is_wp_error($folio)) {
             return $folio;
         }
@@ -42,7 +42,7 @@ class LibreDTE_Boleta {
         // Generar XML de la boleta
         $xml_result = $this->sii_client->generar_boleta_xml($boleta_data);
         if (is_wp_error($xml_result)) {
-            LibreDTE_Database::log('error', 'Error generando XML boleta', [
+            Akibara_Database::log('error', 'Error generando XML boleta', [
                 'folio' => $folio,
                 'error' => $xml_result->get_error_message(),
             ]);
@@ -53,7 +53,7 @@ class LibreDTE_Boleta {
         $montos = $this->calcular_montos($data['items']);
 
         // Guardar en base de datos
-        $boleta_id = LibreDTE_Database::save_boleta([
+        $boleta_id = Akibara_Database::save_boleta([
             'folio' => $folio,
             'tipo_dte' => 39,
             'fecha_emision' => date('Y-m-d'),
@@ -73,10 +73,10 @@ class LibreDTE_Boleta {
         }
 
         // Incrementar folio
-        LibreDTE_Database::incrementar_folio(39, $this->ambiente);
+        Akibara_Database::incrementar_folio(39, $this->ambiente);
 
         // Log
-        LibreDTE_Database::log('boleta', 'Boleta generada', [
+        Akibara_Database::log('boleta', 'Boleta generada', [
             'id' => $boleta_id,
             'folio' => $folio,
             'total' => $montos['total'],
@@ -91,7 +91,7 @@ class LibreDTE_Boleta {
         ];
 
         // Verificar si envío automático está habilitado
-        $envio_automatico = get_option('libredte_envio_automatico', 0);
+        $envio_automatico = get_option('akibara_envio_automatico', 0);
         if ($envio_automatico) {
             $envio_result = $this->enviar_al_sii($boleta_id);
             if (!is_wp_error($envio_result)) {
@@ -115,7 +115,7 @@ class LibreDTE_Boleta {
      * @return array|WP_Error
      */
     public function enviar_al_sii($boleta_id) {
-        $boleta = LibreDTE_Database::get_boleta($boleta_id);
+        $boleta = Akibara_Database::get_boleta($boleta_id);
 
         if (!$boleta) {
             return new WP_Error('not_found', 'Boleta no encontrada');
@@ -134,7 +134,7 @@ class LibreDTE_Boleta {
         // Enviar al SII
         $envio_result = $this->sii_client->enviar_documento($sobre_result['xml'], $boleta->ambiente);
         if (is_wp_error($envio_result)) {
-            LibreDTE_Database::log('error', 'Error enviando boleta al SII', [
+            Akibara_Database::log('error', 'Error enviando boleta al SII', [
                 'boleta_id' => $boleta_id,
                 'folio' => $boleta->folio,
                 'error' => $envio_result->get_error_message(),
@@ -143,7 +143,7 @@ class LibreDTE_Boleta {
         }
 
         // Actualizar boleta
-        LibreDTE_Database::update_boleta($boleta_id, [
+        Akibara_Database::update_boleta($boleta_id, [
             'xml_sobre' => $sobre_result['xml'],
             'track_id' => $envio_result['track_id'],
             'estado' => 'enviado',
@@ -153,7 +153,7 @@ class LibreDTE_Boleta {
         ]);
 
         // Log
-        LibreDTE_Database::log('envio', 'Boleta enviada al SII', [
+        Akibara_Database::log('envio', 'Boleta enviada al SII', [
             'boleta_id' => $boleta_id,
             'folio' => $boleta->folio,
             'track_id' => $envio_result['track_id'],
@@ -191,7 +191,7 @@ class LibreDTE_Boleta {
      * @return array|WP_Error
      */
     public function consultar_estado($boleta_id) {
-        $boleta = LibreDTE_Database::get_boleta($boleta_id);
+        $boleta = Akibara_Database::get_boleta($boleta_id);
 
         if (!$boleta) {
             return new WP_Error('not_found', 'Boleta no encontrada');
@@ -206,7 +206,7 @@ class LibreDTE_Boleta {
         if (!is_wp_error($estado)) {
             // Actualizar estado si cambió
             if ($estado['estado'] !== $boleta->estado) {
-                LibreDTE_Database::update_boleta($boleta_id, [
+                Akibara_Database::update_boleta($boleta_id, [
                     'estado' => $estado['estado'],
                     'respuesta_sii' => json_encode($estado),
                 ]);
@@ -244,13 +244,13 @@ class LibreDTE_Boleta {
         }
 
         // Verificar CAF
-        $caf = LibreDTE_Database::get_caf_activo(39, $this->ambiente);
+        $caf = Akibara_Database::get_caf_activo(39, $this->ambiente);
         if (!$caf) {
             return new WP_Error('no_caf', 'No hay CAF activo. Debe cargar un archivo de folios.');
         }
 
         // Verificar certificado
-        $cert_file = get_option("libredte_cert_{$this->ambiente}_file", '');
+        $cert_file = get_option("akibara_cert_{$this->ambiente}_file", '');
         if (empty($cert_file)) {
             return new WP_Error('no_cert', 'No hay certificado digital configurado');
         }
@@ -336,7 +336,7 @@ class LibreDTE_Boleta {
      * Obtener PDF de boleta (si está disponible)
      */
     public function get_pdf($boleta_id) {
-        $boleta = LibreDTE_Database::get_boleta($boleta_id);
+        $boleta = Akibara_Database::get_boleta($boleta_id);
 
         if (!$boleta) {
             return new WP_Error('not_found', 'Boleta no encontrada');

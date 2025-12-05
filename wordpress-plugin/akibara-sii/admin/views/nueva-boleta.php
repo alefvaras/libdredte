@@ -1,19 +1,19 @@
 <?php
 if (!defined('ABSPATH')) exit;
 
-$ambiente = get_option('libredte_ambiente', 'certificacion');
-$envio_automatico = get_option('libredte_envio_automatico', 0);
+$ambiente = get_option('akibara_ambiente', 'certificacion');
+$envio_automatico = get_option('akibara_envio_automatico', 0);
 
 // Verificar CAF
 global $wpdb;
-$table_caf = $wpdb->prefix . 'libredte_caf';
+$table_caf = $wpdb->prefix . 'akibara_caf';
 $caf_activo = $wpdb->get_row(
     "SELECT * FROM $table_caf WHERE tipo_dte = 39 AND estado = 'activo' ORDER BY folio_desde DESC LIMIT 1"
 );
 
 $siguiente_folio = 0;
 if ($caf_activo) {
-    $siguiente_folio = get_option('libredte_folio_actual_39', $caf_activo->folio_desde);
+    $siguiente_folio = get_option('akibara_folio_actual_39', $caf_activo->folio_desde);
 }
 ?>
 
@@ -41,7 +41,7 @@ if ($caf_activo) {
     </div>
 
     <form id="form-nueva-boleta" class="boleta-form">
-        <?php wp_nonce_field('libredte_nonce', 'libredte_nonce'); ?>
+        <?php wp_nonce_field('akibara_nonce', 'akibara_nonce'); ?>
 
         <!-- Receptor -->
         <div class="card">
@@ -240,8 +240,8 @@ jQuery(document).ready(function($) {
             url: ajaxurl,
             method: 'POST',
             data: {
-                action: 'libredte_emitir_boleta',
-                nonce: $('#libredte_nonce').val(),
+                action: 'akibara_emitir_boleta',
+                nonce: $('#akibara_nonce').val(),
                 receptor: {
                     rut: $('#receptor_rut').val(),
                     razon_social: $('#receptor_razon').val(),
@@ -262,8 +262,8 @@ jQuery(document).ready(function($) {
                     });
                 });
                 this.data = $.param({
-                    action: 'libredte_emitir_boleta',
-                    nonce: $('#libredte_nonce').val(),
+                    action: 'akibara_emitir_boleta',
+                    nonce: $('#akibara_nonce').val(),
                     receptor: {
                         rut: $('#receptor_rut').val(),
                         razon_social: $('#receptor_razon').val(),

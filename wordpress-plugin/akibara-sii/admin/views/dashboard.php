@@ -1,14 +1,14 @@
 <?php
 if (!defined('ABSPATH')) exit;
 
-$ambiente = get_option('libredte_ambiente', 'certificacion');
-$emisor_rut = get_option('libredte_emisor_rut', '');
-$emisor_razon = get_option('libredte_emisor_razon_social', '');
+$ambiente = get_option('akibara_ambiente', 'certificacion');
+$emisor_rut = get_option('akibara_emisor_rut', '');
+$emisor_razon = get_option('akibara_emisor_razon_social', '');
 
 // Estadísticas
 global $wpdb;
-$table_boletas = $wpdb->prefix . 'libredte_boletas';
-$table_caf = $wpdb->prefix . 'libredte_caf';
+$table_boletas = $wpdb->prefix . 'akibara_boletas';
+$table_caf = $wpdb->prefix . 'akibara_caf';
 
 $total_boletas = $wpdb->get_var("SELECT COUNT(*) FROM $table_boletas");
 $boletas_hoy = $wpdb->get_var($wpdb->prepare(
@@ -26,13 +26,13 @@ $caf_activo = $wpdb->get_row(
 
 $folios_disponibles = 0;
 if ($caf_activo) {
-    $folio_actual = get_option('libredte_folio_actual_39', $caf_activo->folio_desde);
+    $folio_actual = get_option('akibara_folio_actual_39', $caf_activo->folio_desde);
     $folios_disponibles = $caf_activo->folio_hasta - $folio_actual + 1;
 }
 ?>
 
 <div class="wrap libredte-dashboard">
-    <h1>LibreDTE - Boletas Electronicas</h1>
+    <h1>Akibara - Boletas Electronicas</h1>
 
     <!-- Ambiente indicator -->
     <div class="ambiente-badge <?php echo $ambiente; ?>">
@@ -121,7 +121,7 @@ if ($caf_activo) {
             </tr>
             <tr>
                 <th>Folio Actual</th>
-                <td><?php echo get_option('libredte_folio_actual_39', $caf_activo->folio_desde); ?></td>
+                <td><?php echo get_option('akibara_folio_actual_39', $caf_activo->folio_desde); ?></td>
             </tr>
             <tr>
                 <th>Folios Disponibles</th>

@@ -9,8 +9,9 @@ use Derafu\Certificate\Service\CertificateLoader;
 use libredte\lib\Core\Application;
 use libredte\lib\Core\Package\Billing\Component\Integration\Enum\SiiAmbiente;
 use libredte\lib\Core\Package\Billing\Component\Integration\Support\SiiRequest;
+use libredte\lib\Core\Package\Billing\Component\TradingParties\Entity\AutorizacionDte;
 
-class LibreDTE_SII_Client {
+class Akibara_SII_Client {
 
     private $app;
     private $certificate_loader;
@@ -39,14 +40,14 @@ class LibreDTE_SII_Client {
      * Cargar certificado
      */
     private function load_certificate($ambiente) {
-        $cert_file = get_option("libredte_cert_{$ambiente}_file", '');
-        $cert_password = base64_decode(get_option("libredte_cert_{$ambiente}_password", ''));
+        $cert_file = get_option("akibara_cert_{$ambiente}_file", '');
+        $cert_password = base64_decode(get_option("akibara_cert_{$ambiente}_password", ''));
 
         if (empty($cert_file)) {
             return new WP_Error('no_cert', 'No hay certificado configurado');
         }
 
-        $cert_path = LIBREDTE_BOLETAS_UPLOADS . 'certs/' . $cert_file;
+        $cert_path = AKIBARA_SII_UPLOADS . 'certs/' . $cert_file;
 
         if (!file_exists($cert_path)) {
             return new WP_Error('cert_not_found', 'Archivo de certificado no encontrado');
@@ -63,13 +64,13 @@ class LibreDTE_SII_Client {
      * Cargar CAF
      */
     private function load_caf($ambiente) {
-        $caf_data = LibreDTE_Database::get_caf_activo(39, $ambiente);
+        $caf_data = Akibara_Database::get_caf_activo(39, $ambiente);
 
         if (!$caf_data) {
             return new WP_Error('no_caf', 'No hay CAF activo');
         }
 
-        $caf_path = LIBREDTE_BOLETAS_UPLOADS . 'caf/' . $caf_data->archivo;
+        $caf_path = AKIBARA_SII_UPLOADS . 'caf/' . $caf_data->archivo;
 
         if (!file_exists($caf_path)) {
             return new WP_Error('caf_not_found', 'Archivo CAF no encontrado');
@@ -148,7 +149,7 @@ class LibreDTE_SII_Client {
             return new WP_Error('no_libredte', 'LibreDTE no está disponible');
         }
 
-        $ambiente = LibreDTE_Boletas::get_ambiente();
+        $ambiente = Akibara_Boletas::get_ambiente();
 
         // Cargar certificado
         $certificate = $this->load_certificate($ambiente);
@@ -172,12 +173,23 @@ class LibreDTE_SII_Client {
                 certificate: $certificate
             );
 
+            // Asignar autorización DTE al emisor (para la Carátula, NO en XML)
+            if ($documentBag->getEmisor()) {
+                $autorizacionConfig = Akibara_Boletas::get_autorizacion_config();
+                $autorizacionDte = new AutorizacionDte(
+                    $autorizacionConfig['fechaResolucion'],
+                    $autorizacionConfig['numeroResolucion']
+                );
+                $documentBag->getEmisor()->setAutorizacionDte($autorizacionDte);
+            }
+
             $documento = $documentBag->getDocument();
 
             return [
                 'xml' => $documento->getXml(),
                 'folio' => $data['Encabezado']['IdDoc']['Folio'],
                 'total' => $documento->getMontoTotal(),
+                'documentBag' => $documentBag,
             ];
         } catch (Exception $e) {
             return new WP_Error('xml_error', 'Error generando XML: ' . $e->getMessage());
@@ -259,7 +271,7 @@ class LibreDTE_SII_Client {
             $xmlDocument->loadXml($xml);
 
             // Enviar
-            $emisor = LibreDTE_Boletas::get_emisor_config();
+            $emisor = Akibara_Boletas::get_emisor_config();
             $trackId = $siiWorker->sendXmlDocument(
                 request: $siiRequest,
                 doc: $xmlDocument,
@@ -303,7 +315,7 @@ class LibreDTE_SII_Client {
                 ]
             );
 
-            $emisor = LibreDTE_Boletas::get_emisor_config();
+            $emisor = Akibara_Boletas::get_emisor_config();
             $response = $siiWorker->checkXmlDocumentSentStatus(
                 request: $siiRequest,
                 trackId: $track_id,
@@ -339,7 +351,7 @@ class LibreDTE_SII_Client {
         }
 
         try {
-            $emisor = LibreDTE_Boletas::get_emisor_config();
+            $emisor = Akibara_Boletas::get_emisor_config();
             $timestamp = date('Y-m-d\TH:i:s');
             $documentId = 'CF_' . str_replace('-', '', $emisor['RUTEmisor']) . '_' . str_replace('-', '', $data['fecha']);
 
@@ -364,10 +376,11 @@ class LibreDTE_SII_Client {
             $caratula->setAttribute('version', '1.0');
             $docCF->appendChild($caratula);
 
+            $autorizacion = Akibara_Boletas::get_autorizacion_config();
             $caratula->appendChild($dom->createElement('RutEmisor', $emisor['RUTEmisor']));
             $caratula->appendChild($dom->createElement('RutEnvia', $certificate->getID()));
-            $caratula->appendChild($dom->createElement('FchResol', $emisor['autorizacionDte']['fechaResolucion']));
-            $caratula->appendChild($dom->createElement('NroResol', (string) $emisor['autorizacionDte']['numeroResolucion']));
+            $caratula->appendChild($dom->createElement('FchResol', $autorizacion['fechaResolucion']));
+            $caratula->appendChild($dom->createElement('NroResol', (string) $autorizacion['numeroResolucion']));
             $caratula->appendChild($dom->createElement('FchInicio', $data['fecha']));
             $caratula->appendChild($dom->createElement('FchFinal', $data['fecha']));
             $caratula->appendChild($dom->createElement('SecEnvio', (string) $data['sec_envio']));

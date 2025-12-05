@@ -1,5 +1,5 @@
 /**
- * LibreDTE Boletas - Admin JavaScript
+ * Akibara SII - Admin JavaScript
  */
 
 (function($) {
@@ -33,16 +33,16 @@
      */
     function initModals() {
         // Cerrar modal al hacer clic fuera o en X
-        $(document).on('click', '.modal-close, .libredte-modal', function(e) {
+        $(document).on('click', '.modal-close, .akibara-modal', function(e) {
             if (e.target === this) {
-                $(this).closest('.libredte-modal').hide();
+                $(this).closest('.akibara-modal').hide();
             }
         });
 
         // Cerrar con ESC
         $(document).on('keydown', function(e) {
             if (e.key === 'Escape') {
-                $('.libredte-modal').hide();
+                $('.akibara-modal').hide();
             }
         });
     }

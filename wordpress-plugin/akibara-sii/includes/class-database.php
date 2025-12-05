@@ -5,7 +5,7 @@
 
 defined('ABSPATH') || exit;
 
-class LibreDTE_Database {
+class Akibara_Database {
 
     /**
      * Crear tablas del plugin
@@ -15,7 +15,7 @@ class LibreDTE_Database {
         $charset_collate = $wpdb->get_charset_collate();
 
         // Tabla de boletas emitidas
-        $table_boletas = $wpdb->prefix . 'libredte_boletas';
+        $table_boletas = $wpdb->prefix . 'akibara_boletas';
         $sql_boletas = "CREATE TABLE $table_boletas (
             id bigint(20) NOT NULL AUTO_INCREMENT,
             folio int(11) NOT NULL,
@@ -44,7 +44,7 @@ class LibreDTE_Database {
         ) $charset_collate;";
 
         // Tabla de CAF (folios)
-        $table_caf = $wpdb->prefix . 'libredte_caf';
+        $table_caf = $wpdb->prefix . 'akibara_caf';
         $sql_caf = "CREATE TABLE $table_caf (
             id bigint(20) NOT NULL AUTO_INCREMENT,
             tipo_dte int(11) NOT NULL DEFAULT 39,
@@ -61,7 +61,7 @@ class LibreDTE_Database {
         ) $charset_collate;";
 
         // Tabla de RCOF enviados
-        $table_rcof = $wpdb->prefix . 'libredte_rcof';
+        $table_rcof = $wpdb->prefix . 'akibara_rcof';
         $sql_rcof = "CREATE TABLE $table_rcof (
             id bigint(20) NOT NULL AUTO_INCREMENT,
             fecha date NOT NULL,
@@ -85,7 +85,7 @@ class LibreDTE_Database {
         ) $charset_collate;";
 
         // Tabla de log de operaciones
-        $table_log = $wpdb->prefix . 'libredte_log';
+        $table_log = $wpdb->prefix . 'akibara_log';
         $sql_log = "CREATE TABLE $table_log (
             id bigint(20) NOT NULL AUTO_INCREMENT,
             tipo varchar(50) NOT NULL,
@@ -109,7 +109,7 @@ class LibreDTE_Database {
      */
     public static function save_boleta($data) {
         global $wpdb;
-        $table = $wpdb->prefix . 'libredte_boletas';
+        $table = $wpdb->prefix . 'akibara_boletas';
 
         $result = $wpdb->insert($table, $data);
 
@@ -125,7 +125,7 @@ class LibreDTE_Database {
      */
     public static function update_boleta($id, $data) {
         global $wpdb;
-        $table = $wpdb->prefix . 'libredte_boletas';
+        $table = $wpdb->prefix . 'akibara_boletas';
 
         return $wpdb->update($table, $data, ['id' => $id]);
     }
@@ -135,7 +135,7 @@ class LibreDTE_Database {
      */
     public static function get_boleta($id) {
         global $wpdb;
-        $table = $wpdb->prefix . 'libredte_boletas';
+        $table = $wpdb->prefix . 'akibara_boletas';
 
         return $wpdb->get_row($wpdb->prepare(
             "SELECT * FROM $table WHERE id = %d",
@@ -148,7 +148,7 @@ class LibreDTE_Database {
      */
     public static function get_boletas_by_date($fecha, $ambiente = null) {
         global $wpdb;
-        $table = $wpdb->prefix . 'libredte_boletas';
+        $table = $wpdb->prefix . 'akibara_boletas';
 
         $sql = "SELECT * FROM $table WHERE fecha_emision = %s";
         $params = [$fecha];
@@ -168,7 +168,7 @@ class LibreDTE_Database {
      */
     public static function get_boletas_pendientes($ambiente = null) {
         global $wpdb;
-        $table = $wpdb->prefix . 'libredte_boletas';
+        $table = $wpdb->prefix . 'akibara_boletas';
 
         $sql = "SELECT * FROM $table WHERE enviado_sii = 0";
 
@@ -186,7 +186,7 @@ class LibreDTE_Database {
      */
     public static function save_caf($data) {
         global $wpdb;
-        $table = $wpdb->prefix . 'libredte_caf';
+        $table = $wpdb->prefix . 'akibara_caf';
 
         // Desactivar CAFs anteriores del mismo tipo y ambiente
         $wpdb->update(
@@ -212,7 +212,7 @@ class LibreDTE_Database {
      */
     public static function get_caf_activo($tipo_dte = 39, $ambiente = 'certificacion') {
         global $wpdb;
-        $table = $wpdb->prefix . 'libredte_caf';
+        $table = $wpdb->prefix . 'akibara_caf';
 
         return $wpdb->get_row($wpdb->prepare(
             "SELECT * FROM $table WHERE tipo_dte = %d AND ambiente = %s AND activo = 1",
@@ -243,7 +243,7 @@ class LibreDTE_Database {
      */
     public static function incrementar_folio($tipo_dte = 39, $ambiente = 'certificacion') {
         global $wpdb;
-        $table = $wpdb->prefix . 'libredte_caf';
+        $table = $wpdb->prefix . 'akibara_caf';
 
         return $wpdb->query($wpdb->prepare(
             "UPDATE $table SET folio_actual = folio_actual + 1
@@ -258,7 +258,7 @@ class LibreDTE_Database {
      */
     public static function save_rcof($data) {
         global $wpdb;
-        $table = $wpdb->prefix . 'libredte_rcof';
+        $table = $wpdb->prefix . 'akibara_rcof';
 
         $result = $wpdb->insert($table, $data);
 
@@ -274,7 +274,7 @@ class LibreDTE_Database {
      */
     public static function get_rcof_by_date($fecha, $ambiente = 'produccion') {
         global $wpdb;
-        $table = $wpdb->prefix . 'libredte_rcof';
+        $table = $wpdb->prefix . 'akibara_rcof';
 
         return $wpdb->get_row($wpdb->prepare(
             "SELECT * FROM $table WHERE fecha = %s AND ambiente = %s ORDER BY sec_envio DESC LIMIT 1",
@@ -288,7 +288,7 @@ class LibreDTE_Database {
      */
     public static function log($tipo, $mensaje, $datos = null) {
         global $wpdb;
-        $table = $wpdb->prefix . 'libredte_log';
+        $table = $wpdb->prefix . 'akibara_log';
 
         $wpdb->insert($table, [
             'tipo' => $tipo,
@@ -302,7 +302,7 @@ class LibreDTE_Database {
      */
     public static function get_historial($args = []) {
         global $wpdb;
-        $table = $wpdb->prefix . 'libredte_boletas';
+        $table = $wpdb->prefix . 'akibara_boletas';
 
         $defaults = [
             'page' => 1,

@@ -10,21 +10,21 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-class LibreDTE_RCOF {
+class Akibara_RCOF {
 
     private $db;
     private $sii_client;
 
     public function __construct() {
-        $this->db = new LibreDTE_Database();
-        $this->sii_client = new LibreDTE_SII_Client();
+        $this->db = new Akibara_Database();
+        $this->sii_client = new Akibara_SII_Client();
     }
 
     /**
      * Obtiene el ambiente actual
      */
     public function get_ambiente() {
-        return get_option('libredte_ambiente', 'certificacion');
+        return get_option('akibara_ambiente', 'certificacion');
     }
 
     /**
@@ -37,7 +37,7 @@ class LibreDTE_RCOF {
 
         // Obtener boletas del día que fueron enviadas exitosamente al SII
         global $wpdb;
-        $table_boletas = $wpdb->prefix . 'libredte_boletas';
+        $table_boletas = $wpdb->prefix . 'akibara_boletas';
 
         $boletas = $wpdb->get_results($wpdb->prepare(
             "SELECT * FROM $table_boletas
@@ -154,13 +154,13 @@ class LibreDTE_RCOF {
      */
     private function generar_xml($data) {
         $emisor = array(
-            'rut' => get_option('libredte_emisor_rut'),
-            'razon_social' => get_option('libredte_emisor_razon_social'),
-            'resolucion_fecha' => get_option('libredte_resolucion_fecha'),
-            'resolucion_numero' => get_option('libredte_resolucion_numero', '0')
+            'rut' => get_option('akibara_emisor_rut'),
+            'razon_social' => get_option('akibara_emisor_razon_social'),
+            'resolucion_fecha' => get_option('akibara_resolucion_fecha'),
+            'resolucion_numero' => get_option('akibara_resolucion_numero', '0')
         );
 
-        $rut_envia = get_option('libredte_rut_envia', $emisor['rut']);
+        $rut_envia = get_option('akibara_rut_envia', $emisor['rut']);
         $rut_emisor_limpio = str_replace('.', '', $emisor['rut']);
         $rut_emisor_limpio = str_replace('-', '', $rut_emisor_limpio);
         $rut_emisor_limpio = substr($rut_emisor_limpio, 0, -1);
@@ -218,7 +218,7 @@ class LibreDTE_RCOF {
      */
     private function get_siguiente_secuencia($fecha) {
         global $wpdb;
-        $table = $wpdb->prefix . 'libredte_rcof';
+        $table = $wpdb->prefix . 'akibara_rcof';
 
         $max = $wpdb->get_var($wpdb->prepare(
             "SELECT MAX(secuencia) FROM $table WHERE fecha = %s",
@@ -233,7 +233,7 @@ class LibreDTE_RCOF {
      */
     public function enviar_rcof($rcof_id) {
         global $wpdb;
-        $table = $wpdb->prefix . 'libredte_rcof';
+        $table = $wpdb->prefix . 'akibara_rcof';
 
         $rcof = $wpdb->get_row($wpdb->prepare(
             "SELECT * FROM $table WHERE id = %d",
@@ -271,7 +271,7 @@ class LibreDTE_RCOF {
      */
     public function consultar_estado($rcof_id) {
         global $wpdb;
-        $table = $wpdb->prefix . 'libredte_rcof';
+        $table = $wpdb->prefix . 'akibara_rcof';
 
         $rcof = $wpdb->get_row($wpdb->prepare(
             "SELECT * FROM $table WHERE id = %d",
@@ -303,7 +303,7 @@ class LibreDTE_RCOF {
      */
     public function get_historial($limit = 50) {
         global $wpdb;
-        $table = $wpdb->prefix . 'libredte_rcof';
+        $table = $wpdb->prefix . 'akibara_rcof';
 
         return $wpdb->get_results($wpdb->prepare(
             "SELECT * FROM $table ORDER BY fecha DESC, id DESC LIMIT %d",
@@ -315,13 +315,13 @@ class LibreDTE_RCOF {
      * Programar envío automático de RCOF (cron)
      */
     public static function programar_envio_automatico() {
-        if (!wp_next_scheduled('libredte_rcof_diario')) {
+        if (!wp_next_scheduled('akibara_rcof_diario')) {
             // Programar para las 23:50 cada día
             $timestamp = strtotime('today 23:50:00');
             if ($timestamp < time()) {
                 $timestamp = strtotime('tomorrow 23:50:00');
             }
-            wp_schedule_event($timestamp, 'daily', 'libredte_rcof_diario');
+            wp_schedule_event($timestamp, 'daily', 'akibara_rcof_diario');
         }
     }
 
@@ -334,7 +334,7 @@ class LibreDTE_RCOF {
             return;
         }
 
-        $envio_automatico = get_option('libredte_rcof_automatico', 0);
+        $envio_automatico = get_option('akibara_rcof_automatico', 0);
         if (!$envio_automatico) {
             return;
         }

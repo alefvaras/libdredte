@@ -3,12 +3,12 @@
  */
 
 /* General */
-.wrap.libredte-dashboard,
-.wrap.libredte-nueva-boleta,
-.wrap.libredte-historial,
-.wrap.libredte-configuracion,
-.wrap.libredte-caf,
-.wrap.libredte-rcof {
+.wrap.akibara-dashboard,
+.wrap.akibara-nueva-boleta,
+.wrap.akibara-historial,
+.wrap.akibara-configuracion,
+.wrap.akibara-caf,
+.wrap.akibara-rcof {
     max-width: 1400px;
 }
 
@@ -186,7 +186,7 @@
 }
 
 /* Modal */
-.libredte-modal {
+.akibara-modal {
     position: fixed;
     z-index: 100000;
     left: 0;

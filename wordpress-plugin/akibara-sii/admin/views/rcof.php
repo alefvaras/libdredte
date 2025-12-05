@@ -1,20 +1,20 @@
 <?php
 if (!defined('ABSPATH')) exit;
 
-$ambiente = get_option('libredte_ambiente', 'certificacion');
+$ambiente = get_option('akibara_ambiente', 'certificacion');
 
 // RCOF disponible en ambos ambientes:
 // - Certificacion: Para enviar junto con el Set de Pruebas
 // - Produccion: Para el envio diario obligatorio
 
 global $wpdb;
-$table_rcof = $wpdb->prefix . 'libredte_rcof';
-$table_boletas = $wpdb->prefix . 'libredte_boletas';
+$table_rcof = $wpdb->prefix . 'akibara_rcof';
+$table_boletas = $wpdb->prefix . 'akibara_boletas';
 
 // Procesar generacion de RCOF
-if (isset($_POST['generar_rcof']) && wp_verify_nonce($_POST['_wpnonce'], 'libredte_rcof')) {
+if (isset($_POST['generar_rcof']) && wp_verify_nonce($_POST['_wpnonce'], 'akibara_rcof')) {
     $fecha = sanitize_text_field($_POST['fecha_rcof']);
-    $rcof = new LibreDTE_RCOF();
+    $rcof = new Akibara_RCOF();
     $resultado = $rcof->generar_rcof($fecha);
 
     if ($resultado['success']) {
@@ -25,9 +25,9 @@ if (isset($_POST['generar_rcof']) && wp_verify_nonce($_POST['_wpnonce'], 'libred
 }
 
 // Procesar envio de RCOF
-if (isset($_POST['enviar_rcof']) && wp_verify_nonce($_POST['_wpnonce'], 'libredte_rcof')) {
+if (isset($_POST['enviar_rcof']) && wp_verify_nonce($_POST['_wpnonce'], 'akibara_rcof')) {
     $rcof_id = intval($_POST['rcof_id']);
-    $rcof = new LibreDTE_RCOF();
+    $rcof = new Akibara_RCOF();
     $resultado = $rcof->enviar_rcof($rcof_id);
 
     if ($resultado['success']) {
@@ -59,7 +59,7 @@ $historial = $wpdb->get_results(
     "SELECT * FROM $table_rcof ORDER BY fecha DESC, id DESC LIMIT 30"
 );
 
-$rcof_automatico = get_option('libredte_rcof_automatico', 0);
+$rcof_automatico = get_option('akibara_rcof_automatico', 0);
 ?>
 
 <div class="wrap libredte-rcof">
@@ -109,7 +109,7 @@ $rcof_automatico = get_option('libredte_rcof_automatico', 0);
     <div class="card">
         <h2>Generar RCOF</h2>
         <form method="post" class="rcof-form">
-            <?php wp_nonce_field('libredte_rcof'); ?>
+            <?php wp_nonce_field('akibara_rcof'); ?>
             <div class="form-row">
                 <label for="fecha_rcof">Fecha:</label>
                 <input type="date" id="fecha_rcof" name="fecha_rcof" value="<?php echo $hoy; ?>" max="<?php echo $hoy; ?>">
@@ -170,7 +170,7 @@ $rcof_automatico = get_option('libredte_rcof_automatico', 0);
                     <td>
                         <?php if ($rcof->estado === 'generado'): ?>
                         <form method="post" style="display:inline;">
-                            <?php wp_nonce_field('libredte_rcof'); ?>
+                            <?php wp_nonce_field('akibara_rcof'); ?>
                             <input type="hidden" name="rcof_id" value="<?php echo $rcof->id; ?>">
                             <button type="submit" name="enviar_rcof" class="button button-small button-primary">
                                 Enviar al SII
@@ -220,8 +220,8 @@ jQuery(document).ready(function($) {
             url: ajaxurl,
             method: 'POST',
             data: {
-                action: 'libredte_consultar_rcof',
-                nonce: '<?php echo wp_create_nonce('libredte_nonce'); ?>',
+                action: 'akibara_consultar_rcof',
+                nonce: '<?php echo wp_create_nonce('akibara_nonce'); ?>',
                 id: id
             },
             success: function(response) {
@@ -241,7 +241,7 @@ jQuery(document).ready(function($) {
     // Ver XML
     $('.btn-ver-xml').on('click', function() {
         var id = $(this).data('id');
-        window.open(ajaxurl + '?action=libredte_ver_rcof_xml&id=' + id, '_blank');
+        window.open(ajaxurl + '?action=akibara_ver_rcof_xml&id=' + id, '_blank');
     });
 });
 </script>

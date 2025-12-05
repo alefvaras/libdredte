@@ -2,29 +2,29 @@
 if (!defined('ABSPATH')) exit;
 
 // Procesar formulario
-if (isset($_POST['libredte_save_config']) && wp_verify_nonce($_POST['_wpnonce'], 'libredte_config')) {
+if (isset($_POST['akibara_save_config']) && wp_verify_nonce($_POST['_wpnonce'], 'akibara_config')) {
     // Datos emisor
-    update_option('libredte_emisor_rut', sanitize_text_field($_POST['emisor_rut']));
-    update_option('libredte_emisor_razon_social', sanitize_text_field($_POST['emisor_razon_social']));
-    update_option('libredte_emisor_giro', sanitize_text_field($_POST['emisor_giro']));
-    update_option('libredte_emisor_direccion', sanitize_text_field($_POST['emisor_direccion']));
-    update_option('libredte_emisor_comuna', sanitize_text_field($_POST['emisor_comuna']));
+    update_option('akibara_emisor_rut', sanitize_text_field($_POST['emisor_rut']));
+    update_option('akibara_emisor_razon_social', sanitize_text_field($_POST['emisor_razon_social']));
+    update_option('akibara_emisor_giro', sanitize_text_field($_POST['emisor_giro']));
+    update_option('akibara_emisor_direccion', sanitize_text_field($_POST['emisor_direccion']));
+    update_option('akibara_emisor_comuna', sanitize_text_field($_POST['emisor_comuna']));
 
     // Configuracion SII
-    update_option('libredte_ambiente', sanitize_text_field($_POST['ambiente']));
-    update_option('libredte_resolucion_fecha', sanitize_text_field($_POST['resolucion_fecha']));
-    update_option('libredte_resolucion_numero', sanitize_text_field($_POST['resolucion_numero']));
-    update_option('libredte_rut_envia', sanitize_text_field($_POST['rut_envia']));
+    update_option('akibara_ambiente', sanitize_text_field($_POST['ambiente']));
+    update_option('akibara_resolucion_fecha', sanitize_text_field($_POST['resolucion_fecha']));
+    update_option('akibara_resolucion_numero', sanitize_text_field($_POST['resolucion_numero']));
+    update_option('akibara_rut_envia', sanitize_text_field($_POST['rut_envia']));
 
     // Opciones
-    update_option('libredte_envio_automatico', isset($_POST['envio_automatico']) ? 1 : 0);
-    update_option('libredte_rcof_automatico', isset($_POST['rcof_automatico']) ? 1 : 0);
+    update_option('akibara_envio_automatico', isset($_POST['envio_automatico']) ? 1 : 0);
+    update_option('akibara_rcof_automatico', isset($_POST['rcof_automatico']) ? 1 : 0);
 
     echo '<div class="notice notice-success"><p>Configuracion guardada correctamente.</p></div>';
 }
 
 // Procesar certificado
-if (isset($_POST['libredte_upload_cert']) && wp_verify_nonce($_POST['_wpnonce'], 'libredte_config')) {
+if (isset($_POST['akibara_upload_cert']) && wp_verify_nonce($_POST['_wpnonce'], 'akibara_config')) {
     if (!empty($_FILES['certificado']['tmp_name'])) {
         $upload_dir = wp_upload_dir();
         $cert_dir = $upload_dir['basedir'] . '/libredte/certs/';
@@ -38,8 +38,8 @@ if (isset($_POST['libredte_upload_cert']) && wp_verify_nonce($_POST['_wpnonce'],
         $cert_file = $cert_dir . 'certificado.p12';
 
         if (move_uploaded_file($_FILES['certificado']['tmp_name'], $cert_file)) {
-            update_option('libredte_cert_path', $cert_file);
-            update_option('libredte_cert_password', sanitize_text_field($_POST['cert_password']));
+            update_option('akibara_cert_path', $cert_file);
+            update_option('akibara_cert_password', sanitize_text_field($_POST['cert_password']));
             echo '<div class="notice notice-success"><p>Certificado subido correctamente.</p></div>';
         } else {
             echo '<div class="notice notice-error"><p>Error al subir el certificado.</p></div>';
@@ -48,22 +48,22 @@ if (isset($_POST['libredte_upload_cert']) && wp_verify_nonce($_POST['_wpnonce'],
 }
 
 // Valores actuales
-$emisor_rut = get_option('libredte_emisor_rut', '');
-$emisor_razon = get_option('libredte_emisor_razon_social', '');
-$emisor_giro = get_option('libredte_emisor_giro', '');
-$emisor_direccion = get_option('libredte_emisor_direccion', '');
-$emisor_comuna = get_option('libredte_emisor_comuna', '');
-$ambiente = get_option('libredte_ambiente', 'certificacion');
-$resolucion_fecha = get_option('libredte_resolucion_fecha', '');
-$resolucion_numero = get_option('libredte_resolucion_numero', '0');
-$rut_envia = get_option('libredte_rut_envia', '');
-$envio_automatico = get_option('libredte_envio_automatico', 0);
-$rcof_automatico = get_option('libredte_rcof_automatico', 0);
-$cert_path = get_option('libredte_cert_path', '');
+$emisor_rut = get_option('akibara_emisor_rut', '');
+$emisor_razon = get_option('akibara_emisor_razon_social', '');
+$emisor_giro = get_option('akibara_emisor_giro', '');
+$emisor_direccion = get_option('akibara_emisor_direccion', '');
+$emisor_comuna = get_option('akibara_emisor_comuna', '');
+$ambiente = get_option('akibara_ambiente', 'certificacion');
+$resolucion_fecha = get_option('akibara_resolucion_fecha', '');
+$resolucion_numero = get_option('akibara_resolucion_numero', '0');
+$rut_envia = get_option('akibara_rut_envia', '');
+$envio_automatico = get_option('akibara_envio_automatico', 0);
+$rcof_automatico = get_option('akibara_rcof_automatico', 0);
+$cert_path = get_option('akibara_cert_path', '');
 ?>
 
 <div class="wrap libredte-configuracion">
-    <h1>Configuracion LibreDTE</h1>
+    <h1>Configuracion Akibara</h1>
 
     <div class="nav-tab-wrapper">
         <a href="#tab-empresa" class="nav-tab nav-tab-active" data-tab="empresa">Empresa Emisora</a>
@@ -73,7 +73,7 @@ $cert_path = get_option('libredte_cert_path', '');
     </div>
 
     <form method="post" enctype="multipart/form-data">
-        <?php wp_nonce_field('libredte_config'); ?>
+        <?php wp_nonce_field('akibara_config'); ?>
 
         <!-- Tab Empresa -->
         <div id="tab-empresa" class="tab-content active">
@@ -204,7 +204,7 @@ $cert_path = get_option('libredte_cert_path', '');
                     </tr>
                 </table>
                 <p class="submit">
-                    <button type="submit" name="libredte_upload_cert" class="button button-secondary">
+                    <button type="submit" name="akibara_upload_cert" class="button button-secondary">
                         Subir Certificado
                     </button>
                 </p>
@@ -249,7 +249,7 @@ $cert_path = get_option('libredte_cert_path', '');
         </div>
 
         <p class="submit">
-            <button type="submit" name="libredte_save_config" class="button button-primary button-hero">
+            <button type="submit" name="akibara_save_config" class="button button-primary button-hero">
                 Guardar Configuracion
             </button>
         </p>

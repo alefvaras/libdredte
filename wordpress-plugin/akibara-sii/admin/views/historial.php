@@ -2,7 +2,7 @@
 if (!defined('ABSPATH')) exit;
 
 global $wpdb;
-$table_boletas = $wpdb->prefix . 'libredte_boletas';
+$table_boletas = $wpdb->prefix . 'akibara_boletas';
 
 // Filtros
 $fecha_desde = isset($_GET['fecha_desde']) ? sanitize_text_field($_GET['fecha_desde']) : date('Y-m-01');
@@ -264,8 +264,8 @@ jQuery(document).ready(function($) {
             url: ajaxurl,
             method: 'POST',
             data: {
-                action: 'libredte_detalle_boleta',
-                nonce: '<?php echo wp_create_nonce('libredte_nonce'); ?>',
+                action: 'akibara_detalle_boleta',
+                nonce: '<?php echo wp_create_nonce('akibara_nonce'); ?>',
                 id: id
             },
             success: function(response) {
@@ -344,8 +344,8 @@ jQuery(document).ready(function($) {
             url: ajaxurl,
             method: 'POST',
             data: {
-                action: 'libredte_enviar_boleta',
-                nonce: '<?php echo wp_create_nonce('libredte_nonce'); ?>',
+                action: 'akibara_enviar_boleta',
+                nonce: '<?php echo wp_create_nonce('akibara_nonce'); ?>',
                 id: id
             },
             success: function(response) {
@@ -374,8 +374,8 @@ jQuery(document).ready(function($) {
             url: ajaxurl,
             method: 'POST',
             data: {
-                action: 'libredte_consultar_estado',
-                nonce: '<?php echo wp_create_nonce('libredte_nonce'); ?>',
+                action: 'akibara_consultar_estado',
+                nonce: '<?php echo wp_create_nonce('akibara_nonce'); ?>',
                 id: id
             },
             success: function(response) {
@@ -416,8 +416,8 @@ jQuery(document).ready(function($) {
             url: ajaxurl,
             method: 'POST',
             data: {
-                action: 'libredte_consultar_masivo',
-                nonce: '<?php echo wp_create_nonce('libredte_nonce'); ?>',
+                action: 'akibara_consultar_masivo',
+                nonce: '<?php echo wp_create_nonce('akibara_nonce'); ?>',
                 ids: ids
             },
             success: function(response) {
@@ -450,8 +450,8 @@ jQuery(document).ready(function($) {
             url: ajaxurl,
             method: 'POST',
             data: {
-                action: 'libredte_enviar_pendientes',
-                nonce: '<?php echo wp_create_nonce('libredte_nonce'); ?>'
+                action: 'akibara_enviar_pendientes',
+                nonce: '<?php echo wp_create_nonce('akibara_nonce'); ?>'
             },
             success: function(response) {
                 if (response.success) {
