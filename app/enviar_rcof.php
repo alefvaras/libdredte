@@ -259,97 +259,147 @@ try {
 
     echo "OK\n";
 
-    // Firmar el documento XML manualmente (corregido)
+    // Firmar el documento XML (replicando exactamente el proceso de LibreDTE)
     echo "Firmando documento... ";
 
-    // Función para firmar XML usando XMLDsig
-    $signXml = function(DOMDocument $doc, $certificate, string $referenceId) {
-        // Obtener el nodo que será firmado
-        $xpath = new DOMXPath($doc);
-        $xpath->registerNamespace('sii', 'http://www.sii.cl/SiiDte');
+    // Convertir DOMDocument a XmlDocument de LibreDTE para usar C14NWithIso88591Encoding
+    $xmlDocument = new XmlDocument();
+    $xmlDocument->loadXml($dom->saveXML());
 
-        // Canonicalizar el nodo referenciado
-        $nodes = $xpath->query("//*[@ID='" . $referenceId . "']");
-        if ($nodes->length == 0) {
-            throw new Exception("No se encontró el nodo con ID: " . $referenceId);
+    // 1. Calcular DigestValue usando C14N con ISO-8859-1 (igual que LibreDTE)
+    $xpath = '//*[@ID="' . $documentId . '"]';
+    $nodeToDigest = $xmlDocument->getNodes($xpath)->item(0);
+    $c14n = $nodeToDigest->C14N();
+    $c14n = mb_convert_encoding($c14n, 'ISO-8859-1', 'UTF-8');
+    $digestValue = base64_encode(sha1($c14n, true));
+
+    // 2. Obtener datos del certificado
+    $x509Certificate = $certificate->getCertificate(true);
+    $modulus = $certificate->getModulus();
+    $exponent = $certificate->getExponent();
+
+    // 3. Construir estructura de la firma como array (igual que LibreDTE Signature class)
+    $signatureData = [
+        'Signature' => [
+            '@attributes' => [
+                'xmlns' => 'http://www.w3.org/2000/09/xmldsig#',
+            ],
+            'SignedInfo' => [
+                '@attributes' => [
+                    'xmlns:xsi' => 'http://www.w3.org/2001/XMLSchema-instance',
+                ],
+                'CanonicalizationMethod' => [
+                    '@attributes' => [
+                        'Algorithm' => 'http://www.w3.org/TR/2001/REC-xml-c14n-20010315',
+                    ],
+                ],
+                'SignatureMethod' => [
+                    '@attributes' => [
+                        'Algorithm' => 'http://www.w3.org/2000/09/xmldsig#rsa-sha1',
+                    ],
+                ],
+                'Reference' => [
+                    '@attributes' => [
+                        'URI' => '#' . $documentId,
+                    ],
+                    'Transforms' => [
+                        'Transform' => [
+                            '@attributes' => [
+                                'Algorithm' => 'http://www.w3.org/TR/2001/REC-xml-c14n-20010315',
+                            ],
+                        ],
+                    ],
+                    'DigestMethod' => [
+                        '@attributes' => [
+                            'Algorithm' => 'http://www.w3.org/2000/09/xmldsig#sha1',
+                        ],
+                    ],
+                    'DigestValue' => $digestValue,
+                ],
+            ],
+            'SignatureValue' => '', // Se llenará después de firmar
+            'KeyInfo' => [
+                'KeyValue' => [
+                    'RSAKeyValue' => [
+                        'Modulus' => $modulus,
+                        'Exponent' => $exponent,
+                    ],
+                ],
+                'X509Data' => [
+                    'X509Certificate' => $x509Certificate,
+                ],
+            ],
+        ],
+    ];
+
+    // 4. Construir XML de la firma para obtener C14N de SignedInfo
+    $signatureXmlDoc = new XmlDocument();
+    $signatureXmlDoc->formatOutput = false;
+
+    // Función para crear XML desde array (similar a como lo hace LibreDTE)
+    $arrayToXml = function(array $data, DOMDocument $doc, ?DOMElement $parent = null) use (&$arrayToXml) {
+        foreach ($data as $key => $value) {
+            if ($key === '@attributes') {
+                continue;
+            }
+            if ($key === '@value') {
+                $parent->nodeValue = (string) $value;
+                continue;
+            }
+
+            $element = $doc->createElement($key);
+
+            if (is_array($value)) {
+                if (isset($value['@attributes'])) {
+                    foreach ($value['@attributes'] as $attrName => $attrValue) {
+                        $element->setAttribute($attrName, $attrValue);
+                    }
+                }
+                if (isset($value['@value'])) {
+                    $element->nodeValue = (string) $value['@value'];
+                } else {
+                    $arrayToXml($value, $doc, $element);
+                }
+            } else {
+                $element->nodeValue = (string) $value;
+            }
+
+            if ($parent) {
+                $parent->appendChild($element);
+            } else {
+                $doc->appendChild($element);
+            }
         }
-        $refNode = $nodes->item(0);
-
-        // Canonicalización C14N (con exclusive=false para incluir namespaces heredados)
-        $c14n = $refNode->C14N(false, false);
-
-        // Calcular DigestValue (SHA1)
-        $digestValue = base64_encode(sha1($c14n, true));
-
-        // Obtener datos del certificado X509
-        $x509Clean = $certificate->getCertificate(true);
-
-        // Obtener datos de la clave pública RSA
-        $pubKey = openssl_pkey_get_public($certificate->getPublicKey());
-        $pubKeyDetails = openssl_pkey_get_details($pubKey);
-        $modulus = base64_encode($pubKeyDetails['rsa']['n']);
-        $exponent = base64_encode($pubKeyDetails['rsa']['e']);
-
-        // Construir el XML de la firma
-        $signatureNS = 'http://www.w3.org/2000/09/xmldsig#';
-
-        // Crear SignedInfo como fragmento para poder canonicalizar correctamente
-        $signedInfoXml = '<SignedInfo xmlns="' . $signatureNS . '" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">'
-            . '<CanonicalizationMethod Algorithm="http://www.w3.org/TR/2001/REC-xml-c14n-20010315"/>'
-            . '<SignatureMethod Algorithm="http://www.w3.org/2000/09/xmldsig#rsa-sha1"/>'
-            . '<Reference URI="#' . $referenceId . '">'
-            . '<Transforms>'
-            . '<Transform Algorithm="http://www.w3.org/TR/2001/REC-xml-c14n-20010315"/>'
-            . '</Transforms>'
-            . '<DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha1"/>'
-            . '<DigestValue>' . $digestValue . '</DigestValue>'
-            . '</Reference>'
-            . '</SignedInfo>';
-
-        // Canonicalizar SignedInfo para firmar
-        $signedInfoDoc = new DOMDocument('1.0', 'UTF-8');
-        $signedInfoDoc->loadXML($signedInfoXml);
-        $signedInfoC14N = $signedInfoDoc->documentElement->C14N(false, false);
-
-        // Firmar con la clave privada
-        $privateKey = $certificate->getPrivateKey();
-        $signature = '';
-        if (!openssl_sign($signedInfoC14N, $signature, $privateKey, OPENSSL_ALGO_SHA1)) {
-            throw new Exception("Error al firmar: " . openssl_error_string());
-        }
-        $signatureValue = base64_encode($signature);
-
-        // Crear el elemento Signature completo
-        $signatureXml = '<Signature xmlns="' . $signatureNS . '">'
-            . $signedInfoXml
-            . '<SignatureValue>' . $signatureValue . '</SignatureValue>'
-            . '<KeyInfo>'
-            . '<KeyValue>'
-            . '<RSAKeyValue>'
-            . '<Modulus>' . $modulus . '</Modulus>'
-            . '<Exponent>' . $exponent . '</Exponent>'
-            . '</RSAKeyValue>'
-            . '</KeyValue>'
-            . '<X509Data>'
-            . '<X509Certificate>' . $x509Clean . '</X509Certificate>'
-            . '</X509Data>'
-            . '</KeyInfo>'
-            . '</Signature>';
-
-        // Insertar la firma en el documento original
-        $signatureDoc = new DOMDocument('1.0', 'ISO-8859-1');
-        $signatureDoc->loadXML($signatureXml);
-        $signatureNode = $doc->importNode($signatureDoc->documentElement, true);
-        $doc->documentElement->appendChild($signatureNode);
-
-        return $doc->saveXML();
     };
 
-    $xmlSigned = $signXml($dom, $certificate, $documentId);
+    $arrayToXml($signatureData, $signatureXmlDoc);
 
-    // Crear XmlDocument desde el XML firmado
+    // 5. Obtener C14N de SignedInfo con ISO-8859-1
+    $signedInfoNode = $signatureXmlDoc->getElementsByTagName('SignedInfo')->item(0);
+    $signedInfoC14N = $signedInfoNode->C14N();
+    $signedInfoC14N = mb_convert_encoding($signedInfoC14N, 'ISO-8859-1', 'UTF-8');
+
+    // 6. Firmar SignedInfo
+    $signature = '';
+    if (!openssl_sign($signedInfoC14N, $signature, $certificate->getPrivateKey(), OPENSSL_ALGO_SHA1)) {
+        throw new Exception("Error al firmar: " . openssl_error_string());
+    }
+    $signatureValue = base64_encode($signature);
+
+    // 7. Actualizar SignatureValue y reconstruir XML
+    $signatureData['Signature']['SignatureValue'] = wordwrap($signatureValue, 64, "\n", true);
+
+    $signatureXmlDoc = new XmlDocument();
+    $signatureXmlDoc->formatOutput = false;
+    $arrayToXml($signatureData, $signatureXmlDoc);
+
+    // 8. Agregar firma al documento original
+    $signatureNode = $dom->importNode($signatureXmlDoc->documentElement, true);
+    $dom->documentElement->appendChild($signatureNode);
+
+    // 9. Crear XmlDocument final
     $xmlDocumentSigned = new XmlDocument();
-    $xmlDocumentSigned->loadXml($xmlSigned);
+    $xmlDocumentSigned->loadXml($dom->saveXML());
     echo "OK\n";
 
     // Guardar XML del RCOF
