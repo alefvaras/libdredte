@@ -163,9 +163,11 @@ try {
     // Intentar enviar con Symfony Mailer (SMTP)
     if ($smtpHost && $smtpUser && $smtpPass) {
         try {
-            // Construir DSN para SMTP
+            // Construir DSN para SMTP (smtps:// para SSL puerto 465, smtp:// para TLS puerto 587)
+            $protocol = ($smtpPort == 465) ? 'smtps' : 'smtp';
             $dsn = sprintf(
-                'smtp://%s:%s@%s:%d',
+                '%s://%s:%s@%s:%d',
+                $protocol,
                 urlencode($smtpUser),
                 urlencode($smtpPass),
                 $smtpHost,
