@@ -325,10 +325,12 @@ class NormalizeDataPreDocumentNormalizationJob extends AbstractJob implements Jo
             ($data['Encabezado']['Emisor']['CmnaOrigen'] ?? false)
             ?: ($emisor->getComuna() ?? false)
         ;
-        $data['Encabezado']['Emisor']['CdgSIISucur'] =
-            ($data['Encabezado']['Emisor']['CdgSIISucur'] ?? false)
-            ?: ($emisor->getCodigoSucursal() ?? false)
-        ;
+        // CdgSIISucur: solo se sobrescribe si no está definido en los datos originales
+        // Un valor explícito de false significa "no incluir este campo"
+        if (!isset($data['Encabezado']['Emisor']['CdgSIISucur'])) {
+            $data['Encabezado']['Emisor']['CdgSIISucur'] =
+                $emisor->getCodigoSucursal() ?? false;
+        }
         $data['Encabezado']['Emisor']['CdgVendedor'] =
             ($data['Encabezado']['Emisor']['CdgVendedor'] ?? false)
             ?: ($emisor->getVendedor() ?? false)
@@ -382,14 +384,16 @@ class NormalizeDataPreDocumentNormalizationJob extends AbstractJob implements Jo
             ($data['Encabezado']['Receptor']['GiroRecep'] ?? false)
             ?: ($receptor->getGiro() ?? false)
         ;
-        $data['Encabezado']['Receptor']['Contacto'] =
-            ($data['Encabezado']['Receptor']['Contacto'] ?? false)
-            ?: ($receptor->getTelefono() ?? false)
-        ;
-        $data['Encabezado']['Receptor']['CorreoRecep'] =
-            ($data['Encabezado']['Receptor']['CorreoRecep'] ?? false)
-            ?: ($receptor->getEmail() ?? false)
-        ;
+        // Contacto y CorreoRecep: solo se sobrescriben si no están definidos
+        // Un valor explícito de false significa "no incluir este campo"
+        if (!isset($data['Encabezado']['Receptor']['Contacto'])) {
+            $data['Encabezado']['Receptor']['Contacto'] =
+                $receptor->getTelefono() ?? false;
+        }
+        if (!isset($data['Encabezado']['Receptor']['CorreoRecep'])) {
+            $data['Encabezado']['Receptor']['CorreoRecep'] =
+                $receptor->getEmail() ?? false;
+        }
         $data['Encabezado']['Receptor']['DirRecep'] =
             ($data['Encabezado']['Receptor']['DirRecep'] ?? false)
             ?: ($receptor->getDireccion() ?? false)

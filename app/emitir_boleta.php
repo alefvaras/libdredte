@@ -130,14 +130,25 @@ try {
     }
 
     // Preparar datos de la boleta
-    $folio = $caf->getFolioDesde(); // Usar primer folio disponible
+    // Usar folio del JSON si está definido, sino usar el siguiente disponible
+    $folioDesde = $caf->getFolioDesde();
+    $folioHasta = $caf->getFolioHasta();
+    $folio = $datosJson['folio'] ?? ($folioDesde + 2); // Usar folio 2041 por defecto
 
-    // Datos del receptor
+    if ($folio < $folioDesde || $folio > $folioHasta) {
+        throw new Exception("Folio $folio fuera del rango del CAF ($folioDesde - $folioHasta)");
+    }
+
+    // Datos del receptor - campos mínimos para boleta
+    // Contacto y CorreoRecep se establecen a false para evitar valores del FakeReceptorProvider
     $receptor = [
         'RUTRecep' => $datosJson['receptor']['rut'] ?? '66666666-6',
         'RznSocRecep' => $datosJson['receptor']['razon_social'] ?? 'CLIENTE',
         'DirRecep' => $datosJson['receptor']['direccion'] ?? 'Santiago',
         'CmnaRecep' => $datosJson['receptor']['comuna'] ?? 'Santiago',
+        'Contacto' => false,     // No incluir teléfono
+        'CorreoRecep' => false,  // No incluir correo (evita referencia automática)
+        'GiroRecep' => false,    // No requerido para boletas
     ];
 
     // Items de la boleta
@@ -159,6 +170,7 @@ try {
     }
 
     // Limpiar datos del emisor para el DTE (sin campos extra)
+    // CdgSIISucur se establece explícitamente a false para que no se incluya
     $emisorDte = [
         'RUTEmisor' => $emisorConfig['RUTEmisor'],
         'RznSoc' => $emisorConfig['RznSoc'],
@@ -166,6 +178,7 @@ try {
         'Acteco' => $emisorConfig['Acteco'],
         'DirOrigen' => $emisorConfig['DirOrigen'],
         'CmnaOrigen' => $emisorConfig['CmnaOrigen'],
+        'CdgSIISucur' => false,  // No incluir código de sucursal
     ];
 
     // Estructura completa de la boleta
