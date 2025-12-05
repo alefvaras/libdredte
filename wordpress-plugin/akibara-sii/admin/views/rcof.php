@@ -62,7 +62,7 @@ $historial = $wpdb->get_results(
 $rcof_automatico = get_option('akibara_rcof_automatico', 0);
 ?>
 
-<div class="wrap libredte-rcof">
+<div class="wrap akibara-rcof">
     <h1>RCOF - Reporte de Consumo de Folios</h1>
 
     <div class="ambiente-badge produccion">

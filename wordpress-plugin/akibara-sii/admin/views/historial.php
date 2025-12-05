@@ -61,7 +61,7 @@ $stats = $wpdb->get_row($wpdb->prepare(
 ));
 ?>
 
-<div class="wrap libredte-historial">
+<div class="wrap akibara-historial">
     <h1>Historial de Boletas</h1>
 
     <!-- Estadisticas del Periodo -->
@@ -95,7 +95,7 @@ $stats = $wpdb->get_row($wpdb->prepare(
     <!-- Filtros -->
     <div class="card filtros-card">
         <form method="get" class="filtros-form">
-            <input type="hidden" name="page" value="libredte-historial">
+            <input type="hidden" name="page" value="akibara-historial">
 
             <div class="filtro-group">
                 <label>Desde:</label>
@@ -124,7 +124,7 @@ $stats = $wpdb->get_row($wpdb->prepare(
             </div>
 
             <button type="submit" class="button">Filtrar</button>
-            <a href="<?php echo admin_url('admin.php?page=libredte-historial'); ?>" class="button">Limpiar</a>
+            <a href="<?php echo admin_url('admin.php?page=akibara-historial'); ?>" class="button">Limpiar</a>
         </form>
     </div>
 
@@ -237,7 +237,7 @@ $stats = $wpdb->get_row($wpdb->prepare(
 </div>
 
 <!-- Modal Detalle Boleta -->
-<div id="modal-detalle" class="libredte-modal" style="display:none;">
+<div id="modal-detalle" class="akibara-modal" style="display:none;">
     <div class="modal-content modal-large">
         <span class="modal-close">&times;</span>
         <div id="detalle-content">
@@ -468,9 +468,9 @@ jQuery(document).ready(function($) {
     });
 
     // Cerrar modal
-    $('.modal-close, .libredte-modal').on('click', function(e) {
+    $('.modal-close, .akibara-modal').on('click', function(e) {
         if (e.target === this) {
-            $('.libredte-modal').hide();
+            $('.akibara-modal').hide();
         }
     });
 

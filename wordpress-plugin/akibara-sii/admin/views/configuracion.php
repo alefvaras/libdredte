@@ -27,7 +27,7 @@ if (isset($_POST['akibara_save_config']) && wp_verify_nonce($_POST['_wpnonce'], 
 if (isset($_POST['akibara_upload_cert']) && wp_verify_nonce($_POST['_wpnonce'], 'akibara_config')) {
     if (!empty($_FILES['certificado']['tmp_name'])) {
         $upload_dir = wp_upload_dir();
-        $cert_dir = $upload_dir['basedir'] . '/libredte/certs/';
+        $cert_dir = $upload_dir['basedir'] . '/akibara-sii/certs/';
 
         if (!file_exists($cert_dir)) {
             wp_mkdir_p($cert_dir);
@@ -62,7 +62,7 @@ $rcof_automatico = get_option('akibara_rcof_automatico', 0);
 $cert_path = get_option('akibara_cert_path', '');
 ?>
 
-<div class="wrap libredte-configuracion">
+<div class="wrap akibara-configuracion">
     <h1>Configuracion Akibara</h1>
 
     <div class="nav-tab-wrapper">

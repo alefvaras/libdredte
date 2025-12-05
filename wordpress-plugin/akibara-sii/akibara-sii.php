@@ -167,7 +167,7 @@ class Akibara_SII {
     }
 
     public function admin_scripts($hook) {
-        if (strpos($hook, 'libredte') === false) {
+        if (strpos($hook, 'akibara') === false) {
             return;
         }
 
@@ -381,7 +381,7 @@ class Akibara_SII {
 
         $id = intval($_POST['id']);
         $boleta = new Akibara_Boleta();
-        $result = $boleta->consultar_estado_sii($id);
+        $result = $boleta->consultar_estado($id);
 
         if (is_wp_error($result)) {
             wp_send_json_error($result->get_error_message());
@@ -406,7 +406,7 @@ class Akibara_SII {
         $resultados = array('aceptadas' => 0, 'rechazadas' => 0, 'pendientes' => 0);
 
         foreach ($ids as $id) {
-            $result = $boleta->consultar_estado_sii($id);
+            $result = $boleta->consultar_estado($id);
             if (!is_wp_error($result)) {
                 if ($result['estado'] === 'aceptado') $resultados['aceptadas']++;
                 elseif ($result['estado'] === 'rechazado') $resultados['rechazadas']++;

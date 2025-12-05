@@ -17,7 +17,7 @@ if ($caf_activo) {
 }
 ?>
 
-<div class="wrap libredte-nueva-boleta">
+<div class="wrap akibara-nueva-boleta">
     <h1>Nueva Boleta Electronica</h1>
 
     <div class="ambiente-badge <?php echo $ambiente; ?>">
@@ -32,7 +32,7 @@ if ($caf_activo) {
     <?php if (!$caf_activo): ?>
     <div class="notice notice-error">
         <p><strong>Error:</strong> No hay CAF activo. Debes subir un CAF antes de emitir boletas.
-        <a href="<?php echo admin_url('admin.php?page=libredte-caf'); ?>">Subir CAF</a></p>
+        <a href="<?php echo admin_url('admin.php?page=akibara-caf'); ?>">Subir CAF</a></p>
     </div>
     <?php else: ?>
 
@@ -149,7 +149,7 @@ if ($caf_activo) {
     </form>
 
     <!-- Modal resultado -->
-    <div id="modal-resultado" class="libredte-modal" style="display:none;">
+    <div id="modal-resultado" class="akibara-modal" style="display:none;">
         <div class="modal-content">
             <span class="modal-close">&times;</span>
             <div id="resultado-content"></div>

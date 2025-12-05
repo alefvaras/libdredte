@@ -1,9 +1,11 @@
 <?php
 /**
  * Clase para gestión del RCOF (Reporte de Consumo de Folios)
- * Disponible en ambos ambientes:
- * - Certificación: Para enviar junto con el Set de Pruebas
- * - Producción: Para el envío diario obligatorio
+ *
+ * Nota importante: Desde agosto 2022 (Resolución Ex. SII N°53),
+ * el RCOF ya no es obligatorio para boletas electrónicas.
+ * Esta funcionalidad se mantiene por compatibilidad y para
+ * usuarios que deseen enviar el reporte voluntariamente.
  */
 
 if (!defined('ABSPATH')) {
@@ -12,11 +14,9 @@ if (!defined('ABSPATH')) {
 
 class Akibara_RCOF {
 
-    private $db;
     private $sii_client;
 
     public function __construct() {
-        $this->db = new Akibara_Database();
         $this->sii_client = new Akibara_SII_Client();
     }
 
@@ -24,246 +24,163 @@ class Akibara_RCOF {
      * Obtiene el ambiente actual
      */
     public function get_ambiente() {
-        return get_option('akibara_ambiente', 'certificacion');
+        return Akibara_SII::get_ambiente();
     }
 
     /**
-     * Genera el RCOF para una fecha específica
+     * Enviar RCOF desde datos del formulario
      */
-    public function generar_rcof($fecha = null) {
-        if ($fecha === null) {
-            $fecha = date('Y-m-d');
-        }
+    public function enviar($data) {
+        $ambiente = $this->get_ambiente();
 
-        // Obtener boletas del día que fueron enviadas exitosamente al SII
-        global $wpdb;
-        $table_boletas = $wpdb->prefix . 'akibara_boletas';
+        // RCOF normalmente solo en producción
+        // Pero permitimos en certificación para pruebas del set
+        $fecha = isset($data['fecha']) ? sanitize_text_field($data['fecha']) : date('Y-m-d');
 
-        $boletas = $wpdb->get_results($wpdb->prepare(
-            "SELECT * FROM $table_boletas
-             WHERE DATE(fecha_emision) = %s
-             AND estado_sii = 'aceptado'
-             ORDER BY folio ASC",
-            $fecha
-        ));
+        // Obtener boletas del día
+        $boletas = Akibara_Database::get_boletas_by_date($fecha, $ambiente);
 
         if (empty($boletas)) {
-            return array(
-                'success' => false,
-                'error' => 'No hay boletas aceptadas para esta fecha'
-            );
+            return new WP_Error('sin_boletas', 'No hay boletas para la fecha indicada');
         }
 
-        // Calcular totales y rangos
-        $data = $this->calcular_resumen($boletas, $fecha);
+        // Calcular totales
+        $resumen = $this->calcular_resumen($boletas);
 
-        // Generar XML
-        $xml = $this->generar_xml($data);
+        // Obtener siguiente secuencia
+        $sec_envio = $this->get_siguiente_secuencia($fecha, $ambiente);
 
-        if (!$xml) {
-            return array(
-                'success' => false,
-                'error' => 'Error al generar XML del RCOF'
-            );
-        }
-
-        // Guardar en base de datos
-        $rcof_id = $this->db->save_rcof(array(
+        // Preparar datos para XML
+        $rcof_data = [
             'fecha' => $fecha,
-            'folio_inicial' => $data['folio_inicial'],
-            'folio_final' => $data['folio_final'],
-            'cantidad_boletas' => $data['cantidad_boletas'],
-            'monto_total' => $data['totales']['total'],
-            'xml' => $xml,
-            'estado' => 'generado'
-        ));
+            'sec_envio' => $sec_envio,
+            'neto' => $resumen['neto'],
+            'iva' => $resumen['iva'],
+            'exento' => $resumen['exento'],
+            'total' => $resumen['total'],
+            'cantidad' => $resumen['cantidad'],
+            'folio_inicial' => $resumen['folio_inicial'],
+            'folio_final' => $resumen['folio_final'],
+        ];
 
-        return array(
-            'success' => true,
+        // Generar XML firmado
+        $xml_result = $this->sii_client->generar_rcof_xml($rcof_data);
+
+        if (is_wp_error($xml_result)) {
+            Akibara_Database::log('error', 'Error generando RCOF XML', [
+                'fecha' => $fecha,
+                'error' => $xml_result->get_error_message(),
+            ]);
+            return $xml_result;
+        }
+
+        // Enviar al SII
+        $envio_result = $this->sii_client->enviar_documento($xml_result['xml'], $ambiente);
+
+        if (is_wp_error($envio_result)) {
+            // Guardar con estado error
+            Akibara_Database::save_rcof([
+                'fecha' => $fecha,
+                'sec_envio' => $sec_envio,
+                'cantidad_boletas' => $resumen['cantidad'],
+                'monto_neto' => $resumen['neto'],
+                'monto_iva' => $resumen['iva'],
+                'monto_exento' => $resumen['exento'],
+                'monto_total' => $resumen['total'],
+                'folios_emitidos' => $resumen['cantidad'],
+                'rango_inicial' => $resumen['folio_inicial'],
+                'rango_final' => $resumen['folio_final'],
+                'estado' => 'error',
+                'ambiente' => $ambiente,
+                'xml_rcof' => $xml_result['xml'],
+                'respuesta_sii' => $envio_result->get_error_message(),
+            ]);
+
+            return $envio_result;
+        }
+
+        // Guardar con track_id
+        $rcof_id = Akibara_Database::save_rcof([
+            'fecha' => $fecha,
+            'sec_envio' => $sec_envio,
+            'cantidad_boletas' => $resumen['cantidad'],
+            'monto_neto' => $resumen['neto'],
+            'monto_iva' => $resumen['iva'],
+            'monto_exento' => $resumen['exento'],
+            'monto_total' => $resumen['total'],
+            'folios_emitidos' => $resumen['cantidad'],
+            'rango_inicial' => $resumen['folio_inicial'],
+            'rango_final' => $resumen['folio_final'],
+            'track_id' => $envio_result['track_id'],
+            'estado' => 'enviado',
+            'ambiente' => $ambiente,
+            'xml_rcof' => $xml_result['xml'],
+            'respuesta_sii' => json_encode($envio_result),
+        ]);
+
+        // Log
+        Akibara_Database::log('rcof', 'RCOF enviado al SII', [
             'rcof_id' => $rcof_id,
-            'data' => $data,
-            'xml' => $xml
-        );
+            'fecha' => $fecha,
+            'track_id' => $envio_result['track_id'],
+            'total' => $resumen['total'],
+        ]);
+
+        return [
+            'id' => $rcof_id,
+            'track_id' => $envio_result['track_id'],
+            'estado' => 'enviado',
+            'mensaje' => 'RCOF enviado correctamente al SII',
+        ];
     }
 
     /**
      * Calcula el resumen de boletas para el RCOF
      */
-    private function calcular_resumen($boletas, $fecha) {
-        $folios = array();
-        $totales = array(
-            'neto' => 0,
-            'iva' => 0,
-            'exento' => 0,
-            'total' => 0
-        );
+    private function calcular_resumen($boletas) {
+        $neto = 0;
+        $iva = 0;
+        $exento = 0;
+        $total = 0;
+        $folio_min = null;
+        $folio_max = null;
 
         foreach ($boletas as $boleta) {
-            $folios[] = $boleta->folio;
-            $totales['neto'] += $boleta->monto_neto;
-            $totales['iva'] += $boleta->monto_iva;
-            $totales['exento'] += $boleta->monto_exento;
-            $totales['total'] += $boleta->monto_total;
-        }
+            $neto += (int) $boleta->monto_neto;
+            $iva += (int) $boleta->monto_iva;
+            $exento += (int) $boleta->monto_exento;
+            $total += (int) $boleta->monto_total;
 
-        sort($folios);
-
-        // Calcular rangos continuos
-        $rangos = $this->calcular_rangos($folios);
-
-        return array(
-            'fecha' => $fecha,
-            'folio_inicial' => min($folios),
-            'folio_final' => max($folios),
-            'cantidad_boletas' => count($boletas),
-            'folios' => $folios,
-            'rangos' => $rangos,
-            'totales' => $totales
-        );
-    }
-
-    /**
-     * Calcula rangos continuos de folios
-     */
-    private function calcular_rangos($folios) {
-        if (empty($folios)) {
-            return array();
-        }
-
-        sort($folios);
-        $rangos = array();
-        $inicio = $folios[0];
-        $fin = $folios[0];
-
-        for ($i = 1; $i < count($folios); $i++) {
-            if ($folios[$i] == $fin + 1) {
-                $fin = $folios[$i];
-            } else {
-                $rangos[] = array('inicial' => $inicio, 'final' => $fin);
-                $inicio = $folios[$i];
-                $fin = $folios[$i];
+            if ($folio_min === null || $boleta->folio < $folio_min) {
+                $folio_min = $boleta->folio;
+            }
+            if ($folio_max === null || $boleta->folio > $folio_max) {
+                $folio_max = $boleta->folio;
             }
         }
-        $rangos[] = array('inicial' => $inicio, 'final' => $fin);
 
-        return $rangos;
+        return [
+            'neto' => $neto,
+            'iva' => $iva,
+            'exento' => $exento,
+            'total' => $total,
+            'cantidad' => count($boletas),
+            'folio_inicial' => $folio_min,
+            'folio_final' => $folio_max,
+        ];
     }
 
     /**
-     * Genera el XML del RCOF
+     * Obtiene la siguiente secuencia de envío para una fecha
      */
-    private function generar_xml($data) {
-        $emisor = array(
-            'rut' => get_option('akibara_emisor_rut'),
-            'razon_social' => get_option('akibara_emisor_razon_social'),
-            'resolucion_fecha' => get_option('akibara_resolucion_fecha'),
-            'resolucion_numero' => get_option('akibara_resolucion_numero', '0')
-        );
+    private function get_siguiente_secuencia($fecha, $ambiente) {
+        $rcof_existente = Akibara_Database::get_rcof_by_date($fecha, $ambiente);
 
-        $rut_envia = get_option('akibara_rut_envia', $emisor['rut']);
-        $rut_emisor_limpio = str_replace('.', '', $emisor['rut']);
-        $rut_emisor_limpio = str_replace('-', '', $rut_emisor_limpio);
-        $rut_emisor_limpio = substr($rut_emisor_limpio, 0, -1);
-
-        $sec_envio = $this->get_siguiente_secuencia($data['fecha']);
-        $timestamp = date('Y-m-d\TH:i:s');
-
-        $id = 'CF_' . $rut_emisor_limpio . '_' . str_replace('-', '', $data['fecha']);
-
-        $xml = '<?xml version="1.0" encoding="ISO-8859-1"?>' . "\n";
-        $xml .= '<ConsumoFolios xmlns="http://www.sii.cl/SiiDte" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.sii.cl/SiiDte ConsumoFolio_v10.xsd" version="1.0">' . "\n";
-        $xml .= '  <DocumentoConsumoFolios ID="' . $id . '">' . "\n";
-        $xml .= '    <Caratula version="1.0">' . "\n";
-        $xml .= '      <RutEmisor>' . $emisor['rut'] . '</RutEmisor>' . "\n";
-        $xml .= '      <RutEnvia>' . $rut_envia . '</RutEnvia>' . "\n";
-        $xml .= '      <FchResol>' . $emisor['resolucion_fecha'] . '</FchResol>' . "\n";
-        $xml .= '      <NroResol>' . $emisor['resolucion_numero'] . '</NroResol>' . "\n";
-        $xml .= '      <FchInicio>' . $data['fecha'] . '</FchInicio>' . "\n";
-        $xml .= '      <FchFinal>' . $data['fecha'] . '</FchFinal>' . "\n";
-        $xml .= '      <SecEnvio>' . $sec_envio . '</SecEnvio>' . "\n";
-        $xml .= '      <TmstFirmaEnv>' . $timestamp . '</TmstFirmaEnv>' . "\n";
-        $xml .= '    </Caratula>' . "\n";
-        $xml .= '    <Resumen>' . "\n";
-        $xml .= '      <TipoDocumento>39</TipoDocumento>' . "\n";
-        $xml .= '      <MntNeto>' . $data['totales']['neto'] . '</MntNeto>' . "\n";
-        $xml .= '      <MntIva>' . $data['totales']['iva'] . '</MntIva>' . "\n";
-        $xml .= '      <TasaIVA>19</TasaIVA>' . "\n";
-        if ($data['totales']['exento'] > 0) {
-            $xml .= '      <MntExento>' . $data['totales']['exento'] . '</MntExento>' . "\n";
-        }
-        $xml .= '      <MntTotal>' . $data['totales']['total'] . '</MntTotal>' . "\n";
-        $xml .= '      <FoliosEmitidos>' . $data['cantidad_boletas'] . '</FoliosEmitidos>' . "\n";
-        $xml .= '      <FoliosAnulados>0</FoliosAnulados>' . "\n";
-        $xml .= '      <FoliosUtilizados>' . $data['cantidad_boletas'] . '</FoliosUtilizados>' . "\n";
-
-        foreach ($data['rangos'] as $rango) {
-            $xml .= '      <RangoUtilizados>' . "\n";
-            $xml .= '        <Inicial>' . $rango['inicial'] . '</Inicial>' . "\n";
-            $xml .= '        <Final>' . $rango['final'] . '</Final>' . "\n";
-            $xml .= '      </RangoUtilizados>' . "\n";
+        if ($rcof_existente) {
+            return $rcof_existente->sec_envio + 1;
         }
 
-        $xml .= '    </Resumen>' . "\n";
-        $xml .= '  </DocumentoConsumoFolios>' . "\n";
-        $xml .= '</ConsumoFolios>';
-
-        // Firmar XML
-        $xml_firmado = $this->sii_client->firmar_xml($xml, $id);
-
-        return $xml_firmado;
-    }
-
-    /**
-     * Obtiene la siguiente secuencia de envío
-     */
-    private function get_siguiente_secuencia($fecha) {
-        global $wpdb;
-        $table = $wpdb->prefix . 'akibara_rcof';
-
-        $max = $wpdb->get_var($wpdb->prepare(
-            "SELECT MAX(secuencia) FROM $table WHERE fecha = %s",
-            $fecha
-        ));
-
-        return ($max !== null) ? $max + 1 : 1;
-    }
-
-    /**
-     * Envía el RCOF al SII
-     */
-    public function enviar_rcof($rcof_id) {
-        global $wpdb;
-        $table = $wpdb->prefix . 'akibara_rcof';
-
-        $rcof = $wpdb->get_row($wpdb->prepare(
-            "SELECT * FROM $table WHERE id = %d",
-            $rcof_id
-        ));
-
-        if (!$rcof) {
-            return array(
-                'success' => false,
-                'error' => 'RCOF no encontrado'
-            );
-        }
-
-        // Enviar al SII
-        $resultado = $this->sii_client->enviar_rcof($rcof->xml);
-
-        // Actualizar estado
-        $nuevo_estado = $resultado['success'] ? 'enviado' : 'error';
-        $wpdb->update(
-            $table,
-            array(
-                'estado' => $nuevo_estado,
-                'track_id' => isset($resultado['track_id']) ? $resultado['track_id'] : null,
-                'respuesta_sii' => isset($resultado['respuesta']) ? $resultado['respuesta'] : null,
-                'fecha_envio' => current_time('mysql')
-            ),
-            array('id' => $rcof_id)
-        );
-
-        return $resultado;
+        return 1;
     }
 
     /**
@@ -278,20 +195,23 @@ class Akibara_RCOF {
             $rcof_id
         ));
 
-        if (!$rcof || !$rcof->track_id) {
-            return array(
-                'success' => false,
-                'error' => 'RCOF no encontrado o sin track_id'
-            );
+        if (!$rcof) {
+            return new WP_Error('not_found', 'RCOF no encontrado');
         }
 
-        $resultado = $this->sii_client->consultar_estado_rcof($rcof->track_id);
+        if (!$rcof->track_id) {
+            return new WP_Error('no_track', 'RCOF sin Track ID');
+        }
 
-        if ($resultado['success'] && isset($resultado['estado'])) {
+        // Consultar estado en SII
+        $resultado = $this->sii_client->consultar_estado($rcof->track_id, $rcof->ambiente);
+
+        if (!is_wp_error($resultado)) {
+            // Actualizar estado en BD
             $wpdb->update(
                 $table,
-                array('estado_sii' => $resultado['estado']),
-                array('id' => $rcof_id)
+                ['estado' => $resultado['estado'], 'respuesta_sii' => json_encode($resultado)],
+                ['id' => $rcof_id]
             );
         }
 
@@ -304,24 +224,39 @@ class Akibara_RCOF {
     public function get_historial($limit = 50) {
         global $wpdb;
         $table = $wpdb->prefix . 'akibara_rcof';
+        $ambiente = $this->get_ambiente();
 
         return $wpdb->get_results($wpdb->prepare(
-            "SELECT * FROM $table ORDER BY fecha DESC, id DESC LIMIT %d",
+            "SELECT * FROM $table WHERE ambiente = %s ORDER BY fecha DESC, id DESC LIMIT %d",
+            $ambiente,
             $limit
         ));
     }
 
     /**
      * Programar envío automático de RCOF (cron)
+     * Nota: Ya no es obligatorio desde agosto 2022
      */
     public static function programar_envio_automatico() {
         if (!wp_next_scheduled('akibara_rcof_diario')) {
-            // Programar para las 23:50 cada día
-            $timestamp = strtotime('today 23:50:00');
+            $hora = get_option('akibara_rcof_hora', '23:00');
+            list($h, $m) = explode(':', $hora);
+
+            $timestamp = strtotime("today {$h}:{$m}:00");
             if ($timestamp < time()) {
-                $timestamp = strtotime('tomorrow 23:50:00');
+                $timestamp = strtotime("tomorrow {$h}:{$m}:00");
             }
             wp_schedule_event($timestamp, 'daily', 'akibara_rcof_diario');
+        }
+    }
+
+    /**
+     * Desprogramar envío automático
+     */
+    public static function desprogramar_envio_automatico() {
+        $timestamp = wp_next_scheduled('akibara_rcof_diario');
+        if ($timestamp) {
+            wp_unschedule_event($timestamp, 'akibara_rcof_diario');
         }
     }
 
@@ -329,27 +264,38 @@ class Akibara_RCOF {
      * Ejecuta el envío automático de RCOF (solo producción)
      */
     public function ejecutar_envio_automatico() {
-        // El envío automático diario solo aplica en producción
+        // RCOF automático solo aplica en producción
         if ($this->get_ambiente() !== 'produccion') {
             return;
         }
 
-        $envio_automatico = get_option('akibara_rcof_automatico', 0);
-        if (!$envio_automatico) {
+        // Verificar si está habilitado
+        $rcof_enabled = get_option('akibara_rcof_enabled', 0);
+        if (!$rcof_enabled) {
             return;
         }
 
         $fecha = date('Y-m-d');
 
-        // Generar RCOF
-        $resultado = $this->generar_rcof($fecha);
-
-        if ($resultado['success']) {
-            // Enviar al SII
-            $this->enviar_rcof($resultado['rcof_id']);
+        // Verificar si ya se envió hoy
+        $rcof_hoy = Akibara_Database::get_rcof_by_date($fecha, 'produccion');
+        if ($rcof_hoy && $rcof_hoy->estado === 'enviado') {
+            return; // Ya se envió
         }
 
+        // Enviar RCOF
+        $resultado = $this->enviar(['fecha' => $fecha]);
+
         // Registrar en log
-        $this->db->log('rcof_automatico', 'Ejecución automática de RCOF', $resultado);
+        Akibara_Database::log('rcof_automatico', 'Ejecución automática de RCOF', [
+            'fecha' => $fecha,
+            'resultado' => is_wp_error($resultado) ? $resultado->get_error_message() : $resultado,
+        ]);
     }
 }
+
+// Hook para cron
+add_action('akibara_rcof_diario', function() {
+    $rcof = new Akibara_RCOF();
+    $rcof->ejecutar_envio_automatico();
+});

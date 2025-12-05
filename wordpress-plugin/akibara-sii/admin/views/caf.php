@@ -15,7 +15,7 @@ if (isset($_POST['akibara_upload_caf']) && wp_verify_nonce($_POST['_wpnonce'], '
         if ($caf_data) {
             // Guardar archivo
             $upload_dir = wp_upload_dir();
-            $caf_dir = $upload_dir['basedir'] . '/libredte/caf/';
+            $caf_dir = $upload_dir['basedir'] . '/akibara-sii/caf/';
             if (!file_exists($caf_dir)) {
                 wp_mkdir_p($caf_dir);
                 file_put_contents($caf_dir . '.htaccess', 'deny from all');
@@ -122,7 +122,7 @@ $folios_usados = $wpdb->get_var("SELECT COUNT(*) FROM $table_boletas WHERE tipo_
 $alerta_folios = ($folios_disponibles > 0 && $folios_disponibles < 50);
 ?>
 
-<div class="wrap libredte-caf">
+<div class="wrap akibara-caf">
     <h1>Gestion de CAF (Codigo de Autorizacion de Folios)</h1>
 
     <!-- Resumen de Folios -->

@@ -31,7 +31,7 @@ if ($caf_activo) {
 }
 ?>
 
-<div class="wrap libredte-dashboard">
+<div class="wrap akibara-dashboard">
     <h1>Akibara - Boletas Electronicas</h1>
 
     <!-- Ambiente indicator -->
@@ -49,7 +49,7 @@ if ($caf_activo) {
         <?php else: ?>
             <p class="notice notice-warning">
                 No hay empresa configurada.
-                <a href="<?php echo admin_url('admin.php?page=libredte-configuracion'); ?>">Configurar ahora</a>
+                <a href="<?php echo admin_url('admin.php?page=akibara-configuracion'); ?>">Configurar ahora</a>
             </p>
         <?php endif; ?>
     </div>
@@ -93,17 +93,17 @@ if ($caf_activo) {
     <div class="acciones-rapidas card">
         <h2>Acciones Rapidas</h2>
         <div class="button-grid">
-            <a href="<?php echo admin_url('admin.php?page=libredte-nueva-boleta'); ?>" class="button button-primary button-hero">
+            <a href="<?php echo admin_url('admin.php?page=akibara-nueva-boleta'); ?>" class="button button-primary button-hero">
                 <span class="dashicons dashicons-plus-alt"></span> Nueva Boleta
             </a>
-            <a href="<?php echo admin_url('admin.php?page=libredte-historial'); ?>" class="button button-secondary button-hero">
+            <a href="<?php echo admin_url('admin.php?page=akibara-historial'); ?>" class="button button-secondary button-hero">
                 <span class="dashicons dashicons-list-view"></span> Ver Historial
             </a>
-            <a href="<?php echo admin_url('admin.php?page=libredte-caf'); ?>" class="button button-secondary button-hero">
+            <a href="<?php echo admin_url('admin.php?page=akibara-caf'); ?>" class="button button-secondary button-hero">
                 <span class="dashicons dashicons-upload"></span> Subir CAF
             </a>
             <?php if ($ambiente === 'produccion'): ?>
-            <a href="<?php echo admin_url('admin.php?page=libredte-rcof'); ?>" class="button button-secondary button-hero">
+            <a href="<?php echo admin_url('admin.php?page=akibara-rcof'); ?>" class="button button-secondary button-hero">
                 <span class="dashicons dashicons-chart-bar"></span> RCOF
             </a>
             <?php endif; ?>
@@ -136,7 +136,7 @@ if ($caf_activo) {
     <?php else: ?>
     <div class="notice notice-error">
         <p><strong>Sin CAF activo.</strong> Debes subir un archivo CAF para poder emitir boletas.
-        <a href="<?php echo admin_url('admin.php?page=libredte-caf'); ?>">Subir CAF</a></p>
+        <a href="<?php echo admin_url('admin.php?page=akibara-caf'); ?>">Subir CAF</a></p>
     </div>
     <?php endif; ?>
 
