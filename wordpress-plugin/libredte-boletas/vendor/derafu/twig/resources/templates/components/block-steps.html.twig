@@ -1,0 +1,69 @@
+{# templates/components/block-steps.html.twig #}
+
+<div
+    class="derafu-block-steps {{ attributes.render('class') }}"
+    {{ attributes }}
+    id="{{ this.id }}"
+>
+    <div class="derafu-block-steps__container">
+        {% for step in this.steps %}
+            {# Step #}
+            <div class="derafu-block-steps__step">
+                <div class="derafu-block-steps__icon">
+                    <i class="{{ step.icon }}"></i>
+                </div>
+                <h3 class="derafu-block-steps__title">{{ step.title }}</h3>
+                <div class="derafu-block-steps__content">
+                    {{ step.content|raw }}
+                </div>
+            </div>
+
+            {# Arrow between steps (except the last one) #}
+            {% if not loop.last %}
+                <div class="derafu-block-steps__arrow">
+                    {% if this.arrowType == 'curved' %}
+                        {% if loop.index is odd %}
+                            {# Curved up #}
+                            <svg viewBox="0 0 60 20" class="derafu-block-steps__arrow-curved">
+                                <path d="M 5,15 Q 30,0 50,15"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    stroke-width="1"
+                                    stroke-linecap="round"/>
+                                <path d="M 45,17 L 50,15 L 48,10"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    stroke-width="1"
+                                    stroke-linecap="round"/>
+                            </svg>
+                        {% else %}
+                            {# Curved down #}
+                            <svg viewBox="0 0 60 20" class="derafu-block-steps__arrow-curved">
+                                <path d="M 5,5 Q 30,20 50,5"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    stroke-width="1"
+                                    stroke-linecap="round"/>
+                                <path d="M 45,3 L 50,5 L 48,10"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    stroke-width="1"
+                                    stroke-linecap="round"/>
+                            </svg>
+                        {% endif %}
+                    {% else %}
+                        <svg viewBox="0 0 100 20" class="derafu-block-steps__arrow-straight">
+                            <line x1="0" y1="10" x2="100" y2="10"
+                                stroke="currentColor"
+                                stroke-width="1"/>
+                            <path d="M 90,5 L 100,10 L 90,15"
+                                fill="none"
+                                stroke="currentColor"
+                                stroke-width="1"/>
+                        </svg>
+                    {% endif %}
+                </div>
+            {% endif %}
+        {% endfor %}
+    </div>
+</div>

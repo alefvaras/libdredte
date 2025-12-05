@@ -1,0 +1,35 @@
+{
+    "name": "derafu/l10n-cl-enum",
+    "description": "Derafu: L10n CL Enum - Chilean Enum Repository",
+    "type": "library",
+    "homepage": "https://www.derafu.dev/docs/standards/l10n-cl-enum",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Esteban De La Fuente Rubio / Derafu",
+            "homepage": "https://www.derafu.dev"
+        }
+    ],
+    "support": {
+        "issues": "https://github.com/derafu/l10n-cl-enum/issues",
+        "source": "https://github.com/derafu/l10n-cl-enum"
+    },
+    "autoload": {
+        "psr-4": {
+            "Derafu\\L10n\\Cl\\Enum\\": "src/"
+        }
+    },
+    "require": {
+        "php": "^8.3"
+    },
+    "require-dev": {
+        "friendsofphp/php-cs-fixer": "^3.63",
+        "phpstan/phpstan": "^1.12"
+    },
+    "scripts": {
+        "phpcs-fix": "vendor/bin/php-cs-fixer fix -v --config=php-cs-fixer.php",
+        "phpcs": "vendor/bin/php-cs-fixer fix -v --dry-run --diff --config=php-cs-fixer.php",
+        "phpstan": "vendor/bin/phpstan analyse --configuration=phpstan.neon --memory-limit=1G",
+        "phpstan-export": "vendor/bin/phpstan analyse --configuration=phpstan.neon --level 9 --generate-baseline"
+    }
+}

@@ -1,0 +1,73 @@
+{# templates/components/block-testimonials.html.twig #}
+
+<div
+    class="derafu-block-testimonials {{ attributes.render('class') }}"
+    {{ attributes }}
+    style="--testimonial-card-max-width: {{ this.maxWidth }}px; --testimonial-brightness: {{ this.brightness }}%; --testimonial-height: {{ this.height }}px;"
+>
+    <div id="{{ this.id }}" class="carousel slide" {% if this.autoplay %}data-bs-ride="carousel" data-bs-interval="{{ this.interval }}"{% endif %}>
+        {% if this.showIndicators %}
+        <div class="carousel-indicators">
+            {% for testimonial in this.testimonials %}
+                <button
+                    type="button"
+                    data-bs-target="#{{ this.id }}"
+                    data-bs-slide-to="{{ loop.index0 }}"
+                    {% if loop.first %}class="active" aria-current="true"{% endif %}
+                    aria-label="Slide {{ loop.index }}"
+                >
+                </button>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        <div class="carousel-inner">
+            {% for testimonial in this.testimonials %}
+                <div class="carousel-item{% if loop.first %} active{% endif %}">
+                    <img src="{{ testimonial.background }}" alt="Background {{ loop.index }}" class="derafu-block-testimonials__background">
+                    <div class="derafu-block-testimonials__card derafu-block-testimonials__card--{{ testimonial.position|default('center') }}">
+                        <div class="derafu-block-testimonials__quote-start-icon">
+                            <i class="fa-solid fa-quote-left"></i>
+                        </div>
+                        <p class="derafu-block-testimonials__content">
+                            {{ testimonial.content|raw }}
+                        </p>
+                        <div class="derafu-block-testimonials__quote-end-icon">
+                            <i class="fa-solid fa-quote-right"></i>
+                        </div>
+                        <div class="derafu-block-testimonials__author">
+                            {% if testimonial.image %}
+                                <img src="{{ testimonial.image }}" alt="{{ testimonial.author }}" class="derafu-block-testimonials__image">
+                            {% endif %}
+                            <div class="derafu-block-testimonials__author-info">
+                                {{ testimonial.author }}
+                                {% if testimonial.note %}
+                                    {% if testimonial.url %}
+                                        • <a href="{{ testimonial.url }}" target="_blank">{{ testimonial.organization }}</a>
+                                    {% else %}
+                                        • {{ testimonial.organization }}
+                                    {% endif %}
+                                {% else %}
+                                    {% if testimonial.url %}
+                                        • <a href="{{ testimonial.url }}" target="_blank">{{ testimonial.url }}</a>
+                                    {% endif %}
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+
+        {% if this.showControls %}
+        <button class="carousel-control-prev" type="button" data-bs-target="#{{ this.id }}" data-bs-slide="prev">
+            <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+            <span class="visually-hidden">Anterior</span>
+        </button>
+        <button class="carousel-control-next" type="button" data-bs-target="#{{ this.id }}" data-bs-slide="next">
+            <span class="carousel-control-next-icon" aria-hidden="true"></span>
+            <span class="visually-hidden">Siguiente</span>
+        </button>
+        {% endif %}
+    </div>
+</div>

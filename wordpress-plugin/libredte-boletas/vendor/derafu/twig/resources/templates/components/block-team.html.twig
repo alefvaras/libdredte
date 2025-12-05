@@ -1,0 +1,48 @@
+{# templates/components/block-team.html.twig #}
+
+<div
+    class="derafu-block-team derafu-block-team--cols-{{ this.cols }} derafu-block-team--align-{{ this.align }} {{ attributes.render('class') }}"
+    {{ attributes }}
+    id="{{ this.id }}"
+>
+    <div class="row g-4">
+        {% for member in this.members %}
+            {% set cols = this.cols %}
+            <div class="col-sm-6 {% if cols == 1 %}col-lg-12
+                {% elseif cols == 2 %}col-lg-6
+                {% elseif cols == 3 %}col-lg-4
+                {% elseif cols == 4 %}col-lg-3
+                {% else %}col-lg-2{% endif %}">
+                <div class="derafu-block-team__member">
+                    {# Image #}
+                    <div class="derafu-block-team__image">
+                        <img src="{{ member.image }}" alt="{{ member.name }}" class="img-fluid">
+                    </div>
+
+                    {# Information #}
+                    <div class="derafu-block-team__info">
+                        <h3 class="derafu-block-team__name">{{ member.name }}</h3>
+                        <div class="derafu-block-team__role">{{ member.role }}</div>
+
+                        {% if member.bio %}
+                            <div class="derafu-block-team__bio">{{ member.bio|raw }}</div>
+                        {% endif %}
+
+                        {% if member.links|length > 0 %}
+                            <div class="derafu-block-team__links">
+                                {% for link in member.links %}
+                                    <a href="{{ link.url }}" class="derafu-block-team__link btn {% if link.url is empty %}disabled{% endif %}">
+                                        {% if link.icon %}
+                                            <i class="{{ link.icon }}"></i>
+                                        {% endif %}
+                                        <span>{{ link.text }}</span>
+                                    </a>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+</div>

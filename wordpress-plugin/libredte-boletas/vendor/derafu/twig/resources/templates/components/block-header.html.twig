@@ -1,0 +1,165 @@
+{% macro render_menu_items(items, isRight = false) %}
+    {% for item in items %}
+        {% if item.type == 'link' %}
+            <li class="nav-item">
+                <a class="nav-link" href="{{ item.url }}">
+                    {% if item.icon is not empty %}
+                        <i class="{{ item.icon }} me-1"></i>
+                    {% endif %}
+                    {{ item.text }}
+                </a>
+            </li>
+        {% elseif item.type == 'dropdown' %}
+            <li class="nav-item dropdown">
+                <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                    {% if item.icon is not empty %}
+                        <i class="{{ item.icon }} me-1"></i>
+                    {% endif %}
+                    {{ item.text }}
+                </a>
+                <ul class="dropdown-menu {% if isRight %}dropdown-menu-end{% endif %}">
+                    {% for subitem in item.items %}
+                        {% if subitem.type == 'divider' %}
+                            <li><hr class="dropdown-divider"></li>
+                        {% elseif subitem.type == 'submenu' %}
+                            <li class="{% if isRight %}dropstart{% else %}dropend{% endif %}">
+                                <a class="dropdown-item dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                                    {% if subitem.icon is not empty %}
+                                        <i class="{{ subitem.icon }} me-1"></i>
+                                    {% endif %}
+                                    {{ subitem.text }}
+                                </a>
+                                <ul class="dropdown-menu submenu">
+                                    {% for subsubitem in subitem.items %}
+                                        {% if subsubitem.type == 'divider' %}
+                                            <li><hr class="dropdown-divider"></li>
+                                        {% else %}
+                                            <li>
+                                                <a class="dropdown-item" href="{{ subsubitem.url }}">
+                                                    {% if subsubitem.icon is not empty %}
+                                                        <i class="{{ subsubitem.icon }} me-1"></i>
+                                                    {% endif %}
+                                                    {{ subsubitem.text }}
+                                                </a>
+                                            </li>
+                                        {% endif %}
+                                    {% endfor %}
+                                </ul>
+                            </li>
+                        {% else %}
+                            <li>
+                                <a class="dropdown-item" href="{{ subitem.url }}">
+                                    {% if subitem.icon is not empty %}
+                                        <i class="{{ subitem.icon }} me-1"></i>
+                                    {% endif %}
+                                    {{ subitem.text }}
+                                </a>
+                            </li>
+                        {% endif %}
+                    {% endfor %}
+                </ul>
+            </li>
+        {% elseif item.type == 'mega-dropdown' %}
+            <li class="nav-item dropdown mega-menu-wrapper">
+                <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                    {% if item.icon is not empty %}
+                        <i class="{{ item.icon }} me-1"></i>
+                    {% endif %}
+                    {{ item.text }}
+                </a>
+                <div class="dropdown-menu mega-dropdown">
+                    <div class="container">
+                        <div class="mega-dropdown-header">{{ item.text }}</div>
+                        <div class="row">
+                            {% for section in item.sections %}
+                                <div class="col{% if section.cols is not empty %}-{{ section.cols }}{% endif %} mb-4">
+                                    <h6 class="dropdown-header">{{ section.title|raw }}</h6>
+                                    {% for link in section.links %}
+                                        {% if link.type == 'divider' %}
+                                            <hr class="dropdown-divider">
+                                        {% else %}
+                                            <a class="dropdown-item" href="{{ link.url }}">
+                                                {% if link.icon is not empty %}
+                                                    <i class="{{ link.icon }} me-1"></i>
+                                                {% endif %}
+                                                {{ link.text }}
+                                            </a>
+                                        {% endif %}
+                                    {% endfor %}
+                                </div>
+                            {% endfor %}
+                        </div>
+                        {% if item.footer is not empty %}
+                            <div class="mega-dropdown-footer">
+                                {% for footerItem in item.footer %}
+                                    {% if footerItem.type == 'divider' %}
+                                        <hr class="dropdown-divider">
+                                    {% else %}
+                                        <a href="{{ footerItem.url }}" class="mega-dropdown-footer-item">
+                                            {% if footerItem.icon is not empty %}
+                                                <i class="{{ footerItem.icon }} me-1"></i>
+                                            {% endif %}
+                                            {{ footerItem.text }}
+                                        </a>
+                                    {% endif %}
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </li>
+        {% endif %}
+    {% endfor %}
+{% endmacro %}
+
+{% import _self as menu %}
+
+<nav class="derafu-block-header {{ attributes.render('class') }} navbar navbar-expand-lg
+    {% if this.position != 'normal' %}{{ this.position }}{% endif %}
+    {% if this.backgroundColor %}style="background-color: {{ this.backgroundColor }};"{% endif %}
+    {% if this.dropdownTrigger == 'hover' %}data-dropdown-trigger="hover"{% endif %}"
+    {{ attributes }}
+    id="{{ this.id }}"
+>
+    <div {% if this.fullWidth is empty %}class="container"{% endif %}>
+        {# Logo Section #}
+        <a class="navbar-brand d-flex align-items-center" href="{{ this.logoUrl }}">
+            {% if this.logoImage %}
+                <img src="{{ this.logoImage }}" alt="Logo" style="max-width: {{ this.logoMaxWidth }}px;">
+            {% endif %}
+            {% if this.logoText %}
+                <span class="ms-2">{{ this.logoText|raw }}</span>
+            {% endif %}
+        </a>
+
+        {# Mobile Toggle Button #}
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarContent">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+
+        {# Navigation Content #}
+        <div class="collapse navbar-collapse" id="navbarContent">
+            {# Left Navigation #}
+            <ul class="navbar-nav me-auto">
+                {{ menu.render_menu_items(this.leftNav) }}
+            </ul>
+
+            {# Right Navigation #}
+            <ul class="navbar-nav">
+                {{ menu.render_menu_items(this.rightNav, true) }}
+
+                {# CTA Button #}
+                {% if this.ctaText and this.ctaUrl %}
+                    <li class="nav-item ms-2">
+                        <a href="{{ this.ctaUrl }}" class="btn btn-primary">
+                            {% if this.ctaIcon is not empty %}
+                                <i class="{{ this.ctaIcon }} me-1"></i>
+                            {% endif %}
+                            {{ this.ctaText }}
+                        </a>
+                    </li>
+                {% endif %}
+            </ul>
+        </div>
+    </div>
+</nav>

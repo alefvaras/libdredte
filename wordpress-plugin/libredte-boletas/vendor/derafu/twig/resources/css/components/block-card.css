@@ -1,0 +1,264 @@
+/* Variables base */
+:root {
+  /* Card Grid - General */
+  --spacing-y: var(--spacing-lg);
+
+  /* Card - Estructura */
+  --card-border-radius: var(--border-radius-md);
+  --card-border-width: var(--border-width, 1px);
+  --card-box-shadow: transparent;
+  --card-hover-transform: translateY(-5px);
+  --card-transition-duration: 0.3s;
+
+  /* Card - Colores */
+  --card-bg: var(--bs-card-bg, #fff);
+  --card-border: var(--bs-border-color, #dee2e6);
+  --card-shadow: var(--bs-border-color-translucent, rgba(0,0,0,0.175));
+  --card-title: var(--bs-body-color, #212529);
+  --card-text: var(--bs-body-color, #212529);
+
+  /* Card - Contenido */
+  --card-content-padding: var(--spacing-md);
+  --card-title-font-size: var(--font-size-lg);
+  --card-title-font-weight: var(--font-weight-bold, 700);
+  --card-title-margin-bottom: var(--spacing-sm);
+  --card-content-font-size: var(--font-size-sm);
+  --card-content-line-height: 1.6;
+
+  /* Card - Footer */
+  --card-footer-padding: var(--spacing-md);
+  --card-footer-padding-top: 0;
+
+  /* Card - Botón */
+  --card-button-padding-y: var(--spacing-sm);
+  --card-button-padding-x: var(--spacing-md);
+  --card-button-border-radius: var(--border-radius-sm);
+  --card-button-bg: var(--bs-primary, #0d6efd);
+  --card-button-text: var(--bs-btn-color, #fff);
+  --card-button-hover: var(--bs-btn-primary-hover-bg, #0b5ed7);
+  --card-button-transition-duration: 0.3s;
+
+  /* Variables responsive */
+  --card-tablet-content-padding: 1.25rem;
+  --card-mobile-content-padding: 1rem;
+  --card-mobile-title-font-size: 1.1rem;
+  --card-mobile-content-font-size: 0.85rem;
+  --card-mobile-button-padding-y: 0.5rem;
+  --card-mobile-hover-transform: translateY(-3px);
+}
+
+.derafu-block-card-grid {
+  margin: var(--spacing-y, 2rem) auto;
+  width: 100%;
+}
+
+/* Contenedor de la grid */
+.derafu-block-card-grid__container {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 1.5rem;
+  width: 100%;
+}
+
+.derafu-block-card-grid__card {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  background-color: var(--card-bg);
+  border: var(--card-border-width) solid var(--card-border);
+  border-radius: var(--card-border-radius);
+  overflow: hidden;
+  box-shadow: var(--card-box-shadow);
+  transition: transform var(--card-transition-duration) ease,
+              box-shadow var(--card-transition-duration) ease;
+}
+
+.derafu-block-card-grid__card:hover {
+  transform: var(--card-hover-transform);
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+}
+
+.derafu-block-card-grid__image {
+  width: 100%;
+  overflow: hidden;
+  position: relative;
+}
+
+.derafu-block-card-grid__image img {
+  width: 100%;
+  display: block;
+  object-fit: cover;
+  transition: transform 0.5s ease;
+}
+
+.derafu-block-card-grid__card:hover .derafu-block-card-grid__image img {
+  transform: scale(1.05);
+}
+
+.derafu-block-card-grid__content {
+  padding: var(--card-content-padding);
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.derafu-block-card-grid__title {
+  color: var(--card-title);
+  font-size: var(--card-title-font-size);
+  font-weight: var(--card-title-font-weight);
+  margin-bottom: var(--card-title-margin-bottom);
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  line-height: 1.3;
+}
+
+.derafu-block-card-grid__content {
+  color: var(--card-text);
+  font-size: var(--card-content-font-size);
+  line-height: var(--card-content-line-height);
+  flex-grow: 1;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+}
+
+.derafu-block-card-grid__footer {
+  padding: var(--card-footer-padding);
+  padding-top: var(--card-footer-padding-top);
+  margin-top: auto;
+}
+
+.derafu-block-card-grid__button {
+  display: block;
+  width: 100%;
+  padding: var(--card-button-padding-y) var(--card-button-padding-x);
+  background-color: var(--card-button-bg);
+  color: var(--card-button-text);
+  text-align: center;
+  text-decoration: none;
+  border-radius: var(--card-button-border-radius);
+  transition: background-color var(--card-button-transition-duration) ease,
+              transform 0.1s ease;
+  border: none;
+  cursor: pointer;
+}
+
+.derafu-block-card-grid__button:hover {
+  background-color: var(--card-button-hover);
+  color: var(--card-button-text);
+  text-decoration: none;
+}
+
+.derafu-block-card-grid__button:active {
+  transform: translateY(1px);
+}
+
+/* Card Grid con diferentes columnas */
+.derafu-block-card-grid--cols-1 .derafu-block-card-grid__container {
+  grid-template-columns: 1fr;
+  margin: 0 auto;
+}
+
+.derafu-block-card-grid--cols-2 .derafu-block-card-grid__container {
+  grid-template-columns: repeat(2, 1fr);
+}
+
+.derafu-block-card-grid--cols-3 .derafu-block-card-grid__container {
+  grid-template-columns: repeat(3, 1fr);
+}
+
+.derafu-block-card-grid--cols-4 .derafu-block-card-grid__container {
+  grid-template-columns: repeat(4, 1fr);
+}
+
+.derafu-block-card.container {
+  width: 100%;
+  margin-left: auto;
+  margin-right: auto;
+  padding-left: 1.5rem;
+  padding-right: 1.5rem;
+}
+
+.derafu-block-card-grid__content a {
+  text-decoration: none;
+}
+
+.derafu-block-card-grid__content a:hover {
+  text-decoration: underline;
+}
+
+/* Estilos responsive */
+@media (max-width: 1199px) {
+  .derafu-block-card-grid--cols-4 .derafu-block-card-grid__container {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (max-width: 991px) {
+  .derafu-block-card-grid__container {
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: 1.25rem;
+  }
+
+  .derafu-block-card-grid__content {
+    padding: var(--card-tablet-content-padding);
+  }
+
+  .derafu-block-card-grid__footer {
+    padding: 0 var(--card-tablet-content-padding) var(--card-tablet-content-padding);
+  }
+
+  .derafu-block-card-grid--cols-3 .derafu-block-card-grid__container,
+  .derafu-block-card-grid--cols-4 .derafu-block-card-grid__container {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 767px) {
+  .derafu-block-card-grid__container {
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 1rem;
+  }
+
+  .derafu-block-card-grid__card:hover {
+    transform: var(--card-mobile-hover-transform);
+  }
+
+  .derafu-block-card-grid__content {
+    padding: var(--card-mobile-content-padding);
+  }
+
+  .derafu-block-card-grid__title {
+    font-size: var(--card-mobile-title-font-size);
+  }
+
+  .derafu-block-card-grid__content {
+    font-size: var(--card-mobile-content-font-size);
+  }
+
+  .derafu-block-card-grid__footer {
+    padding: 0 var(--card-mobile-content-padding) var(--card-mobile-content-padding);
+  }
+
+  .derafu-block-card-grid__button {
+    padding: var(--card-mobile-button-padding-y) var(--card-button-padding-x);
+  }
+}
+
+@media (max-width: 575px) {
+  .derafu-block-card-grid__container {
+    grid-template-columns: 1fr;
+    max-width: 450px;
+    margin: 0 auto;
+  }
+
+  .derafu-block-card-grid--cols-2 .derafu-block-card-grid__container,
+  .derafu-block-card-grid--cols-3 .derafu-block-card-grid__container,
+  .derafu-block-card-grid--cols-4 .derafu-block-card-grid__container {
+    grid-template-columns: 1fr;
+  }
+
+  /* Ajuste opcional para imágenes en móvil */
+  .derafu-block-card-grid__image {
+    max-height: 200px;
+  }
+}

@@ -1,0 +1,8 @@
+{# templates/components/block-box.html.twig #}
+
+<div class="derafu-block-box {{ attributes.render('class') }}" {{ attributes }} id="{{ this.id }}">
+    <h3 class="derafu-block-box__title">{{ this.title }}</h3>
+    {% if this.content is not null %}
+        <div class="derafu-block-box__content">{{ this.content | raw }}</div>
+    {% endif %}
+</div>

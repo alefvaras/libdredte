@@ -1,0 +1,542 @@
+/* ======================================
+   Base Variables
+   ====================================== */
+   :root {
+    /* Breakpoints */
+    --breakpoint-xs: 375px;
+    --breakpoint-sm: 576px;
+    --breakpoint-md: 768px;
+    --breakpoint-lg: 992px;
+
+    /* Base Spacing */
+    --spacing-xs: 0.5rem;
+    --spacing-sm: 1rem;
+    --spacing-md: 1.5rem;
+    --spacing-lg: 2rem;
+
+    /* ======================================
+       Plan Structure Variables
+       ====================================== */
+    /* Plan Container */
+    --comparison-plan-bg: var(--bs-white, #fff);
+    --comparison-plan-border: var(--bs-border-color, #dee2e6);
+    --comparison-plan-shadow: var(--bs-light, #f8f9fa);
+    --comparison-plan-transition-duration: 0.3s;
+    --comparison-plan-hover-transform: translateY(-5px);
+    --comparison-plan-border-radius: 1rem;
+    --comparison-tablet-plan-border-radius: 0.875rem;
+    --comparison-mobile-plan-border-radius: 0.75rem;
+    --comparison-small-plan-border-radius: 0.5rem;
+
+    /* ======================================
+       Title Section Variables
+       ====================================== */
+    --comparison-title-font-size: 1.5rem;
+    --comparison-title-font-weight: bold;
+    --comparison-title-bg: var(--bs-primary, #0d6efd);
+    --comparison-title-color: var(--bs-white, #fff);
+    --comparison-title-padding: 1.5rem;
+    --comparison-tablet-title-font-size: 1.35rem;
+    --comparison-mobile-title-font-size: 1.25rem;
+    --comparison-small-title-font-size: 1.125rem;
+    --comparison-tablet-title-padding: 1.25rem;
+    --comparison-mobile-title-padding: 1rem;
+    --comparison-small-title-padding: 0.875rem;
+
+    /* Highlighted Title */
+    --comparison-highlighted-title-bg: var(--bs-secondary, #6c757d);
+    --comparison-highlighted-title-color: var(--bs-white, #fff);
+
+    /* ======================================
+       Price Section Variables
+       ====================================== */
+    --comparison-price-font-size: 2.5rem;
+    --comparison-price-font-weight: bold;
+    --comparison-price: var(--bs-body-color, #212529);
+    --comparison-price-margin-top: 0.5rem;
+    --comparison-price-padding: 2rem;
+    --comparison-price-gap: 0.25rem;
+    --comparison-price-small-font-size: 50%;
+    --comparison-tablet-price-font-size: 2.25rem;
+    --comparison-mobile-price-font-size: 2rem;
+    --comparison-small-price-font-size: 1.75rem;
+    --comparison-tablet-price-padding: 1.75rem;
+    --comparison-mobile-price-padding: 1.5rem;
+    --comparison-small-price-padding: 1.25rem;
+
+    /* Period */
+    --comparison-period: var(--bs-secondary, #6c757d);
+    --comparison-tablet-period-font-size: 0.9375rem;
+    --comparison-mobile-period-font-size: 0.875rem;
+
+    /* ======================================
+       Features Section Variables
+       ====================================== */
+    --comparison-text: var(--bs-body-color, #212529);
+    --comparison-features-padding: 2rem;
+    --comparison-feature-gap: 1rem;
+    --comparison-feature-padding-y: 0.75rem;
+    --comparison-tablet-features-padding: 1.75rem;
+    --comparison-mobile-features-padding: 1.5rem;
+    --comparison-small-features-padding: 1.25rem;
+    --comparison-tablet-feature-padding-y: 0.625rem;
+    --comparison-mobile-feature-padding-y: 0.5rem;
+    --comparison-tablet-feature-gap: 0.875rem;
+    --comparison-mobile-feature-gap: 0.75rem;
+
+    /* ======================================
+       Footer Section Variables
+       ====================================== */
+    --comparison-footer-padding: 2rem;
+    --comparison-tablet-footer-padding: 1.75rem;
+    --comparison-mobile-footer-padding: 1.5rem;
+    --comparison-small-footer-padding: 1.25rem;
+
+    /* Note */
+    --comparison-note: var(--bs-dark, #212529);
+    --comparison-note-font-size: 0.9rem;
+    --comparison-note-margin-bottom: 1.5rem;
+    --comparison-mobile-note-font-size: 0.8125rem;
+    --comparison-mobile-note-margin-bottom: 1.25rem;
+
+    /* Button */
+    --comparison-button-bg: var(--bs-primary, #0d6efd);
+    --comparison-button-text: var(--bs-white, #fff);
+    --comparison-button-hover: var(--bs-btn-primary-hover-bg, #0b5ed7);
+    --comparison-button-padding: 1rem;
+    --comparison-button-border-radius: 0.5rem;
+    --comparison-button-font-weight: bold;
+    --comparison-button-transition-duration: 0.3s;
+    --comparison-tablet-button-padding: 0.875rem;
+    --comparison-mobile-button-padding: 0.75rem;
+    --comparison-small-button-padding: 0.625rem;
+    --comparison-tablet-button-border-radius: 0.4375rem;
+    --comparison-mobile-button-border-radius: 0.375rem;
+}
+
+/* ======================================
+   Component Base
+   ====================================== */
+.derafu-block-comparison {
+    margin: var(--spacing-lg, 2rem) auto;
+    width: 100%;
+}
+
+.derafu-block-comparison__container {
+    display: flex;
+    flex-wrap: wrap;
+    margin-right: -1rem;
+    margin-left: -1rem;
+}
+
+.derafu-block-comparison__col {
+    padding-right: 1rem;
+    padding-left: 1rem;
+    width: 100%;
+    margin-bottom: 2rem;
+    flex: 1 0 0%;
+    min-width: 0;
+}
+
+/* ======================================
+   Plan Card
+   ====================================== */
+.derafu-block-comparison__plan {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    background-color: var(--comparison-plan-bg);
+    border: 1px solid var(--comparison-plan-border);
+    border-radius: var(--comparison-plan-border-radius);
+    overflow: hidden;
+    box-shadow: 0 4px 6px var(--comparison-plan-shadow);
+    transition: all var(--comparison-plan-transition-duration) ease;
+    position: relative;
+}
+
+.derafu-block-comparison__plan:hover {
+    transform: var(--comparison-plan-hover-transform);
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+}
+
+/* ======================================
+   Title Section
+   ====================================== */
+.derafu-block-comparison__title-section {
+    padding: var(--comparison-title-padding);
+    background-color: var(--comparison-title-bg);
+    text-align: center;
+}
+
+.derafu-block-comparison__title {
+    color: var(--comparison-title-color);
+    font-size: var(--comparison-title-font-size);
+    font-weight: var(--comparison-title-font-weight);
+    margin: 0;
+    line-height: 1.3;
+}
+
+/* Highlighted Title */
+.derafu-block-comparison__title-section--highlighted {
+    background-color: var(--comparison-highlighted-title-bg);
+}
+
+.derafu-block-comparison__title-section--highlighted .derafu-block-comparison__title {
+    color: var(--comparison-highlighted-title-color);
+}
+
+/* ======================================
+   Price Section
+   ====================================== */
+.derafu-block-comparison__price-section {
+    padding: var(--comparison-price-padding);
+    text-align: center;
+    background-color: var(--comparison-plan-bg);
+}
+
+.derafu-block-comparison__price {
+    color: var(--comparison-price);
+    font-size: var(--comparison-price-font-size);
+    font-weight: var(--comparison-price-font-weight);
+    line-height: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--comparison-price-gap);
+    flex-wrap: wrap;
+}
+
+.derafu-block-comparison__price small {
+    font-size: var(--comparison-price-small-font-size);
+    position: relative;
+}
+
+.derafu-block-comparison__period {
+    color: var(--comparison-period);
+    font-size: 1rem;
+    margin-top: var(--comparison-price-margin-top);
+}
+
+/* ======================================
+   Features Section
+   ====================================== */
+.derafu-block-comparison__features {
+    flex: 1;
+    padding: var(--comparison-features-padding);
+    border-top: 1px solid var(--comparison-plan-border);
+    border-bottom: 1px solid var(--comparison-plan-border);
+}
+
+.derafu-block-comparison__feature {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--comparison-feature-gap);
+    padding: var(--comparison-feature-padding-y) 0;
+    color: var(--comparison-text);
+}
+
+.derafu-block-comparison__feature:not(:last-child) {
+    border-bottom: 1px solid var(--comparison-plan-border);
+}
+
+.derafu-block-comparison__feature i {
+    flex-shrink: 0;
+    margin-top: 0.25rem;
+}
+
+.derafu-block-comparison__feature a {
+    text-decoration: none;
+}
+
+.derafu-block-comparison__feature a:hover {
+    text-decoration: underline;
+}
+
+.derafu-block-comparison__value {
+    font-weight: bold;
+}
+
+/* ======================================
+   Footer Section
+   ====================================== */
+.derafu-block-comparison__footer {
+    padding: var(--comparison-footer-padding);
+}
+
+.derafu-block-comparison__note {
+    text-align: center;
+    font-style: italic;
+    font-size: var(--comparison-note-font-size);
+    color: var(--comparison-note);
+    margin-bottom: var(--comparison-note-margin-bottom);
+}
+
+.derafu-block-comparison__button {
+    display: block;
+    width: 100%;
+    padding: var(--comparison-button-padding);
+    background-color: var(--comparison-button-bg);
+    color: var(--comparison-button-text);
+    text-align: center;
+    text-decoration: none;
+    border-radius: var(--comparison-button-border-radius);
+    font-weight: var(--comparison-button-font-weight);
+    transition: all var(--comparison-button-transition-duration) ease;
+    cursor: pointer;
+    border: none;
+}
+
+.derafu-block-comparison__button:hover {
+    background-color: var(--comparison-button-hover);
+    color: var(--comparison-button-text);
+    text-decoration: none;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.derafu-block-comparison__button:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* ======================================
+   Popular Plan Ribbon
+   ====================================== */
+.derafu-block-comparison__plan--popular {
+    position: relative;
+}
+
+.derafu-block-comparison__plan--popular::before {
+    content: "Popular";
+    position: absolute;
+    top: 1.5rem;
+    right: -2rem;
+    transform: rotate(45deg);
+    background-color: #ff6b6b;
+    color: white;
+    padding: 0.25rem 2rem;
+    font-size: 0.8125rem;
+    font-weight: bold;
+    z-index: 1;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* ======================================
+   Content Overflow Prevention
+   ====================================== */
+.derafu-block-comparison__title,
+.derafu-block-comparison__period,
+.derafu-block-comparison__feature,
+.derafu-block-comparison__note {
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+}
+
+.derafu-block-comparison.container {
+    width: 100%;
+    margin-left: auto;
+    margin-right: auto;
+    padding-left: var(--spacing-md, 1.5rem);
+    padding-right: var(--spacing-md, 1.5rem);
+}
+
+/* ======================================
+   Responsive Styles
+   ====================================== */
+/* Large Screens (≥ 992px) */
+@media (min-width: 992px) {
+    .derafu-block-comparison__col {
+        flex: 0 0 33.333333%;
+        max-width: 33.333333%;
+    }
+}
+
+/* Tablets (≤ 991px) */
+@media (max-width: 991px) {
+    .derafu-block-comparison__col {
+        flex: 0 0 50%;
+        max-width: 50%;
+    }
+
+    .derafu-block-comparison__plan {
+        border-radius: var(--comparison-tablet-plan-border-radius);
+    }
+
+    .derafu-block-comparison__title-section {
+        padding: var(--comparison-tablet-title-padding);
+    }
+
+    .derafu-block-comparison__title {
+        font-size: var(--comparison-tablet-title-font-size);
+    }
+
+    .derafu-block-comparison__price-section {
+        padding: var(--comparison-tablet-price-padding);
+    }
+
+    .derafu-block-comparison__price {
+        font-size: var(--comparison-tablet-price-font-size);
+    }
+
+    .derafu-block-comparison__period {
+        font-size: var(--comparison-tablet-period-font-size);
+    }
+
+    .derafu-block-comparison__features {
+        padding: var(--comparison-tablet-features-padding);
+    }
+
+    .derafu-block-comparison__feature {
+        gap: var(--comparison-tablet-feature-gap);
+        padding: var(--comparison-tablet-feature-padding-y) 0;
+    }
+
+    .derafu-block-comparison__footer {
+        padding: var(--comparison-tablet-footer-padding);
+    }
+
+    .derafu-block-comparison__button {
+        padding: var(--comparison-tablet-button-padding);
+        border-radius: var(--comparison-tablet-button-border-radius);
+    }
+}
+
+/* Mobile (≤ 767px) */
+@media (max-width: 767px) {
+    .derafu-block-comparison {
+        margin: calc(var(--spacing-lg) * 0.75) auto;
+    }
+
+    .derafu-block-comparison__container {
+        margin-right: -0.5rem;
+        margin-left: -0.5rem;
+    }
+
+    .derafu-block-comparison__col {
+        flex: 0 0 100%;
+        max-width: 100%;
+        padding-right: 0.5rem;
+        padding-left: 0.5rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .derafu-block-comparison__plan {
+        border-radius: var(--comparison-mobile-plan-border-radius);
+    }
+
+    .derafu-block-comparison__plan:hover {
+        transform: none;
+        box-shadow: 0 4px 6px var(--comparison-plan-shadow);
+    }
+
+    .derafu-block-comparison__title-section {
+        padding: var(--comparison-mobile-title-padding);
+    }
+
+    .derafu-block-comparison__title {
+        font-size: var(--comparison-mobile-title-font-size);
+    }
+
+    .derafu-block-comparison__price-section {
+        padding: var(--comparison-mobile-price-padding);
+    }
+
+    .derafu-block-comparison__price {
+        font-size: var(--comparison-mobile-price-font-size);
+    }
+
+    .derafu-block-comparison__period {
+        font-size: var(--comparison-mobile-period-font-size);
+    }
+
+    .derafu-block-comparison__features {
+        padding: var(--comparison-mobile-features-padding);
+    }
+
+    .derafu-block-comparison__feature {
+        gap: var(--comparison-mobile-feature-gap);
+        padding: var(--comparison-mobile-feature-padding-y) 0;
+    }
+
+    .derafu-block-comparison__footer {
+        padding: var(--comparison-mobile-footer-padding);
+    }
+
+    .derafu-block-comparison__note {
+        font-size: var(--comparison-mobile-note-font-size);
+        margin-bottom: var(--comparison-mobile-note-margin-bottom);
+    }
+
+    .derafu-block-comparison__button {
+        padding: var(--comparison-mobile-button-padding);
+        border-radius: var(--comparison-mobile-button-border-radius);
+    }
+
+    .derafu-block-comparison__button:hover {
+        transform: none;
+        box-shadow: none;
+    }
+
+    .derafu-block-comparison__plan--popular::before {
+        font-size: 0.75rem;
+        padding: 0.2rem 1.75rem;
+        right: -1.75rem;
+        top: 1.25rem;
+    }
+}
+
+/* Small Mobile (≤ 575px) */
+@media (max-width: 575px) {
+    .derafu-block-comparison {
+        margin: calc(var(--spacing-lg) * 0.5) auto;
+    }
+
+    .derafu-block-comparison__col {
+        margin-bottom: 1.25rem;
+    }
+
+    .derafu-block-comparison__plan {
+        border-radius: var(--comparison-small-plan-border-radius);
+    }
+
+    .derafu-block-comparison__title-section {
+        padding: var(--comparison-small-title-padding);
+    }
+
+    .derafu-block-comparison__title {
+        font-size: var(--comparison-small-title-font-size);
+    }
+
+    .derafu-block-comparison__price-section {
+        padding: var(--comparison-small-price-padding);
+    }
+
+    .derafu-block-comparison__price {
+        font-size: var(--comparison-small-price-font-size);
+    }
+
+    .derafu-block-comparison__features {
+        padding: var(--comparison-small-features-padding);
+    }
+
+    .derafu-block-comparison__footer {
+        padding: var(--comparison-small-footer-padding);
+    }
+
+    .derafu-block-comparison__button {
+        padding: var(--comparison-small-button-padding);
+    }
+}
+
+/* Touch Device Optimization */
+@media (hover: none) {
+    .derafu-block-comparison__plan:hover {
+        transform: none;
+        box-shadow: 0 4px 6px var(--comparison-plan-shadow);
+    }
+
+    .derafu-block-comparison__button:hover {
+        transform: none;
+        box-shadow: none;
+    }
+}

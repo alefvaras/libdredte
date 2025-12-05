@@ -1,0 +1,25 @@
+{# templates/components/block-hero.html.twig #}
+
+<div
+    class="derafu-block-hero derafu-block-hero--{{ this.size }} {{ attributes.render('class') }}"
+    {{ attributes }}
+    id="{{ this.id }}"
+    {% if this.background %}style="background-image: url('{{ this.background }}')"{% endif %}
+>
+   <div class="derafu-block-hero__container {{ this.fullWidth ? '' : 'container' }}">
+       <div class="derafu-block-hero__content derafu-block-hero__content--{{ this.align }}
+           {% if this.contentBackground %}derafu-block-hero__content--with-background{% endif %}">
+           <h1 class="derafu-block-hero__title">{{ this.title|raw }}</h1>
+           <div class="derafu-block-hero__subtitle">{{ this.subtitle|raw }}</div>
+           {% if this.buttons|length > 0 %}
+               <div class="derafu-block-hero__buttons">
+                   {% for button in this.buttons %}
+                       <a href="{{ button.url }}" class="btn derafu-block-hero__button derafu-block-hero__button--{{ button.type|default('primary') }}">
+                           {{ button.text }}
+                       </a>
+                   {% endfor %}
+               </div>
+           {% endif %}
+       </div>
+   </div>
+</div>

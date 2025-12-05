@@ -1,0 +1,15 @@
+{# templates/components/block-alert.html.twig #}
+
+<div class="derafu-block-alert {{ attributes.render('class') }}" {{ attributes }} id="{{ this.id }}">
+    <div class="alert alert-{{ this.type }} d-flex align-items-center {{ this.dismissible ? 'alert-dismissible fade show' : '' }}" role="alert">
+        {% if this.icon %}
+            <i class="{{ this.icon }} derafu-block-alert__icon"></i>
+        {% endif %}
+        <div>
+            {{ this.content|raw }}
+        </div>
+        {% if this.dismissible %}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        {% endif %}
+    </div>
+</div>

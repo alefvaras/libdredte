@@ -1,0 +1,226 @@
+/*
+ * Image Grid - Base Variables
+ */
+ :root {
+  /* General Settings */
+  --image-grid-spacing-y: 2rem;
+
+  /* Colors */
+  --image-grid-bg: var(--bs-white, transparent);
+  --image-grid-border: var(--bs-border-color, #dee2e6);
+  --image-grid-hover: var(--bs-primary-subtle, #cfe2ff);
+
+  /* Structure */
+
+  --image-grid-item-border-radius: 0.5rem;
+  --image-grid-item-border-width: 1px;
+  --image-grid-hover-transform: translateY(-2px);
+
+  /* Layout */
+  --image-grid-columns-lg: 4;
+  --image-grid-columns-md: 3;
+  --image-grid-columns-sm: 2;
+  --image-grid-columns-xs: 1;
+  --image-grid-gap: 1.5rem;
+
+  /* Responsive */
+  --image-grid-mobile-gap: 1rem;
+  --image-grid-mobile-spacing-y: 1.5rem;
+
+  /* Image Effects */
+  --image-grid-image-grayscale: 100%;
+  --image-grid-image-opacity: 0.7;
+  --image-grid-image-hover-grayscale: 0;
+  --image-grid-image-hover-opacity: 1;
+
+  /* Animations */
+  --image-grid-transition-duration: 0.3s;
+}
+
+/*
+  * Image Grid - Main Container
+  */
+.derafu-block-image-grid {
+  margin: var(--image-grid-spacing-y) auto;
+  background-color: var(--image-grid-bg);
+  box-sizing: border-box;
+}
+
+/*
+  * Grid Container
+  */
+.derafu-block-image-grid__container {
+  display: grid;
+  grid-template-columns: repeat(var(--image-grid-columns-lg), 1fr);
+  gap: var(--image-grid-gap);
+}
+
+/*
+  * Grid Items
+  */
+.derafu-block-image-grid__item {
+  border: var(--image-grid-item-border-width) solid var(--image-grid-border);
+  border-radius: var(--image-grid-item-border-radius);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all var(--image-grid-transition-duration) ease;
+  aspect-ratio: 16/9; /* Maintain consistent aspect ratio */
+  overflow: hidden; /* Prevent content overflow */
+}
+
+.derafu-block-image-grid.container {
+  margin-left: auto;
+  margin-right: auto;
+}
+
+/* Compatibility for browsers that don't support aspect-ratio */
+@supports not (aspect-ratio: 16/9) {
+  .derafu-block-image-grid__item::before {
+    content: "";
+    display: block;
+    padding-top: 56.25%; /* 9/16 = 0.5625 */
+  }
+}
+
+.derafu-block-image-grid__item:hover {
+  background-color: var(--image-grid-hover);
+  transform: var(--image-grid-hover-transform);
+}
+
+/*
+  * Grid Item Links
+  */
+.derafu-block-image-grid__link {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+}
+
+/*
+  * Grid Images
+  */
+.derafu-block-image-grid__image {
+  max-height: 100%;
+  object-fit: contain;
+  filter: grayscale(var(--image-grid-image-grayscale));
+  opacity: var(--image-grid-image-opacity);
+  transition: all var(--image-grid-transition-duration) ease;
+}
+
+.derafu-block-image-grid__item:hover .derafu-block-image-grid__image {
+  filter: grayscale(var(--image-grid-image-hover-grayscale));
+  opacity: var(--image-grid-image-hover-opacity);
+}
+
+/*
+  * Responsive Breakpoints
+  */
+/* Large Desktops to Medium Desktops */
+@media (max-width: 1199.98px) {
+  .derafu-block-image-grid__container {
+    grid-template-columns: repeat(var(--image-grid-columns-md), 1fr);
+  }
+}
+
+/* Medium Desktops to Tablets */
+@media (max-width: 991.98px) {
+  .derafu-block-image-grid {
+    margin: var(--image-grid-mobile-spacing-y) auto;
+  }
+
+  .derafu-block-image-grid__container {
+    gap: var(--image-grid-mobile-gap);
+  }
+}
+
+/* Tablets to Large Phones */
+@media (max-width: 767.98px) {
+  .derafu-block-image-grid__container {
+    grid-template-columns: repeat(var(--image-grid-columns-sm), 1fr);
+  }
+}
+
+/* Small Mobile Devices */
+@media (max-width: 575.98px) {
+  .derafu-block-image-grid__container {
+    grid-template-columns: repeat(var(--image-grid-columns-xs), 1fr);
+  }
+
+  /* Disable transform on mobile for better performance */
+  .derafu-block-image-grid__item:hover {
+    transform: none;
+  }
+
+  /* Adjustments for touch devices */
+  .derafu-block-image-grid__image {
+    filter: grayscale(0);
+    opacity: 1;
+  }
+}
+
+/*
+  * Column Variants
+  */
+.derafu-block-image-grid--columns-2 .derafu-block-image-grid__container {
+  grid-template-columns: repeat(2, 1fr);
+}
+
+.derafu-block-image-grid--columns-3 .derafu-block-image-grid__container {
+  grid-template-columns: repeat(3, 1fr);
+}
+
+.derafu-block-image-grid--columns-4 .derafu-block-image-grid__container {
+  grid-template-columns: repeat(4, 1fr);
+}
+
+.derafu-block-image-grid--columns-5 .derafu-block-image-grid__container {
+  grid-template-columns: repeat(5, 1fr);
+}
+
+.derafu-block-image-grid--columns-6 .derafu-block-image-grid__container {
+  grid-template-columns: repeat(6, 1fr);
+}
+
+/*
+  * Responsive Adjustments for Column Variants
+  */
+/* Large Desktops */
+@media (max-width: 1199.98px) {
+  .derafu-block-image-grid--columns-5 .derafu-block-image-grid__container,
+  .derafu-block-image-grid--columns-6 .derafu-block-image-grid__container {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+/* Medium Desktops */
+@media (max-width: 991.98px) {
+  .derafu-block-image-grid--columns-4 .derafu-block-image-grid__container,
+  .derafu-block-image-grid--columns-5 .derafu-block-image-grid__container,
+  .derafu-block-image-grid--columns-6 .derafu-block-image-grid__container {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+/* Tablets */
+@media (max-width: 767.98px) {
+  .derafu-block-image-grid--columns-3 .derafu-block-image-grid__container,
+  .derafu-block-image-grid--columns-4 .derafu-block-image-grid__container,
+  .derafu-block-image-grid--columns-5 .derafu-block-image-grid__container,
+  .derafu-block-image-grid--columns-6 .derafu-block-image-grid__container {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+/* Mobile Phones */
+@media (max-width: 575.98px) {
+  .derafu-block-image-grid--columns-2 .derafu-block-image-grid__container,
+  .derafu-block-image-grid--columns-3 .derafu-block-image-grid__container,
+  .derafu-block-image-grid--columns-4 .derafu-block-image-grid__container,
+  .derafu-block-image-grid--columns-5 .derafu-block-image-grid__container,
+  .derafu-block-image-grid--columns-6 .derafu-block-image-grid__container {
+    grid-template-columns: 1fr;
+  }
+}

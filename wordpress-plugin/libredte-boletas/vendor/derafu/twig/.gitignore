@@ -1,0 +1,25 @@
+# PHP files and directories.
+cache/
+var/
+vendor/
+composer.lock
+
+# Node.js and Vite build.
+node_modules/
+public/static/
+npm-debug.log*
+package-lock.json
+.sharp-cache.json
+
+# IDE and editor specific files.
+.vscode/
+
+# OS specific files.
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+desktop.ini

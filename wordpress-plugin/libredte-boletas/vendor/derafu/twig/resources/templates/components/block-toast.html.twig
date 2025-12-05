@@ -1,0 +1,27 @@
+{# templates/components/block-toast.html.twig #}
+
+<div
+    class="derafu-block-toast {{ attributes.render('class') }}"
+    {{ attributes }}
+    id="{{ this.id }}"
+>
+    <div class="toast show bg-{{ this.type }} border-{{ this.type }}" role="alert" aria-live="assertive" aria-atomic="true">
+        <div class="toast-header">
+            {% if this.icon %}
+                <i class="{{ this.icon }} derafu-block-toast__icon me-2"></i>
+            {% endif %}
+            {% if this.title %}
+                <strong class="me-auto text-body-{{ this.type }}">{{ this.title }}</strong>
+            {% endif %}
+            {% if this.time %}
+                <small class="text-body-secondary">{{ this.time }}</small>
+            {% endif %}
+            <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+        </div>
+        {% if this.content %}
+            <div class="toast-body">
+                {{ this.content|raw }}
+            </div>
+        {% endif %}
+    </div>
+</div>

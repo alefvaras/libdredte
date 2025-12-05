@@ -1,0 +1,328 @@
+/*
+ * Hero - Base Variables
+ */
+ :root {
+    /* Height variants */
+    --hero-height-mini: 20vh;
+    --hero-height-small: 40vh;
+    --hero-height-medium: 60vh;
+    --hero-height-large: 80vh;
+    --hero-height-full: 100vh;
+
+    /* Spacing */
+    --hero-spacing-y: 2rem;
+    --hero-button-spacing: 1rem;
+    --hero-content-with-bg-padding: 4rem;
+    --hero-content-with-bg-radius: 0.5rem;
+    --hero-content-with-bg-blur: 5px;
+    --hero-title-margin-bottom: 1rem;
+    --hero-subtitle-margin-bottom: 2rem;
+
+    /* Hero Colors */
+    --hero-bg: var(--bs-primary, #0d6efd);
+    --hero-text: var(--bs-white, #fff);
+    --hero-title-color: var(--bs-white, #fff);
+    --hero-subtitle-color: var(--bs-white, #fff);
+
+    /* Background Content Colors */
+    --hero-content-background-color: var(--bs-secondary, #6c757d);
+    --hero-content-background-opacity: 0.6;
+
+    /* Button Colors */
+    --hero-button-primary-bg: var(--bs-white, #fff);
+    --hero-button-primary-text: var(--bs-primary, #0d6efd);
+    --hero-button-primary-hover: var(--bs-primary-emphasis, #0b5ed7);
+    --hero-button-secondary-bg: transparent;
+    --hero-button-secondary-text: var(--bs-white, #fff);
+    --hero-button-secondary-border: var(--bs-white, #fff);
+
+    /* Subtitle Links */
+    --hero-link-color: var(--bs-warning, #ffc107);
+    --hero-link-hover-color: var(--bs-light, #f8f9fa);
+    --hero-link-font-weight: 500;
+
+    --hero-title-font-weight: bold;
+
+    /* Responsive Variables */
+    --hero-mobile-spacing-y: 1.5rem;
+    --hero-mobile-title-font-size: 2rem;
+    --hero-mobile-subtitle-font-size: 1rem;
+    --hero-mobile-content-padding: 1rem;
+    --hero-mobile-button-padding: 0.5rem 1rem;
+    --hero-mobile-height-reduction: 0.7; /* Height reduction factor for mobile */
+  }
+
+  /*
+   * Base hero component styles
+   */
+  .derafu-block-hero {
+    background-position: center;
+    background-repeat: no-repeat;
+    background-size: cover;
+    position: relative;
+    display: flex;
+    align-items: center;
+    background-color: var(--hero-bg);
+    color: var(--hero-text);
+    overflow: hidden; /* Prevent content overflow */
+  }
+
+  .derafu-block-hero__container {
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+
+  .derafu-block-hero.container {
+    margin-left: auto;
+    margin-right: auto;
+    padding-left: var(--spacing-md, 1.5rem);
+    padding-right: var(--spacing-md, 1.5rem);
+}
+
+  /*
+   * Size variants
+   */
+  .derafu-block-hero--mini {
+    min-height: var(--hero-height-mini);
+  }
+
+  .derafu-block-hero--small {
+    min-height: var(--hero-height-small);
+  }
+
+  .derafu-block-hero--medium {
+    min-height: var(--hero-height-medium);
+  }
+
+  .derafu-block-hero--large {
+    min-height: var(--hero-height-large);
+  }
+
+  .derafu-block-hero--full {
+    min-height: var(--hero-height-full);
+  }
+
+  /*
+   * Content and alignment
+   */
+  .derafu-block-hero__content {
+    padding: var(--hero-spacing-y) 0;
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+  }
+
+  .derafu-block-hero__content--left {
+    align-items: flex-start;
+    text-align: left;
+    padding-left: 4rem;
+  }
+
+  .derafu-block-hero__content--center {
+    align-items: center;
+    text-align: center;
+  }
+
+  .derafu-block-hero__content--right {
+    align-items: flex-end;
+    text-align: right;
+    padding-right: 4rem;
+  }
+
+  /*
+   * Title and subtitle
+   */
+  .derafu-block-hero__title {
+    margin-bottom: var(--hero-title-margin-bottom);
+    font-weight: var(--hero-title-font-weight);
+    color: var(--hero-title-color);
+    display: inline-block; /* Key: makes the title only take up the necessary space */
+    width: auto; /* Overrides any width: 100% that might be applied */
+    word-wrap: break-word; /* Improves rendering of long words */
+    hyphens: auto; /* Allow hyphenation for long words */
+    position: relative;
+    padding-bottom: 10px; /* Space for the line */
+  }
+
+  .derafu-block-hero__subtitle {
+    margin-bottom: var(--hero-subtitle-margin-bottom);
+    color: var(--hero-subtitle-color);
+    width: 100%;
+    word-wrap: break-word;
+    hyphens: auto;
+  }
+
+  /*
+   * Buttons
+   */
+  .derafu-block-hero__buttons {
+    display: flex;
+    gap: var(--hero-button-spacing);
+    flex-wrap: wrap; /* Important for responsiveness */
+    width: 100%;
+  }
+
+  .derafu-block-hero__content--left .derafu-block-hero__buttons {
+    justify-content: flex-start;
+  }
+
+  .derafu-block-hero__content--center .derafu-block-hero__buttons {
+    justify-content: center;
+  }
+
+  .derafu-block-hero__content--right .derafu-block-hero__buttons {
+    justify-content: flex-end;
+  }
+
+  /*
+   * Button styles
+   */
+  .derafu-block-hero__button--primary {
+    background-color: var(--hero-button-primary-bg);
+    color: var(--hero-button-primary-text);
+    white-space: nowrap; /* Prevent line breaks in button text */
+  }
+
+  .derafu-block-hero__button--primary:hover {
+    background-color: var(--hero-button-primary-hover);
+  }
+
+  .derafu-block-hero__button--secondary {
+    background-color: var(--hero-button-secondary-bg);
+    color: var(--hero-button-secondary-text);
+    border: 2px solid var(--hero-button-secondary-border);
+    white-space: nowrap;
+  }
+
+  /*
+   * Content with background
+   */
+  .derafu-block-hero__content--with-background {
+    position: relative;
+    padding: var(--hero-content-with-bg-padding);
+    border-radius: var(--hero-content-with-bg-radius);
+    backdrop-filter: blur(var(--hero-content-with-bg-blur));
+  }
+
+  .derafu-block-hero__content--with-background::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: var(--hero-content-background-color, #ffffff);
+    opacity: var(--hero-content-background-opacity, 0.6);
+    border-radius: inherit;
+    z-index: -1;
+  }
+
+  /* Ensure content appears above the background */
+  .derafu-block-hero__content--with-background > * {
+    position: relative;
+  }
+
+  .derafu-block-hero__title a {
+    text-decoration: none;
+  }
+
+  .derafu-block-hero__title a:hover {
+    text-decoration: underline;
+  }
+
+  /*
+   * Subtitle links
+   */
+  .derafu-block-hero__subtitle a {
+    text-decoration: none;
+  }
+
+  .derafu-block-hero__subtitle a:hover {
+    text-decoration: underline;
+  }
+
+  /*
+   * Responsive media queries
+   */
+
+   @media (max-width: 1200px) {
+    .derafu-block-hero {
+      background-image: none !important; /* Elimina cualquier imagen de fondo */
+      background-color: var(--bs-primary) !important; /* Usa el color primario como fondo */
+    }
+  }
+  
+  @media (max-width: 991.98px) {
+    /* Height reduction */
+    .derafu-block-hero--mini {
+      min-height: calc(var(--hero-height-mini) * var(--hero-mobile-height-reduction));
+    }
+
+    .derafu-block-hero--small {
+      min-height: calc(var(--hero-height-small) * var(--hero-mobile-height-reduction));
+    }
+
+    .derafu-block-hero--medium {
+      min-height: calc(var(--hero-height-medium) * var(--hero-mobile-height-reduction));
+    }
+
+    .derafu-block-hero--large {
+      min-height: calc(var(--hero-height-large) * var(--hero-mobile-height-reduction));
+    }
+
+    .derafu-block-hero--full {
+      min-height: 100vh; /* Maintain 100vh for full size */
+    }
+
+    /* Spacing adjustments */
+    .derafu-block-hero__content {
+      padding: var(--hero-mobile-spacing-y) 0;
+    }
+
+    /* Font size adjustments */
+    .derafu-block-hero__title {
+      font-size: var(--hero-mobile-title-font-size);
+    }
+
+    .derafu-block-hero__subtitle {
+      font-size: var(--hero-mobile-subtitle-font-size);
+    }
+
+    /* Background content adjustments */
+    .derafu-block-hero__content--with-background {
+      padding: var(--hero-mobile-content-padding);
+    }
+
+    /* Button adjustments */
+    .derafu-block-hero__buttons {
+      width: 100%;
+    }
+  }
+
+  /*
+   * Media query for very small screens
+   */
+  @media (max-width: 575.98px) {
+    .derafu-block-hero__buttons {
+      flex-direction: column;
+      width: 100%;
+    }
+
+    .derafu-block-hero__buttons > * {
+      width: 100%;
+      margin-bottom: 0.5rem;
+      text-align: center;
+    }
+
+    /* Center content on mobile by default */
+    .derafu-block-hero__content--left,
+    .derafu-block-hero__content--right {
+      align-items: center;
+      text-align: center;
+    }
+
+    .derafu-block-hero__content--left .derafu-block-hero__buttons,
+    .derafu-block-hero__content--right .derafu-block-hero__buttons {
+      justify-content: center;
+    }
+  }

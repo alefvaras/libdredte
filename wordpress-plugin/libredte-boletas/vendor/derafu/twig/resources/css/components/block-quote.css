@@ -1,0 +1,265 @@
+/* Quote Component - Base Variables */
+:root {
+    /* Structure */
+    --quote-padding: 3rem;
+    --quote-border-radius: 0.5rem;
+    --quote-margin-bottom: 1.5rem;
+    --quote-icon-size: 3rem;
+    --quote-icon-offset: 2rem;
+    --quote-content-margin-bottom: 1rem;
+    --quote-author-margin-top: 1rem;
+    --quote-author-image-size: 3.5rem;
+    --quote-author-image-margin: 1rem;
+
+    /* Colors */
+    --quote-bg: var(--bs-light, #f8f9fa);
+    --quote-content-color: var(--bs-gray-900, #403434);
+    --quote-author-name-color: var(--bs-gray-600, #6c757d);
+    --quote-author-source-color: var(--bs-primary, #0d6efd);
+    --quote-icon-color: var(--bs-primary, #0d6efd);
+    --quote-icon-opacity: 0.1;
+
+    /* Typography (maintaining exact sizes) */
+    --quote-content-font-size: 1.25rem;
+    --quote-content-font-style: italic;
+    --quote-author-name-font-weight: 600;
+    --quote-author-name-font-size: 1.25rem; /* Adjusted to maintain size as in the image */
+    --quote-author-source-font-size: 0.9rem;
+
+    /* Responsive Typography */
+    --quote-content-tablet-font-size: 1.2rem;
+    --quote-content-mobile-font-size: 1.1rem;
+    --quote-content-small-font-size: 1rem;
+
+    --quote-author-name-tablet-font-size: 1.15rem;
+    --quote-author-name-mobile-font-size: 1.05rem;
+    --quote-author-name-small-font-size: 1rem;
+
+    --quote-author-source-tablet-font-size: 0.85rem;
+    --quote-author-source-mobile-font-size: 0.8rem;
+    --quote-author-source-small-font-size: 0.75rem;
+  }
+
+  /* Quote Content */
+  .derafu-block-quote__content {
+    font-size: var(--quote-content-font-size);
+    font-style: var(--quote-content-font-style);
+    color: var(--quote-content-color);
+    margin-bottom: var(--quote-content-margin-bottom);
+    position: relative;
+    z-index: 1;
+    word-wrap: break-word; /* For long words */
+  }
+
+  /* Quote Author */
+  .derafu-block-quote__author {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-top: var(--quote-author-margin-top);
+  }
+
+  .derafu-block-quote__author-image {
+    width: var(--quote-author-image-size);
+    height: var(--quote-author-image-size);
+    border-radius: 50%;
+    margin-right: var(--quote-author-image-margin);
+    object-fit: cover;
+  }
+
+  .derafu-block-quote__author-info {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .derafu-block-quote__author-name {
+    font-weight: var(--quote-author-name-font-weight);
+    color: var(--quote-author-name-color);
+    font-size: var(--quote-author-name-font-size);
+  }
+
+  .derafu-block-quote__author-source {
+    color: var(--quote-author-source-color);
+    font-size: var(--quote-author-source-font-size);
+  }
+  .derafu-block-quote__content a {
+    text-decoration: none;
+  }
+
+  .derafu-block-quote__content a:hover {
+    text-decoration: underline;
+  }
+
+  .derafu-block-quote__author-source a {
+    text-decoration: none;
+  }
+
+  .derafu-block-quote__author-source a:hover {
+    text-decoration: underline;
+  }
+  /* Quote Container */
+  .derafu-block-quote__figure {
+    position: relative;
+    margin-bottom: var(--quote-margin-bottom);
+    padding: var(--quote-padding);
+    border-radius: var(--quote-border-radius);
+    background-color: var(--quote-bg);
+    margin-left: auto;
+    margin-right: auto;
+    text-align: center;
+    overflow: hidden; /* Ensure icons don't overflow */
+  }
+
+  /* Quote Decorative Icons */
+  .derafu-block-quote__icon {
+    position: absolute;
+    color: var(--quote-icon-color);
+    opacity: var(--quote-icon-opacity);
+    font-size: var(--quote-icon-size);
+  }
+
+  .derafu-block-quote__icon--left {
+    top: 0%;
+    left: var(--quote-icon-offset);
+    transform: translateX(-50%);
+  }
+
+  .derafu-block-quote__icon--right {
+    bottom: 0%;
+    right: var(--quote-icon-offset);
+    transform: translateX(50%);
+  }
+
+  /* Responsive Styles - Tablets */
+  @media (max-width: 991.98px) {
+    .derafu-block-quote__figure {
+      padding: 1.75rem; /* Slightly reduce padding while maintaining space */
+    }
+
+    .derafu-block-quote__icon {
+      font-size: 2.5rem; /* Slightly reduce size */
+    }
+
+    .derafu-block-quote__icon--left {
+      left: 1.75rem;
+    }
+
+    .derafu-block-quote__icon--right {
+      right: 1.75rem;
+    }
+
+    /* Text size adjustments for tablets */
+    .derafu-block-quote__content {
+      font-size: var(--quote-content-tablet-font-size);
+    }
+
+    .derafu-block-quote__author-name {
+      font-size: var(--quote-author-name-tablet-font-size);
+    }
+
+    .derafu-block-quote__author-source {
+      font-size: var(--quote-author-source-tablet-font-size);
+    }
+  }
+
+  /* Responsive Styles - Medium Mobile Devices */
+  @media (max-width: 767.98px) {
+    .derafu-block-quote__figure {
+      padding: 1.5rem;
+    }
+
+    .derafu-block-quote__icon {
+      font-size: 2.25rem;
+    }
+
+    .derafu-block-quote__icon--left {
+      left: 1.5rem;
+    }
+
+    .derafu-block-quote__icon--right {
+      right: 1.5rem;
+    }
+
+    .derafu-block-quote__author-image {
+      width: 3rem;
+      height: 3rem;
+      margin-right: 0.75rem;
+    }
+
+    /* Text size adjustments for medium mobile devices */
+    .derafu-block-quote__content {
+      font-size: var(--quote-content-mobile-font-size);
+      line-height: 1.5;
+    }
+
+    .derafu-block-quote__author-name {
+      font-size: var(--quote-author-name-mobile-font-size);
+    }
+
+    .derafu-block-quote__author-source {
+      font-size: var(--quote-author-source-mobile-font-size);
+    }
+  }
+
+  /* Responsive Styles - Small Mobile Devices */
+  @media (max-width: 575.98px) {
+    .derafu-block-quote__figure {
+      padding: 1.25rem;
+    }
+
+    .derafu-block-quote__icon {
+      font-size: 2rem;
+    }
+
+    .derafu-block-quote__icon--left {
+      left: 1.25rem;
+    }
+
+    .derafu-block-quote__icon--right {
+      right: 1.25rem;
+    }
+
+    /* Text size adjustments for small mobile devices */
+    .derafu-block-quote__content {
+      font-size: var(--quote-content-small-font-size);
+      line-height: 1.4;
+      margin-bottom: 0.75rem;
+    }
+
+    .derafu-block-quote__author-name {
+      font-size: var(--quote-author-name-small-font-size);
+    }
+
+    .derafu-block-quote__author-source {
+      font-size: var(--quote-author-source-small-font-size);
+    }
+
+    .derafu-block-quote__author {
+      margin-top: 0.75rem;
+    }
+
+    .derafu-block-quote__author-image {
+      width: 2.5rem;
+      height: 2.5rem;
+      margin-right: 0.5rem;
+    }
+  }
+
+  /* Fix for very small devices */
+  @media (max-width: 360px) {
+    .derafu-block-quote__figure {
+      padding: 1rem;
+    }
+
+    .derafu-block-quote__content {
+      font-size: 0.95rem;
+    }
+
+    .derafu-block-quote__author-name {
+      font-size: 0.95rem;
+    }
+
+    .derafu-block-quote__author-source {
+      font-size: 0.7rem;
+    }
+  }

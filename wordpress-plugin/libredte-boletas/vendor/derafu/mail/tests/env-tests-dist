@@ -1,0 +1,13 @@
+#
+# Definition of environment variables for Derafu Mail tests.
+#
+# To configure, rename this file to env-tests with:
+#   $ mv env-tests-dist env-tests
+#
+# The variables must be loaded before running the tests with:
+#   $ source tests/env-tests
+#
+
+# Email (the tests use a Gmail account).
+export MAIL_USERNAME=""
+export MAIL_PASSWORD=""

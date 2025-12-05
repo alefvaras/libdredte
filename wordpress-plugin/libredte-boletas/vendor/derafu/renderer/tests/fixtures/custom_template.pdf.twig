@@ -1,0 +1,4 @@
+<h1>{{ title }}</h1>
+<p>{{ content }}</p>
+<p>Hoy es {{ date | format_as('date') }}.</p>
+<p>Arreglo a string {{ {'key1': 'value1', 'key2': 'value2', 'key3': [1, 2, 3]} | to_string() }}</p>

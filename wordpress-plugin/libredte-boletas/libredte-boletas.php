@@ -18,8 +18,8 @@ define('LIBREDTE_BOLETAS_URL', plugin_dir_url(__FILE__));
 define('LIBREDTE_BOLETAS_UPLOADS', LIBREDTE_BOLETAS_PATH . 'uploads/');
 
 // Autoloader de LibreDTE
-if (file_exists(LIBREDTE_BOLETAS_PATH . 'lib/libredte-lib-core/vendor/autoload.php')) {
-    require_once LIBREDTE_BOLETAS_PATH . 'lib/libredte-lib-core/vendor/autoload.php';
+if (file_exists(LIBREDTE_BOLETAS_PATH . 'vendor/autoload.php')) {
+    require_once LIBREDTE_BOLETAS_PATH . 'vendor/autoload.php';
 }
 
 /**

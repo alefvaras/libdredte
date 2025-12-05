@@ -1,0 +1,31 @@
+{# templates/components/block-accordion.html.twig #}
+
+<div class="derafu-block-accordion {{ attributes.render('class') }}" {{ attributes }} id="{{ this.id }}">
+    <div class="accordion" id="{{ this.id }}-accordion">
+        {% for key, item in this.items %}
+            <div class="accordion-item">
+                <h2 class="accordion-header">
+                    <button
+                        class="accordion-button {% if not item.active %}collapsed{% endif %}"
+                        type="button"
+                        data-bs-toggle="collapse"
+                        data-bs-target="#{{ this.id }}-collapse-{{ key }}"
+                        aria-expanded="{{ item.active ? 'true' : 'false' }}"
+                        aria-controls="{{ this.id }}-collapse-{{ key }}"
+                    >
+                        {{ item.title|raw }}
+                    </button>
+                </h2>
+                <div
+                    id="{{ this.id }}-collapse-{{ key }}"
+                    class="accordion-collapse collapse {% if item.active %}show{% endif %}"
+                    data-bs-parent="#{{ this.id }}-accordion"
+                >
+                    <div class="accordion-body">
+                        {{ item.content|raw }}
+                    </div>
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+</div>

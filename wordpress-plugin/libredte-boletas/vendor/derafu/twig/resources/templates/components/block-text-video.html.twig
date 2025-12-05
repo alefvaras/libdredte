@@ -1,0 +1,42 @@
+{# templates/components/block-text-video.html.twig #}
+
+<div
+    class="derafu-block-text-video {{ attributes.render('class') }}"
+    {{ attributes }}
+    id="{{ this.id }}"
+>
+    <div class="row align-items-center">
+        {# Text Column #}
+        <div class="col-12 col-md-{{ this.cols }} {% if this.videoPosition == 'left' %}order-md-2{% endif %}">
+            <div class="derafu-block-text-video__content">
+                <h2 class="derafu-block-text-video__title">{{ this.title }}</h2>
+                <div class="derafu-block-text-video__text">
+                    {{ this.content|raw }}
+                </div>
+                {% if this.buttons|length > 0 %}
+                    <div class="derafu-block-text-video__buttons">
+                        {% for button in this.buttons %}
+                            <a href="{{ button.url }}" class="derafu-block-text-video__button">
+                                {{ button.text }}
+                            </a>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+
+        {# Video Column #}
+        <div class="col-12 col-md-{{ 12 - this.cols }} {% if this.videoPosition == 'left' %}order-md-1{% endif %}">
+            <div class="derafu-block-text-video__media-wrapper">
+                <div class="derafu-block-text-video__media derafu-block-text-video__media--{{ this.aspectRatio|replace({':': '-'}) }}">
+                    <iframe
+                        src="{{ this.video }}{% if not this.showControls %}?controls=0{% endif %}"
+                        frameborder="0"
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                        allowfullscreen
+                    ></iframe>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

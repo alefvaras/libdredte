@@ -1,0 +1,60 @@
+{# templates/components/block-features-icon.html.twig #}
+
+<div class="derafu-block-features-icon {{ attributes.render('class') }}" {{ attributes }} id="{{ this.id }}">
+    {% set total = features|length %}
+
+    {# Primero determinamos el tamaño base de filas que usaremos #}
+    {% set baseRowSize = 0 %}
+    {% if total % 6 == 0 %}
+        {% set baseRowSize = 6 %}
+    {% elseif total % 4 == 0 %}
+        {% set baseRowSize = 4 %}
+    {% elseif total % 3 == 0 %}
+        {% set baseRowSize = 3 %}
+    {% endif %}
+
+    {# Calculamos cuántas filas necesitaremos #}
+    {% set rows = [] %}
+    {% set remaining = total %}
+    {% set offset = 0 %}
+
+    {% for i in range(0, ((total / 2)|round(0, 'ceil') - 1)) %}
+        {% if remaining > 0 %}
+            {% set rowSize = 0 %}
+
+            {% if baseRowSize > 0 %}
+                {% set rowSize = baseRowSize %}
+            {% elseif remaining >= 4 %}
+                {% set rowSize = 4 %}
+            {% elseif remaining == 3 %}
+                {% set rowSize = 3 %}
+            {% elseif remaining == 2 %}
+                {% set rowSize = 2 %}
+            {% elseif remaining == 1 %}
+                {% set rowSize = 1 %}
+            {% endif %}
+
+            {% if remaining == 5 and offset == 0 %}
+                {% set rowSize = 3 %}
+            {% endif %}
+
+            <div class="derafu-block-features-icon__row{% if rowSize < 3 %} derafu-block-features-icon__row--centered{% endif %}">
+                {% for j in range(0, rowSize - 1) %}
+                    {% set feature = features[offset + j] %}
+                    <div class="derafu-block-features-icon__item derafu-block-features-icon__item--{{ rowSize }}">
+                        <div class="derafu-block-features-icon__icon">
+                            <i class="{{ feature.icon }}"></i>
+                        </div>
+                        <h3 class="derafu-block-features-icon__title">{{ feature.title|raw }}</h3>
+                        <div class="derafu-block-features-icon__content">
+                            {{ feature.content|raw }}
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+
+            {% set offset = offset + rowSize %}
+            {% set remaining = remaining - rowSize %}
+        {% endif %}
+    {% endfor %}
+</div>

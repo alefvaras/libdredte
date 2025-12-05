@@ -1,0 +1,45 @@
+{# templates/components/block-modal.html.twig #}
+
+<div
+    class="modal fade {{ attributes.render('class') }}"
+    {{ attributes }}
+    id="{{ this.id }}"
+    tabindex="-1"
+    aria-labelledby="{{ this.id }}-label"
+    aria-hidden="true"
+    {% if this.withStaticBackdrop %}
+        data-bs-backdrop="static" data-bs-keyboard="false"
+    {% endif %}>
+    <div class="modal-dialog
+        {{ this.size ? 'modal-' ~ this.size : '' }}
+        {{ this.centered ? 'modal-dialog-centered' : '' }}
+        {{ this.scrollable ? 'modal-dialog-scrollable' : '' }}">
+        <div class="modal-content">
+            {% if this.title or this.showClose %}
+                <div class="modal-header">
+                    {% if this.title %}
+                        <h5 class="modal-title" id="{{ this.id }}-label">{{ this.title }}</h5>
+                    {% endif %}
+                    {% if this.showClose %}
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    {% endif %}
+                </div>
+            {% endif %}
+            <div class="modal-body">
+                {{ this.content|raw }}
+            </div>
+            {% if this.buttons|length > 0 %}
+                <div class="modal-footer">
+                    {% for button in this.buttons %}
+                        <button type="button"
+                            class="btn btn-{{ button.type|default('secondary') }}"
+                            {% if button.dismiss|default(false) %}data-bs-dismiss="modal"{% endif %}
+                            {{ button.attributes|default('')|raw }}>
+                            {{ button.text }}
+                        </button>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>

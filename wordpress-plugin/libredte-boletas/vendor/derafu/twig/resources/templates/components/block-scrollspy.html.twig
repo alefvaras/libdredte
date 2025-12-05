@@ -1,0 +1,102 @@
+{# templates/components/block-scrollspy.html.twig #}
+
+<div
+    class="derafu-block-scrollspy row {{ attributes.render('class') }}"
+    {{ attributes }}
+    id="{{ this.id }}"
+    {% if this.style %}style="{{ this.style }}"{% endif %}
+>
+
+    {# Navigation List - automatically adjusts based on device #}
+    <div class="derafu-block-scrollspy__list col-md-{{ this.cols }} col-12">
+        <div
+            id="{% if orientation == 'horizontal' %}list-scrollspy-horizontal{% else %}list-scrollspy-vertical{% endif %}"
+            class="list-group {% if orientation != 'vertical' %}list-group-{{ orientation }}{% else %}list-group-horizontal-md d-md-block{% endif %}"
+        >
+            {% for section in sections %}
+                <div class="derafu-block-scrollspy__list-item">
+                    <a class="list-group-item list-group-item-action" href="#{{ section.id }}">
+                        {% if section.icon %}<i class="fas {{ section.icon }} me-2"></i>{% endif %}
+                        {{ section.title }}
+                        {% if section.badge %}<span class="badge bg-primary float-end">{{ section.badge }}</span>{% endif %}
+                    </a>
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    {# Scrollspy Content - without fixed height on mobile #}
+    <div class="derafu-block-scrollspy__content col-md-{{ 12 - this.cols }} col-12">
+        <div
+            data-bs-spy="scroll"
+            {% if this.orientation == 'horizontal' %}
+                data-bs-orientation="horizontal"
+            {% endif %}
+            style="height: {% if this.orientation == 'horizontal' %}{{ this.height }}{% else %}auto{% endif %};
+                overflow-y: {% if this.orientation == 'horizontal' %}scroll{% else %}visible{% endif %};"
+            data-bs-target="#{% if this.orientation == 'horizontal' %}list-scrollspy-horizontal{% else %}list-scrollspy-vertical{% endif %}"
+            data-bs-offset="0"
+            data-bs-smooth-scroll="true"
+            class="scrollspy-example p-3"
+            tabindex="0"
+        >
+            {% for section in this.sections %}
+                <div id="{{ section.id }}" class="derafu-block-scrollspy__section mb-4">
+                    <h4 class="mb-3 pb-2 border-bottom">{{ section.title }}</h4>
+                    <div class="derafu-block-scrollspy__section-content">
+                        {{ section.content|raw }}
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+{# Script to automatically adjust the scrollspy orientation on mobile devices #}
+{% block javascripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const adjustScrollspy = function() {
+            const scrollspyContent = document.querySelector('.scrollspy-example');
+            const listGroup = document.querySelector('.derafu-block-scrollspy__list .list-group');
+
+            if (window.innerWidth <= 768) {
+                // On mobile: change to horizontal and remove fixed height.
+                scrollspyContent.setAttribute('data-bs-orientation', 'horizontal');
+                scrollspyContent.style.height = 'auto';
+                scrollspyContent.style.overflowY = 'visible';
+
+                // Ensure the menu is horizontal on mobile.
+                if (!listGroup.classList.contains('list-group-horizontal')) {
+                    listGroup.classList.add('list-group-horizontal');
+                }
+            } else {
+                // On desktop: keep original configuration.
+                {% if this.orientation == 'horizontal' %}
+                    scrollspyContent.setAttribute('data-bs-orientation', 'horizontal');
+                    scrollspyContent.style.height = '{{ height }}';
+                    scrollspyContent.style.overflowY = 'scroll';
+                {% else %}
+                    scrollspyContent.setAttribute('data-bs-orientation', 'vertical');
+                    scrollspyContent.style.height = '{{ height }}';
+                    scrollspyContent.style.overflowY = 'scroll';
+
+                    // Ensure the menu is vertical on desktop if configured.
+                    listGroup.classList.remove('list-group-horizontal');
+                {% endif %}
+            }
+
+            // Restart scrollspy to apply changes.
+            var dataSpyList = [].slice.call(document.querySelectorAll('[data-bs-spy="scroll"]'));
+            dataSpyList.forEach(function(dataSpyEl) {
+                bootstrap.ScrollSpy.getInstance(dataSpyEl)?.dispose();
+                new bootstrap.ScrollSpy(dataSpyEl);
+            });
+        };
+
+        // Execute on load and when resizing.
+        adjustScrollspy();
+        window.addEventListener('resize', adjustScrollspy);
+    });
+</script>
+{% endblock %}

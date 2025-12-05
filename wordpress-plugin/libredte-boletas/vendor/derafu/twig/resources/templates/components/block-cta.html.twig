@@ -1,0 +1,20 @@
+{# templates/components/block-cta.html.twig #}
+
+<div class="derafu-block-cta {{ attributes.render('class') }}" {{ attributes }} id="{{ this.id }}">
+    <div class="derafu-block-cta__container container">
+        <div class="derafu-block-cta__row row align-items-center">
+            {# Text Section #}
+            <div class="col-md-{{ this.cols }} derafu-block-cta__content">
+                <h3 class="derafu-block-cta__title">{{ this.title|raw }}</h3>
+                <p class="derafu-block-cta__content">{{ this.content|raw }}</p>
+            </div>
+
+            {# Button Section #}
+            <div class="col-md-{{ 12 - this.cols }} derafu-block-cta__action">
+                <a href="{{ this.buttonUrl }}" class="derafu-block-cta__button btn {{ this.buttonUrl ? '' : 'disabled' }}">
+                    {{ this.buttonText }}
+                </a>
+            </div>
+        </div>
+    </div>
+</div>

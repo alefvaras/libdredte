@@ -1,0 +1,194 @@
+/* ======================================
+   Base Variables
+   ====================================== */
+   :root {
+    /* Global Spacing */
+    --spacing-xs: 0.5rem;
+    --spacing-sm: 1rem;
+    --spacing-md: 1.5rem;
+    --spacing-lg: 2rem;
+    --spacing-y: var(--spacing-lg, 2rem);
+
+    /* Internal Spacing */
+    --accordion-button-padding-x: var(--spacing-md, 1.5rem);
+    --accordion-button-padding-y: var(--spacing-sm, 1rem);
+    --accordion-body-padding: var(--spacing-md, 1.5rem);
+
+    /* Responsive Spacing */
+    --accordion-mobile-button-padding-x: var(--spacing-sm, 1rem);
+    --accordion-mobile-button-padding-y: var(--spacing-xs, 0.5rem);
+    --accordion-mobile-body-padding: var(--spacing-sm, 1rem);
+
+    /* Typography */
+    --accordion-button-font-weight: var(--font-weight-medium, 500);
+    --accordion-button-font-size: 1rem;
+    --accordion-mobile-button-font-size: 0.9375rem;
+
+    /* Paragraphs */
+    --accordion-paragraph-margin-bottom: var(--spacing-sm, 1rem);
+    --accordion-mobile-paragraph-margin-bottom: var(--spacing-xs, 0.5rem);
+
+    /* Breakpoints */
+    --mobile-breakpoint: 576px;
+    --tablet-breakpoint: 768px;
+}
+
+/* ======================================
+   Accordion Styles
+   ====================================== */
+.derafu-block-accordion {
+    margin: var(--spacing-y, 2rem) auto;
+}
+
+/* Accordion - Button */
+.derafu-block-accordion .accordion-button {
+    display: flex;
+    align-items: center;
+    position: relative;
+    font-weight: var(--accordion-button-font-weight);
+    font-size: var(--accordion-button-font-size);
+    padding: var(--accordion-button-padding-y) var(--accordion-button-padding-x);
+    transition: all 0.2s ease;
+}
+
+.derafu-block-accordion .accordion-button:not(.collapsed) {
+    color: var(--bs-accordion-active-color, inherit);
+    background-color: var(--bs-accordion-active-bg, rgba(0, 0, 0, 0.05));
+    box-shadow: inset 0 calc(-1 * var(--bs-accordion-border-width, 1px)) 0 var(--bs-accordion-border-color, rgba(0, 0, 0, 0.125));
+}
+
+/* Accordion - Button Icon */
+.derafu-block-accordion .accordion-button::after {
+    flex-shrink: 0;
+    width: 1.25rem;
+    height: 1.25rem;
+    margin-left: auto;
+    background-size: 1.25rem;
+    transition: transform 0.2s ease-in-out;
+    filter: none;
+}
+
+.derafu-block-accordion .accordion-button:not(.collapsed)::after {
+    transform: var(--bs-accordion-btn-icon-transform, rotate(180deg));
+    background-image: var(--bs-accordion-btn-active-icon, url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='%230c63e4'%3e%3cpath fill-rule='evenodd' d='M1.646 4.646a.5.5 0 0 1 .708 0L8 10.293l5.646-5.647a.5.5 0 0 1 .708.708l-6 6a.5.5 0 0 1-.708 0l-6-6a.5.5 0 0 1 0-.708z'/%3e%3c/svg%3e"));
+}
+
+/* Accordion - Content */
+.derafu-block-accordion .accordion-body {
+    padding: var(--accordion-body-padding);
+}
+
+.derafu-block-accordion .accordion-body p {
+    margin-bottom: var(--accordion-paragraph-margin-bottom);
+}
+
+.derafu-block-accordion .accordion-body p:last-child {
+    margin-bottom: 0;
+}
+
+/* Accordion - Links */
+.derafu-block-accordion .accordion-body a {
+    text-decoration: none;
+}
+
+.derafu-block-accordion .accordion-body a:hover {
+    text-decoration: underline;
+}
+
+/* Accessibility - Focus */
+.derafu-block-accordion .accordion-button:focus {
+    z-index: 3;
+    border-color: rgba(13, 110, 253, 0.5);
+    outline: 0;
+    box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+}
+
+.derafu-block-accordion.container {
+    width: 100%;
+    margin-left: auto;
+    margin-right: auto;
+    padding-left: var(--accordion-button-padding-x, 1.5rem);
+    padding-right: var(--accordion-button-padding-x, 1.5rem);
+}
+
+/* ======================================
+   Media Queries - Responsive
+   ====================================== */
+
+/* Tablets (≤ 768px) */
+@media (max-width: 768px) {
+    .derafu-block-accordion {
+        margin: calc(var(--spacing-y) * 0.8) auto;
+    }
+
+    .derafu-block-accordion .accordion-button {
+        font-size: calc(var(--accordion-button-font-size) * 0.95);
+        padding: calc(var(--accordion-button-padding-y) * 0.9) var(--accordion-button-padding-x);
+    }
+
+    .derafu-block-accordion .accordion-body {
+        padding: calc(var(--accordion-body-padding) * 0.9);
+    }
+}
+
+/* Mobile (≤ 576px) */
+@media (max-width: 576px) {
+    .derafu-block-accordion {
+        margin: calc(var(--spacing-y) * 0.6) auto;
+    }
+
+    .derafu-block-accordion .accordion-item {
+        border-radius: 0;
+    }
+
+    .derafu-block-accordion .accordion-item:first-of-type {
+        border-top-left-radius: 0.25rem;
+        border-top-right-radius: 0.25rem;
+    }
+
+    .derafu-block-accordion .accordion-item:last-of-type {
+        border-bottom-left-radius: 0.25rem;
+        border-bottom-right-radius: 0.25rem;
+    }
+
+    .derafu-block-accordion .accordion-button {
+        font-size: var(--accordion-mobile-button-font-size);
+        padding: var(--accordion-mobile-button-padding-y) var(--accordion-mobile-button-padding-x);
+        line-height: 1.4;
+    }
+
+    .derafu-block-accordion .accordion-button::after {
+        width: 1rem;
+        height: 1rem;
+        background-size: 1rem;
+        position: relative;
+        right: -0.25rem;
+    }
+
+    .derafu-block-accordion .accordion-body {
+        padding: var(--accordion-mobile-body-padding);
+    }
+
+    .derafu-block-accordion .accordion-body p {
+        margin-bottom: var(--accordion-mobile-paragraph-margin-bottom);
+        font-size: 0.9375rem;
+        line-height: 1.5;
+    }
+}
+
+/* Small Mobile (≤ 375px) */
+@media (max-width: 375px) {
+    .derafu-block-accordion .accordion-button {
+        font-size: 0.875rem;
+        padding: calc(var(--accordion-mobile-button-padding-y) * 0.9) calc(var(--accordion-mobile-button-padding-x) * 0.9);
+        line-height: 1.3;
+    }
+
+    .derafu-block-accordion .accordion-body {
+        padding: calc(var(--accordion-mobile-body-padding) * 0.9);
+    }
+
+    .derafu-block-accordion .accordion-body p {
+        font-size: 0.875rem;
+    }
+}
