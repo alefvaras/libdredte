@@ -1,0 +1,360 @@
+<?php
+/**
+ * Clase para emisión de boletas
+ */
+
+defined('ABSPATH') || exit;
+
+class LibreDTE_Boleta {
+
+    private $sii_client;
+    private $ambiente;
+    private $emisor;
+
+    public function __construct() {
+        $this->sii_client = new LibreDTE_SII_Client();
+        $this->ambiente = LibreDTE_Boletas::get_ambiente();
+        $this->emisor = LibreDTE_Boletas::get_emisor_config();
+    }
+
+    /**
+     * Emitir boleta
+     *
+     * @param array $data Datos de la boleta
+     * @return array|WP_Error
+     */
+    public function emitir($data) {
+        // Validar datos requeridos
+        $validation = $this->validar_datos($data);
+        if (is_wp_error($validation)) {
+            return $validation;
+        }
+
+        // Obtener siguiente folio
+        $folio = LibreDTE_Database::get_siguiente_folio(39, $this->ambiente);
+        if (is_wp_error($folio)) {
+            return $folio;
+        }
+
+        // Preparar datos de la boleta
+        $boleta_data = $this->preparar_datos_boleta($data, $folio);
+
+        // Generar XML de la boleta
+        $xml_result = $this->sii_client->generar_boleta_xml($boleta_data);
+        if (is_wp_error($xml_result)) {
+            LibreDTE_Database::log('error', 'Error generando XML boleta', [
+                'folio' => $folio,
+                'error' => $xml_result->get_error_message(),
+            ]);
+            return $xml_result;
+        }
+
+        // Calcular montos
+        $montos = $this->calcular_montos($data['items']);
+
+        // Guardar en base de datos
+        $boleta_id = LibreDTE_Database::save_boleta([
+            'folio' => $folio,
+            'tipo_dte' => 39,
+            'fecha_emision' => date('Y-m-d'),
+            'rut_receptor' => sanitize_text_field($data['receptor']['rut'] ?? '66666666-6'),
+            'razon_social_receptor' => sanitize_text_field($data['receptor']['razon_social'] ?? 'CLIENTE'),
+            'monto_neto' => $montos['neto'],
+            'monto_iva' => $montos['iva'],
+            'monto_exento' => $montos['exento'],
+            'monto_total' => $montos['total'],
+            'estado' => 'generado',
+            'ambiente' => $this->ambiente,
+            'xml_documento' => $xml_result['xml'],
+        ]);
+
+        if (is_wp_error($boleta_id)) {
+            return $boleta_id;
+        }
+
+        // Incrementar folio
+        LibreDTE_Database::incrementar_folio(39, $this->ambiente);
+
+        // Log
+        LibreDTE_Database::log('boleta', 'Boleta generada', [
+            'id' => $boleta_id,
+            'folio' => $folio,
+            'total' => $montos['total'],
+        ]);
+
+        $result = [
+            'id' => $boleta_id,
+            'folio' => $folio,
+            'total' => $montos['total'],
+            'estado' => 'generado',
+            'mensaje' => 'Boleta generada correctamente',
+        ];
+
+        // Verificar si envío automático está habilitado
+        $envio_automatico = get_option('libredte_envio_automatico', 0);
+        if ($envio_automatico) {
+            $envio_result = $this->enviar_al_sii($boleta_id);
+            if (!is_wp_error($envio_result)) {
+                $result['enviado'] = true;
+                $result['track_id'] = $envio_result['track_id'];
+                $result['estado'] = 'enviado';
+                $result['mensaje'] = 'Boleta generada y enviada al SII';
+            } else {
+                $result['enviado'] = false;
+                $result['error_envio'] = $envio_result->get_error_message();
+            }
+        }
+
+        return $result;
+    }
+
+    /**
+     * Enviar boleta al SII
+     *
+     * @param int $boleta_id ID de la boleta
+     * @return array|WP_Error
+     */
+    public function enviar_al_sii($boleta_id) {
+        $boleta = LibreDTE_Database::get_boleta($boleta_id);
+
+        if (!$boleta) {
+            return new WP_Error('not_found', 'Boleta no encontrada');
+        }
+
+        if ($boleta->enviado_sii) {
+            return new WP_Error('already_sent', 'La boleta ya fue enviada al SII');
+        }
+
+        // Crear sobre de envío
+        $sobre_result = $this->sii_client->crear_sobre_boleta($boleta);
+        if (is_wp_error($sobre_result)) {
+            return $sobre_result;
+        }
+
+        // Enviar al SII
+        $envio_result = $this->sii_client->enviar_documento($sobre_result['xml'], $boleta->ambiente);
+        if (is_wp_error($envio_result)) {
+            LibreDTE_Database::log('error', 'Error enviando boleta al SII', [
+                'boleta_id' => $boleta_id,
+                'folio' => $boleta->folio,
+                'error' => $envio_result->get_error_message(),
+            ]);
+            return $envio_result;
+        }
+
+        // Actualizar boleta
+        LibreDTE_Database::update_boleta($boleta_id, [
+            'xml_sobre' => $sobre_result['xml'],
+            'track_id' => $envio_result['track_id'],
+            'estado' => 'enviado',
+            'enviado_sii' => 1,
+            'fecha_envio' => current_time('mysql'),
+            'respuesta_sii' => json_encode($envio_result),
+        ]);
+
+        // Log
+        LibreDTE_Database::log('envio', 'Boleta enviada al SII', [
+            'boleta_id' => $boleta_id,
+            'folio' => $boleta->folio,
+            'track_id' => $envio_result['track_id'],
+        ]);
+
+        return [
+            'track_id' => $envio_result['track_id'],
+            'estado' => $envio_result['estado'],
+        ];
+    }
+
+    /**
+     * Enviar múltiples boletas al SII
+     *
+     * @param array $boleta_ids IDs de boletas a enviar
+     * @return array
+     */
+    public function enviar_multiples($boleta_ids) {
+        $resultados = [];
+
+        foreach ($boleta_ids as $id) {
+            $result = $this->enviar_al_sii($id);
+            $resultados[$id] = is_wp_error($result)
+                ? ['error' => $result->get_error_message()]
+                : $result;
+        }
+
+        return $resultados;
+    }
+
+    /**
+     * Consultar estado de boleta en SII
+     *
+     * @param int $boleta_id
+     * @return array|WP_Error
+     */
+    public function consultar_estado($boleta_id) {
+        $boleta = LibreDTE_Database::get_boleta($boleta_id);
+
+        if (!$boleta) {
+            return new WP_Error('not_found', 'Boleta no encontrada');
+        }
+
+        if (!$boleta->track_id) {
+            return new WP_Error('no_track', 'La boleta no tiene Track ID');
+        }
+
+        $estado = $this->sii_client->consultar_estado($boleta->track_id, $boleta->ambiente);
+
+        if (!is_wp_error($estado)) {
+            // Actualizar estado si cambió
+            if ($estado['estado'] !== $boleta->estado) {
+                LibreDTE_Database::update_boleta($boleta_id, [
+                    'estado' => $estado['estado'],
+                    'respuesta_sii' => json_encode($estado),
+                ]);
+            }
+        }
+
+        return $estado;
+    }
+
+    /**
+     * Validar datos de boleta
+     */
+    private function validar_datos($data) {
+        // Verificar emisor configurado
+        if (empty($this->emisor['RUTEmisor'])) {
+            return new WP_Error('no_emisor', 'Debe configurar los datos del emisor');
+        }
+
+        // Verificar items
+        if (empty($data['items']) || !is_array($data['items'])) {
+            return new WP_Error('no_items', 'Debe incluir al menos un item');
+        }
+
+        // Verificar cada item
+        foreach ($data['items'] as $i => $item) {
+            if (empty($item['nombre'])) {
+                return new WP_Error('item_sin_nombre', "El item " . ($i + 1) . " no tiene nombre");
+            }
+            if (!isset($item['cantidad']) || $item['cantidad'] <= 0) {
+                return new WP_Error('item_sin_cantidad', "El item " . ($i + 1) . " no tiene cantidad válida");
+            }
+            if (!isset($item['precio']) || $item['precio'] < 0) {
+                return new WP_Error('item_sin_precio', "El item " . ($i + 1) . " no tiene precio válido");
+            }
+        }
+
+        // Verificar CAF
+        $caf = LibreDTE_Database::get_caf_activo(39, $this->ambiente);
+        if (!$caf) {
+            return new WP_Error('no_caf', 'No hay CAF activo. Debe cargar un archivo de folios.');
+        }
+
+        // Verificar certificado
+        $cert_file = get_option("libredte_cert_{$this->ambiente}_file", '');
+        if (empty($cert_file)) {
+            return new WP_Error('no_cert', 'No hay certificado digital configurado');
+        }
+
+        return true;
+    }
+
+    /**
+     * Preparar datos de boleta para XML
+     */
+    private function preparar_datos_boleta($data, $folio) {
+        $items = [];
+        foreach ($data['items'] as $item) {
+            $item_data = [
+                'NmbItem' => sanitize_text_field($item['nombre']),
+                'QtyItem' => floatval($item['cantidad']),
+                'PrcItem' => floatval($item['precio']),
+            ];
+
+            if (!empty($item['unidad'])) {
+                $item_data['UnmdItem'] = sanitize_text_field($item['unidad']);
+            }
+
+            if (!empty($item['exento'])) {
+                $item_data['IndExe'] = 1;
+            }
+
+            $items[] = $item_data;
+        }
+
+        return [
+            'Encabezado' => [
+                'IdDoc' => [
+                    'TipoDTE' => 39,
+                    'Folio' => $folio,
+                    'FchEmis' => date('Y-m-d'),
+                    'IndServicio' => 3,
+                ],
+                'Emisor' => $this->emisor,
+                'Receptor' => [
+                    'RUTRecep' => sanitize_text_field($data['receptor']['rut'] ?? '66666666-6'),
+                    'RznSocRecep' => sanitize_text_field($data['receptor']['razon_social'] ?? 'CLIENTE'),
+                    'DirRecep' => sanitize_text_field($data['receptor']['direccion'] ?? 'Santiago'),
+                    'CmnaRecep' => sanitize_text_field($data['receptor']['comuna'] ?? 'Santiago'),
+                ],
+            ],
+            'Detalle' => $items,
+        ];
+    }
+
+    /**
+     * Calcular montos de la boleta
+     */
+    private function calcular_montos($items) {
+        $bruto_afecto = 0;
+        $exento = 0;
+
+        foreach ($items as $item) {
+            $subtotal = floatval($item['cantidad']) * floatval($item['precio']);
+
+            if (!empty($item['exento'])) {
+                $exento += $subtotal;
+            } else {
+                $bruto_afecto += $subtotal;
+            }
+        }
+
+        // Para boletas, los precios incluyen IVA
+        // Neto = Bruto / 1.19
+        $neto = round($bruto_afecto / 1.19);
+        $iva = $bruto_afecto - $neto;
+        $total = $bruto_afecto + $exento;
+
+        return [
+            'neto' => (int) $neto,
+            'iva' => (int) $iva,
+            'exento' => (int) $exento,
+            'total' => (int) $total,
+        ];
+    }
+
+    /**
+     * Obtener PDF de boleta (si está disponible)
+     */
+    public function get_pdf($boleta_id) {
+        $boleta = LibreDTE_Database::get_boleta($boleta_id);
+
+        if (!$boleta) {
+            return new WP_Error('not_found', 'Boleta no encontrada');
+        }
+
+        // Generar PDF usando template
+        return $this->generar_pdf($boleta);
+    }
+
+    /**
+     * Generar PDF de boleta
+     */
+    private function generar_pdf($boleta) {
+        // Aquí se puede integrar una librería de PDF como TCPDF o Dompdf
+        // Por ahora retornamos el XML
+        return [
+            'folio' => $boleta->folio,
+            'xml' => $boleta->xml_documento,
+        ];
+    }
+}

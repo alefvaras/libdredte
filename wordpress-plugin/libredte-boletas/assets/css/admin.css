@@ -1,0 +1,374 @@
+/**
+ * LibreDTE Boletas - Admin Styles
+ */
+
+/* General */
+.wrap.libredte-dashboard,
+.wrap.libredte-nueva-boleta,
+.wrap.libredte-historial,
+.wrap.libredte-configuracion,
+.wrap.libredte-caf,
+.wrap.libredte-rcof {
+    max-width: 1400px;
+}
+
+/* Cards */
+.card {
+    background: #fff;
+    border: 1px solid #c3c4c7;
+    border-radius: 4px;
+    padding: 20px;
+    margin-bottom: 20px;
+    box-shadow: 0 1px 1px rgba(0,0,0,.04);
+}
+
+.card h2 {
+    margin-top: 0;
+    padding-bottom: 10px;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+/* Ambiente Badge */
+.ambiente-badge {
+    display: inline-block;
+    padding: 8px 16px;
+    border-radius: 4px;
+    font-weight: 500;
+    margin-bottom: 20px;
+}
+
+.ambiente-badge.certificacion {
+    background: #fef3c7;
+    color: #92400e;
+    border: 1px solid #fcd34d;
+}
+
+.ambiente-badge.produccion {
+    background: #d1fae5;
+    color: #065f46;
+    border: 1px solid #6ee7b7;
+}
+
+.ambiente-badge .dashicons {
+    vertical-align: middle;
+    margin-right: 5px;
+}
+
+.envio-mode {
+    opacity: 0.8;
+    margin-left: 10px;
+}
+
+/* Estadisticas Grid */
+.estadisticas-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 20px;
+    margin-bottom: 20px;
+}
+
+.stat-card {
+    background: #fff;
+    border: 1px solid #c3c4c7;
+    border-radius: 8px;
+    padding: 20px;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.stat-card.warning {
+    border-color: #d63638;
+    background: #fff5f5;
+}
+
+.stat-icon {
+    font-size: 36px;
+    color: #2271b1;
+}
+
+.stat-card.warning .stat-icon {
+    color: #d63638;
+}
+
+.stat-number {
+    display: block;
+    font-size: 28px;
+    font-weight: 700;
+    color: #1e293b;
+    line-height: 1.2;
+}
+
+.stat-label {
+    color: #64748b;
+    font-size: 13px;
+}
+
+/* Button Grid */
+.button-grid {
+    display: flex;
+    gap: 15px;
+    flex-wrap: wrap;
+}
+
+.button-hero {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.button-hero .dashicons {
+    font-size: 18px;
+    width: 18px;
+    height: 18px;
+}
+
+/* Estado Badges */
+.estado-badge {
+    display: inline-block;
+    padding: 4px 10px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.estado-aceptado, .estado-activo {
+    background: #d1fae5;
+    color: #065f46;
+}
+
+.estado-rechazado, .estado-error {
+    background: #fee2e2;
+    color: #991b1b;
+}
+
+.estado-pendiente {
+    background: #fef3c7;
+    color: #92400e;
+}
+
+.estado-generado, .estado-sin-enviar {
+    background: #e5e7eb;
+    color: #374151;
+}
+
+.estado-enviado {
+    background: #dbeafe;
+    color: #1e40af;
+}
+
+/* Tables */
+.boletas-table td,
+.boletas-table th {
+    vertical-align: middle;
+}
+
+.boletas-table .numero {
+    text-align: right;
+    font-family: monospace;
+}
+
+.boletas-table .acciones {
+    white-space: nowrap;
+}
+
+.boletas-table .button-small {
+    padding: 2px 6px;
+}
+
+.boletas-table .dashicons {
+    font-size: 16px;
+    width: 16px;
+    height: 16px;
+    vertical-align: middle;
+}
+
+/* Modal */
+.libredte-modal {
+    position: fixed;
+    z-index: 100000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0,0,0,0.6);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.modal-content {
+    background-color: #fff;
+    padding: 30px;
+    border-radius: 8px;
+    max-width: 600px;
+    width: 90%;
+    max-height: 90vh;
+    overflow-y: auto;
+    position: relative;
+    box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1), 0 10px 10px -5px rgba(0,0,0,0.04);
+}
+
+.modal-content.modal-large {
+    max-width: 900px;
+}
+
+.modal-close {
+    position: absolute;
+    top: 15px;
+    right: 20px;
+    font-size: 28px;
+    font-weight: bold;
+    color: #64748b;
+    cursor: pointer;
+    line-height: 1;
+}
+
+.modal-close:hover {
+    color: #1e293b;
+}
+
+/* Forms */
+.boleta-form .form-table th {
+    width: 150px;
+}
+
+.totales-card {
+    max-width: 400px;
+}
+
+.totales-table {
+    width: 100%;
+}
+
+.totales-table th {
+    text-align: left;
+    padding: 10px 0;
+    width: 100px;
+}
+
+.totales-table td {
+    text-align: right;
+    padding: 10px 0;
+    font-size: 18px;
+    font-weight: 500;
+}
+
+.totales-table .total-row th,
+.totales-table .total-row td {
+    font-size: 24px;
+    font-weight: 700;
+    padding-top: 15px;
+    border-top: 2px solid #e5e7eb;
+}
+
+.submit-area {
+    margin-top: 30px;
+    text-align: center;
+}
+
+/* Items Table */
+#tabla-items input[type="text"],
+#tabla-items input[type="number"] {
+    width: 100%;
+}
+
+#tabla-items .item-cantidad {
+    width: 80px;
+}
+
+#tabla-items .item-precio {
+    width: 100px;
+}
+
+.btn-remove-item {
+    color: #d63638 !important;
+    border-color: #d63638 !important;
+}
+
+/* Filtros */
+.filtros-card {
+    margin-bottom: 20px;
+}
+
+.filtros-form {
+    display: flex;
+    gap: 20px;
+    align-items: flex-end;
+    flex-wrap: wrap;
+}
+
+.filtro-group {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.filtro-group label {
+    font-weight: 500;
+    font-size: 13px;
+}
+
+.filtro-group input,
+.filtro-group select {
+    min-width: 150px;
+}
+
+/* Acciones masivas */
+.acciones-masivas {
+    margin: 15px 0;
+    display: flex;
+    gap: 10px;
+}
+
+/* Tabs */
+.tab-content {
+    display: none;
+}
+
+.tab-content.active {
+    display: block;
+}
+
+/* Loading */
+.loading {
+    text-align: center;
+    padding: 40px;
+    color: #64748b;
+}
+
+/* Spin animation */
+.spin {
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    100% { transform: rotate(360deg); }
+}
+
+/* Responsive */
+@media (max-width: 782px) {
+    .estadisticas-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .button-grid {
+        flex-direction: column;
+    }
+
+    .filtros-form {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .filtro-group input,
+    .filtro-group select {
+        width: 100%;
+    }
+
+    .detalle-grid {
+        grid-template-columns: 1fr !important;
+    }
+}
