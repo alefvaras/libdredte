@@ -1,0 +1,73 @@
+Rut: 16694181 - 4Cerrar Sesión
+SII - Servicio de Impuestos InternosContactoAyudaServicios onlineMi SII
+
+SOLICITUD DE TIMBRAJE ELECTRONICO DE DOCUMENTOS
+En esta página podrá solicitar rangos de numeración para utilizar en los Documentos Tributarios Electrónicos autorizados para los contribuyentes.
+
+El contribuyente AKIBARA SPA, Rut 78274225-6, registra la siguiente información de timbraje para BOLETA ELECTRONICA DE VENTAS Y SERV. :
+
+Timbraje Solicitado:
+Fecha Timbraje	05-12-2025 13:26
+Mandatario	16694181-4   ALEJANDRO ANTONIO FERNANDEZ VARAS
+Cantidad Solicitada	10
+Disponible	0
+Máximo Autorizado	0
+Folio Inicial	2039
+Folio Final	2048
+
+Timbraje Anterior:
+Fecha Timbraje	18-11-2025
+Mandatario	16694181-4   ALEJANDRO ANTONIO FERNANDEZ VARAS
+Cantidad Timbrada	50
+Folio Inicial	1989
+Folio Final	2038
+
+
+
+SII - Servicio de Impuestos InternosContactoAyudaServicios onlineMi SII
+ACTUALIZACION DE DATOS DEL CONTRIBUYENTE
+A través de esta opción usted podrá actualizar tanto los antecedentes de los usuarios como del Contribuyente que representa.
+
+Antecedentes del Contribuyente registrados :
+
+Rut	 78274225-6
+Razón Social	 AKIBARA SPA
+Fecha Autorización	 18-11-2025
+Fecha Resolución	 18-11-2025
+Resolución	 0
+Nombre del Software (*)	 AKIBARA-SII
+Mail Contacto Usuario-Administrador (*)	 ale.fvaras@gmail.com
+Mail Contacto SII (*)	 ale.fvaras@gmail.com
+Mail Contacto Empresas (*)	 contacto@akibara.cl
+URL	 
+
+ 
+IMPORTANTE: Si el contribuyente está enrolado para ser notificado por correo electrónico, de acuerdo a lo estipulado en la circular N°34 del 15 de mayo de 2015, comenzará a recibir sus notificaciones en la casilla del Usuario Administrador.
+
+
+El Servicio de Impuestos Internos con fecha 20-10-2025 17:12:36, certifica que ha efectuado el trámite de Inicio de Actividades.
+Información General
+Contribuyente : 78274225-6 AKIBARA SPA
+Clasificación : SOCIEDAD POR ACCIONES
+Solicitante : 16694181-4 ALEJANDRO ANTONIO FERNANDEZ VARAS
+Fecha inicio actividades : 18-10-2025
+Actividad a realizar : Comercio minorista de coleccionables, figuras, libros, importación
+Resultado Clasificación
+Categoría Tributaria Afecto a IVA Segmento
+PRIMERA SI MICRO EMPRESA
+Actividades Económicas
+Código Descripción Categoría Afecto
+476101 VENTA AL POR MENOR DE LIBROS EN COMERCIOS ESPECIALIZADOS PRIMERA SI
+479100 VENTA AL POR MENOR POR CORREO, POR INTERNET Y VIA TELEFONICA PRIMERA SI
+477399 VENTA AL POR MENOR DE OTROS PRODUCTOS
+EN COMERCIOS ESPECIALIZADOS N.C.P.
+PRIMERA SI
+Dirección
+Domicilio Calle/Número: BARTOLO SOTO 3700 DP 1402 PISO 14, Depto: 1402, Rol: 2952-563, Comuna: SAN MIGUEL, Rut
+Propietario: 16694181-4, Calidad Ocupac.: ARRENDADO NOTARIAL, Monto arriendo M$: 300000
+Información de contacto
+Correo Electrónico Teléfono móvil
+contacto@akibara.cl 942806106
+Contribuyente no ha solicitado verificación de actividades por lo que no podrá emitir facturas electrónicas.
+
+certificado esta al rut de 16694181-5. contraseña 5605
