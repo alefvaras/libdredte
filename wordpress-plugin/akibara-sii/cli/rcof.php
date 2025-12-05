@@ -162,7 +162,7 @@ try {
     $signedXml = $signatureWorker->signXml(
         doc: $xmlDoc,
         certificate: $certificate,
-        reference: '#' . $documentId
+        reference: $documentId  // Sin '#' - LibreDTE lo agrega automáticamente
     );
 
     $rcofFile = $outputDir . "RCOF_" . date('Ymd_His') . ".xml";
