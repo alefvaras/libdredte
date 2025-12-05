@@ -12,9 +12,8 @@ class Akibara_WooCommerce_Integration {
 
     /**
      * Meta key donde el plugin de RUT guarda el valor
-     * Configurar según el plugin instalado
      */
-    const RUT_META_KEY = '_billing_rut'; // Cambiar si tu plugin usa otro meta key
+    const RUT_META_KEY = 'billing_rut';
 
     /**
      * Inicializar hooks
@@ -43,9 +42,8 @@ class Akibara_WooCommerce_Integration {
     public static function get_rut_from_order($order_id) {
         // Intentar varios meta keys comunes
         $meta_keys = [
-            self::RUT_META_KEY,
-            '_billing_rut',
-            'billing_rut',
+            self::RUT_META_KEY,  // billing_rut (principal)
+            '_billing_rut',      // fallback con underscore
             '_rut',
             'rut',
             '_billing_rut_number',
