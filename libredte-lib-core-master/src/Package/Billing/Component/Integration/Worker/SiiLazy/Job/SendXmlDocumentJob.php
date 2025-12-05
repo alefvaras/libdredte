@@ -250,6 +250,28 @@ class SendXmlDocumentJob extends AbstractJob implements JobInterface
             curl_setopt($curl, CURLOPT_SSL_VERIFYHOST, 0);
         }
 
+        // Configurar proxy si está definido en variables de entorno.
+        $httpsProxy = getenv('https_proxy') ?: getenv('HTTPS_PROXY');
+        if ($httpsProxy) {
+            $proxyParts = parse_url($httpsProxy);
+            if ($proxyParts) {
+                $proxyHost = $proxyParts['host'] ?? '';
+                $proxyPort = $proxyParts['port'] ?? 8080;
+                $proxyUser = $proxyParts['user'] ?? '';
+                $proxyPass = $proxyParts['pass'] ?? '';
+
+                $proxyUrl = $proxyHost . ':' . $proxyPort;
+                curl_setopt($curl, CURLOPT_PROXY, $proxyUrl);
+                curl_setopt($curl, CURLOPT_PROXYTYPE, CURLPROXY_HTTP);
+                curl_setopt($curl, CURLOPT_HTTPPROXYTUNNEL, true);
+
+                if ($proxyUser) {
+                    curl_setopt($curl, CURLOPT_PROXYUSERPWD, $proxyUser . ':' . $proxyPass);
+                }
+            }
+            curl_setopt($curl, CURLOPT_FOLLOWLOCATION, true);
+        }
+
         // Realizar el envío del XML al SII con $retry intentos.
         $responseBody = null;
         for ($i = 0; $i < $retry; $i++) {
@@ -285,7 +307,15 @@ class SendXmlDocumentJob extends AbstractJob implements JobInterface
 
         // Entregar el resultado como un documento XML.
         $xmlDocument = new XmlDocument();
-        $xmlDocument->loadXml((string) $responseBody);
+        try {
+            $xmlDocument->loadXml((string) $responseBody);
+        } catch (\Throwable $e) {
+            // Si hay error al parsear la respuesta, mostrar qué se recibió.
+            $preview = substr((string) $responseBody, 0, 500);
+            throw new SiiSendXmlDocumentException(
+                'Error al cargar el XML. ' . $e->getMessage() . ". Respuesta recibida: " . $preview
+            );
+        }
         return $xmlDocument;
     }
 

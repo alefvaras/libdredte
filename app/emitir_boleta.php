@@ -136,7 +136,7 @@ try {
     $receptor = [
         'RUTRecep' => $datosJson['receptor']['rut'] ?? '66666666-6',
         'RznSocRecep' => $datosJson['receptor']['razon_social'] ?? 'CLIENTE',
-        'DirRecep' => $datosJson['receptor']['direccion'] ?? 'Sin dirección',
+        'DirRecep' => $datosJson['receptor']['direccion'] ?? 'Santiago',
         'CmnaRecep' => $datosJson['receptor']['comuna'] ?? 'Santiago',
     ];
 
@@ -158,6 +158,16 @@ try {
         ];
     }
 
+    // Limpiar datos del emisor para el DTE (sin campos extra)
+    $emisorDte = [
+        'RUTEmisor' => $emisorConfig['RUTEmisor'],
+        'RznSoc' => $emisorConfig['RznSoc'],
+        'GiroEmis' => $emisorConfig['GiroEmis'],
+        'Acteco' => $emisorConfig['Acteco'],
+        'DirOrigen' => $emisorConfig['DirOrigen'],
+        'CmnaOrigen' => $emisorConfig['CmnaOrigen'],
+    ];
+
     // Estructura completa de la boleta
     $datosBoleta = [
         'Encabezado' => [
@@ -167,7 +177,7 @@ try {
                 'FchEmis' => date('Y-m-d'),
                 'IndServicio' => 3,
             ],
-            'Emisor' => $emisorConfig,
+            'Emisor' => $emisorDte,
             'Receptor' => $receptor,
         ],
         'Detalle' => $items,
@@ -187,6 +197,15 @@ try {
         certificate: $certificate
     );
     $documento = $documentBag->getDocument();
+
+    // Establecer autorización DTE en el emisor (requerido para el sobre de envío)
+    if ($documentBag->getEmisor() && isset($emisorConfig['autorizacionDte'])) {
+        $autorizacionDte = new \libredte\lib\Core\Package\Billing\Component\TradingParties\Entity\AutorizacionDte(
+            $emisorConfig['autorizacionDte']['fechaResolucion'],
+            (int) $emisorConfig['autorizacionDte']['numeroResolucion']
+        );
+        $documentBag->getEmisor()->setAutorizacionDte($autorizacionDte);
+    }
     echo "OK\n\n";
 
     // Mostrar resumen
@@ -211,6 +230,7 @@ try {
         echo "╚══════════════════════════════════════════════════════════════╝\n\n";
 
         $siiWorker = $integrationComponent->getSiiLazyWorker();
+        $dispatcherWorker = $documentComponent->getDispatcherWorker();
 
         // Crear request para el SII
         $siiRequest = new SiiRequest(
@@ -235,15 +255,30 @@ try {
             throw new Exception("Error de autenticación SII: " . $e->getMessage());
         }
 
-        // 2. Enviar documento
-        echo "Enviando boleta al SII... ";
+        // 2. Crear sobre de envío EnvioBOLETA
+        echo "Creando sobre de envío EnvioBOLETA... ";
         try {
-            $xmlDocument = $documentBag->getXmlDocument();
+            $envelope = $dispatcherWorker->create($documentBag);
+            $sobreXml = $envelope->getXmlDocument()->saveXML();
+
+            // Guardar sobre de envío
+            $sobreFilename = $outputDir . "EnvioBOLETA_F" . $documento->getFolio() . "_" . date('Ymd_His') . ".xml";
+            file_put_contents($sobreFilename, $sobreXml);
+            echo "OK\n";
+            echo "  └─ Sobre guardado: $sobreFilename\n\n";
+        } catch (Exception $e) {
+            echo "ERROR\n";
+            throw new Exception("Error creando sobre: " . $e->getMessage());
+        }
+
+        // 3. Enviar sobre al SII
+        echo "Enviando sobre al SII... ";
+        try {
             $rutEmisor = $emisorConfig['RUTEmisor'];
 
             $trackId = $siiWorker->sendXmlDocument(
                 request: $siiRequest,
-                doc: $xmlDocument,
+                doc: $envelope->getXmlDocument(),
                 company: $rutEmisor,
                 compress: false,
                 retry: 3
@@ -265,13 +300,14 @@ try {
                 ],
                 'emisor' => $emisorConfig['RUTEmisor'],
                 'xml_file' => $xmlFilename,
+                'sobre_file' => $sobreFilename,
             ];
 
             $resultFile = $outputDir . "envio_trackid_{$trackId}.json";
             file_put_contents($resultFile, json_encode($resultadoEnvio, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
             echo "Resultado guardado: $resultFile\n\n";
 
-            // 3. Consultar estado
+            // 4. Consultar estado
             echo "Consultando estado del envío... ";
             sleep(2);
 
@@ -282,8 +318,9 @@ try {
                     company: $rutEmisor
                 );
 
-                $estado = $estadoResponse->getEstado();
-                $glosa = $estadoResponse->getGlosa();
+                $data = $estadoResponse->getData();
+                $estado = $data['status'] ?? 'N/A';
+                $glosa = $data['description'] ?? $estadoResponse->getReviewStatus();
 
                 echo "OK\n";
                 echo "  ├─ Estado: $estado\n";

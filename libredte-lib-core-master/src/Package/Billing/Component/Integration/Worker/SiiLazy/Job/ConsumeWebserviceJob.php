@@ -272,6 +272,32 @@ class ConsumeWebserviceJob extends AbstractJob implements JobInterface
             ],
         ];
 
+        // Configurar proxy si está definido en variables de entorno.
+        $httpsProxy = getenv('https_proxy') ?: getenv('HTTPS_PROXY');
+        if ($httpsProxy) {
+            $proxyParts = parse_url($httpsProxy);
+            if ($proxyParts) {
+                $proxyHost = $proxyParts['host'] ?? '';
+                $proxyPort = $proxyParts['port'] ?? 8080;
+                $proxyUser = $proxyParts['user'] ?? '';
+                $proxyPass = $proxyParts['pass'] ?? '';
+
+                $options['proxy_host'] = $proxyHost;
+                $options['proxy_port'] = $proxyPort;
+                if ($proxyUser) {
+                    $options['proxy_login'] = $proxyUser;
+                    $options['proxy_password'] = $proxyPass;
+                }
+
+                $options['stream_context']['http']['proxy'] = "tcp://{$proxyHost}:{$proxyPort}";
+                $options['stream_context']['http']['request_fulluri'] = true;
+                if ($proxyUser) {
+                    $auth = base64_encode("{$proxyUser}:{$proxyPass}");
+                    $options['stream_context']['http']['header'][] = "Proxy-Authorization: Basic {$auth}";
+                }
+            }
+        }
+
         // Si no se debe verificar el certificado SSL del servidor del SII se
         // asigna al "stream_context" dicha configuración.
         if (!$request->getVerificarSsl()) {

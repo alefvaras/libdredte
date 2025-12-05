@@ -34,4 +34,10 @@ return [
 
     // Código vendedor (opcional)
     'CdgVendedor' => null,
+
+    // Autorización DTE del SII (requerido para envío)
+    'autorizacionDte' => [
+        'fechaResolucion' => '2025-11-18',
+        'numeroResolucion' => 0,
+    ],
 ];
