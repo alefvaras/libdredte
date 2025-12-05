@@ -259,7 +259,7 @@ try {
 
     echo "OK\n";
 
-    // Firmar el documento XML manualmente
+    // Firmar el documento XML manualmente (corregido)
     echo "Firmando documento... ";
 
     // Función para firmar XML usando XMLDsig
@@ -275,7 +275,7 @@ try {
         }
         $refNode = $nodes->item(0);
 
-        // Canonicalización C14N
+        // Canonicalización C14N (con exclusive=false para incluir namespaces heredados)
         $c14n = $refNode->C14N(false, false);
 
         // Calcular DigestValue (SHA1)
@@ -290,9 +290,11 @@ try {
         $modulus = base64_encode($pubKeyDetails['rsa']['n']);
         $exponent = base64_encode($pubKeyDetails['rsa']['e']);
 
-        // Crear Signature completa con placeholder para SignatureValue
-        $signatureXml = '<Signature xmlns="http://www.w3.org/2000/09/xmldsig#">'
-            . '<SignedInfo xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">'
+        // Construir el XML de la firma
+        $signatureNS = 'http://www.w3.org/2000/09/xmldsig#';
+
+        // Crear SignedInfo como fragmento para poder canonicalizar correctamente
+        $signedInfoXml = '<SignedInfo xmlns="' . $signatureNS . '">'
             . '<CanonicalizationMethod Algorithm="http://www.w3.org/TR/2001/REC-xml-c14n-20010315"/>'
             . '<SignatureMethod Algorithm="http://www.w3.org/2000/09/xmldsig#rsa-sha1"/>'
             . '<Reference URI="#' . $referenceId . '">'
@@ -302,8 +304,25 @@ try {
             . '<DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha1"/>'
             . '<DigestValue>' . $digestValue . '</DigestValue>'
             . '</Reference>'
-            . '</SignedInfo>'
-            . '<SignatureValue></SignatureValue>'
+            . '</SignedInfo>';
+
+        // Canonicalizar SignedInfo para firmar
+        $signedInfoDoc = new DOMDocument('1.0', 'UTF-8');
+        $signedInfoDoc->loadXML($signedInfoXml);
+        $signedInfoC14N = $signedInfoDoc->documentElement->C14N(false, false);
+
+        // Firmar con la clave privada
+        $privateKey = $certificate->getPrivateKey();
+        $signature = '';
+        if (!openssl_sign($signedInfoC14N, $signature, $privateKey, OPENSSL_ALGO_SHA1)) {
+            throw new Exception("Error al firmar: " . openssl_error_string());
+        }
+        $signatureValue = base64_encode($signature);
+
+        // Crear el elemento Signature completo
+        $signatureXml = '<Signature xmlns="' . $signatureNS . '">'
+            . $signedInfoXml
+            . '<SignatureValue>' . $signatureValue . '</SignatureValue>'
             . '<KeyInfo>'
             . '<KeyValue>'
             . '<RSAKeyValue>'
@@ -317,30 +336,9 @@ try {
             . '</KeyInfo>'
             . '</Signature>';
 
-        // Cargar Signature como documento para canonicalizar SignedInfo en contexto
+        // Insertar la firma en el documento original
         $signatureDoc = new DOMDocument('1.0', 'ISO-8859-1');
         $signatureDoc->loadXML($signatureXml);
-
-        // Obtener SignedInfo y canonicalizarlo en el contexto del namespace del padre
-        $signedInfoNodes = $signatureDoc->getElementsByTagName('SignedInfo');
-        $signedInfoNode = $signedInfoNodes->item(0);
-
-        // Canonicalizar SignedInfo (incluirá el namespace heredado)
-        $signedInfoC14N = $signedInfoNode->C14N(false, false);
-
-        // Firmar con la clave privada
-        $privateKey = $certificate->getPrivateKey();
-        $signature = '';
-        if (!openssl_sign($signedInfoC14N, $signature, $privateKey, OPENSSL_ALGO_SHA1)) {
-            throw new Exception("Error al firmar: " . openssl_error_string());
-        }
-        $signatureValue = base64_encode($signature);
-
-        // Actualizar SignatureValue en el documento
-        $signatureValueNodes = $signatureDoc->getElementsByTagName('SignatureValue');
-        $signatureValueNodes->item(0)->nodeValue = $signatureValue;
-
-        // Insertar la firma en el documento original
         $signatureNode = $doc->importNode($signatureDoc->documentElement, true);
         $doc->documentElement->appendChild($signatureNode);
 
