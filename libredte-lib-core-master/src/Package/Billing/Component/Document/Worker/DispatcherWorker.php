@@ -288,6 +288,12 @@ class DispatcherWorker extends AbstractWorker implements DispatcherWorkerInterfa
         // Timestamp de la firma del sobre que se generará.
         $timestamp = date('Y-m-d\TH:i:s');
 
+        // Para boletas, el RutReceptor en la Caratula debe ser el RUT del SII.
+        // El RUT 66666666-6 (cliente anónimo) solo va dentro del DTE, no en la Caratula.
+        $rutReceptorCaratula = $envelope->getTipoSobre()->sonBoletas()
+            ? '60803000-K'  // RUT del SII para envío de boletas
+            : $envelope->getReceptor()->getRut();
+
         // Crear datos de la carátula.
         $caratula = [
             '@attributes' => [
@@ -295,7 +301,7 @@ class DispatcherWorker extends AbstractWorker implements DispatcherWorkerInterfa
             ],
             'RutEmisor' => $envelope->getEmisor()->getRut(),
             'RutEnvia' => $envelope->getMandatario()->getRun(),
-            'RutReceptor' => $envelope->getReceptor()->getRut(),
+            'RutReceptor' => $rutReceptorCaratula,
             'FchResol' => $envelope->getEmisor()->getAutorizacionDte()->getFechaResolucion(),
             'NroResol' => $envelope->getEmisor()->getAutorizacionDte()->getNumeroResolucion(),
             'TmstFirmaEnv' => $timestamp,
