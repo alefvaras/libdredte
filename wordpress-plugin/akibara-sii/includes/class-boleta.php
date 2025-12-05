@@ -13,8 +13,8 @@ class Akibara_Boleta {
 
     public function __construct() {
         $this->sii_client = new Akibara_SII_Client();
-        $this->ambiente = Akibara_Boletas::get_ambiente();
-        $this->emisor = Akibara_Boletas::get_emisor_config();
+        $this->ambiente = Akibara_SII::get_ambiente();
+        $this->emisor = Akibara_SII::get_emisor_config();
     }
 
     /**

@@ -79,7 +79,7 @@ class Akibara_Admin {
      * Render Dashboard
      */
     public function render_dashboard() {
-        $ambiente = Akibara_Boletas::get_ambiente();
+        $ambiente = Akibara_SII::get_ambiente();
         $caf = Akibara_Database::get_caf_activo(39, $ambiente);
 
         // Estadísticas del día
@@ -106,8 +106,8 @@ class Akibara_Admin {
      * Render Nueva Boleta
      */
     public function render_nueva_boleta() {
-        $ambiente = Akibara_Boletas::get_ambiente();
-        $emisor = Akibara_Boletas::get_emisor_config();
+        $ambiente = Akibara_SII::get_ambiente();
+        $emisor = Akibara_SII::get_emisor_config();
         $envio_automatico = get_option('akibara_envio_automatico', 0);
 
         // Obtener siguiente folio
@@ -120,7 +120,7 @@ class Akibara_Admin {
      * Render Historial
      */
     public function render_historial() {
-        $ambiente = Akibara_Boletas::get_ambiente();
+        $ambiente = Akibara_SII::get_ambiente();
 
         $args = [
             'page' => isset($_GET['paged']) ? intval($_GET['paged']) : 1,
@@ -141,8 +141,8 @@ class Akibara_Admin {
     public function render_configuracion() {
         $this->save_settings();
 
-        $emisor = Akibara_Boletas::get_emisor_config();
-        $ambiente = Akibara_Boletas::get_ambiente();
+        $emisor = Akibara_SII::get_emisor_config();
+        $ambiente = Akibara_SII::get_ambiente();
         $envio_automatico = get_option('akibara_envio_automatico', 0);
         $rcof_enabled = get_option('akibara_rcof_enabled', 0);
         $rcof_hora = get_option('akibara_rcof_hora', '23:00');
@@ -166,7 +166,7 @@ class Akibara_Admin {
      * Render CAF / Folios
      */
     public function render_caf() {
-        $ambiente = Akibara_Boletas::get_ambiente();
+        $ambiente = Akibara_SII::get_ambiente();
         $caf = Akibara_Database::get_caf_activo(39, $ambiente);
 
         // Listar todos los CAF
@@ -184,7 +184,7 @@ class Akibara_Admin {
      * Render RCOF
      */
     public function render_rcof() {
-        $ambiente = Akibara_Boletas::get_ambiente();
+        $ambiente = Akibara_SII::get_ambiente();
 
         // RCOF solo disponible en producción
         if ($ambiente !== 'produccion') {

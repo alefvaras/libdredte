@@ -199,7 +199,7 @@ class Akibara_SII_Client {
             return new WP_Error('no_libredte', 'LibreDTE no está disponible');
         }
 
-        $ambiente = Akibara_Boletas::get_ambiente();
+        $ambiente = Akibara_SII::get_ambiente();
 
         // Cargar certificado
         $certificate = $this->load_certificate($ambiente);
@@ -225,7 +225,7 @@ class Akibara_SII_Client {
 
             // Asignar autorización DTE al emisor (para la Carátula, NO en XML)
             if ($documentBag->getEmisor()) {
-                $autorizacionConfig = Akibara_Boletas::get_autorizacion_config();
+                $autorizacionConfig = Akibara_SII::get_autorizacion_config();
                 $autorizacionDte = new AutorizacionDte(
                     $autorizacionConfig['fechaResolucion'],
                     $autorizacionConfig['numeroResolucion']
@@ -324,7 +324,7 @@ class Akibara_SII_Client {
             $xmlDocument->loadXml($xml);
 
             // Enviar con reintentos
-            $emisor = Akibara_Boletas::get_emisor_config();
+            $emisor = Akibara_SII::get_emisor_config();
             $trackId = $this->executeWithRetry(
                 fn() => $siiWorker->sendXmlDocument(
                     request: $siiRequest,
@@ -371,7 +371,7 @@ class Akibara_SII_Client {
                 ]
             );
 
-            $emisor = Akibara_Boletas::get_emisor_config();
+            $emisor = Akibara_SII::get_emisor_config();
 
             // Consultar con reintentos
             $response = $this->executeWithRetry(
@@ -412,7 +412,7 @@ class Akibara_SII_Client {
         }
 
         try {
-            $emisor = Akibara_Boletas::get_emisor_config();
+            $emisor = Akibara_SII::get_emisor_config();
             $timestamp = date('Y-m-d\TH:i:s');
             $documentId = 'CF_' . str_replace('-', '', $emisor['RUTEmisor']) . '_' . str_replace('-', '', $data['fecha']);
 
@@ -437,7 +437,7 @@ class Akibara_SII_Client {
             $caratula->setAttribute('version', '1.0');
             $docCF->appendChild($caratula);
 
-            $autorizacion = Akibara_Boletas::get_autorizacion_config();
+            $autorizacion = Akibara_SII::get_autorizacion_config();
             $caratula->appendChild($dom->createElement('RutEmisor', $emisor['RUTEmisor']));
             $caratula->appendChild($dom->createElement('RutEnvia', $certificate->getID()));
             $caratula->appendChild($dom->createElement('FchResol', $autorizacion['fechaResolucion']));

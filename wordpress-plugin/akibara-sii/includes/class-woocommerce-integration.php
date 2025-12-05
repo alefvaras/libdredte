@@ -351,7 +351,7 @@ class Akibara_WooCommerce_Integration {
         }
 
         // Preparar email
-        $emisor = Akibara_Boletas::get_emisor_config();
+        $emisor = Akibara_SII::get_emisor_config();
         $subject = sprintf(
             __('Boleta Electrónica N° %d - %s', 'akibara-sii'),
             $boleta->folio,
@@ -381,7 +381,7 @@ class Akibara_WooCommerce_Integration {
      * Obtener template de email
      */
     private static function get_email_template($order, $boleta) {
-        $emisor = Akibara_Boletas::get_emisor_config();
+        $emisor = Akibara_SII::get_emisor_config();
 
         ob_start();
         ?>
