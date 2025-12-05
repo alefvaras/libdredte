@@ -21,6 +21,11 @@ if (isset($_POST['akibara_save_config']) && wp_verify_nonce($_POST['_wpnonce'], 
     update_option('akibara_envio_automatico', isset($_POST['envio_automatico']) ? 1 : 0);
     update_option('akibara_rcof_automatico', isset($_POST['rcof_automatico']) ? 1 : 0);
 
+    // Notificaciones de folios
+    update_option('akibara_folio_notifications', isset($_POST['folio_notifications']) ? 1 : 0);
+    update_option('akibara_folio_alert_threshold', intval($_POST['folio_alert_threshold'] ?? 50));
+    update_option('akibara_folio_notification_email', sanitize_email($_POST['folio_notification_email'] ?? ''));
+
     echo '<div class="notice notice-success"><p>Configuracion guardada correctamente.</p></div>';
 }
 
@@ -70,6 +75,11 @@ $rut_envia = get_option('akibara_rut_envia', '');
 $envio_automatico = get_option('akibara_envio_automatico', 0);
 $rcof_automatico = get_option('akibara_rcof_automatico', 0);
 $cert_path = get_option('akibara_cert_path', '');
+
+// Notificaciones de folios
+$folio_notifications = get_option('akibara_folio_notifications', 0);
+$folio_alert_threshold = get_option('akibara_folio_alert_threshold', 50);
+$folio_notification_email = get_option('akibara_folio_notification_email', get_option('admin_email'));
 
 // Certificados por ambiente
 $cert_certificacion_file = get_option('akibara_cert_certificacion_file', '');
@@ -278,6 +288,49 @@ $cert_produccion_file = get_option('akibara_cert_produccion_file', '');
                             <p class="description">
                                 Si esta activado, el RCOF se enviara automaticamente cada dia a las 23:50.<br>
                                 <strong>Nota:</strong> RCOF solo disponible en ambiente de produccion.
+                            </p>
+                        </td>
+                    </tr>
+                </table>
+            </div>
+
+            <div class="card">
+                <h2>Notificaciones de Folios</h2>
+                <table class="form-table">
+                    <tr>
+                        <th>Alertas por Email</th>
+                        <td>
+                            <label>
+                                <input type="checkbox" name="folio_notifications" value="1"
+                                       <?php checked($folio_notifications, 1); ?>>
+                                Enviar email cuando queden pocos folios
+                            </label>
+                            <p class="description">
+                                Recibe una alerta por email cuando los folios disponibles esten por agotarse.
+                            </p>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th><label for="folio_alert_threshold">Umbral de Alerta</label></th>
+                        <td>
+                            <input type="number" id="folio_alert_threshold" name="folio_alert_threshold"
+                                   value="<?php echo esc_attr($folio_alert_threshold); ?>"
+                                   class="small-text" min="1" max="500">
+                            <span>folios</span>
+                            <p class="description">
+                                Se enviara una alerta cuando queden menos de esta cantidad de folios.<br>
+                                <strong>Recomendado:</strong> 50 folios
+                            </p>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th><label for="folio_notification_email">Email de Notificacion</label></th>
+                        <td>
+                            <input type="email" id="folio_notification_email" name="folio_notification_email"
+                                   value="<?php echo esc_attr($folio_notification_email); ?>"
+                                   class="regular-text" placeholder="<?php echo esc_attr(get_option('admin_email')); ?>">
+                            <p class="description">
+                                Email donde se enviaran las alertas. Si esta vacio, se usara el email del administrador.
                             </p>
                         </td>
                     </tr>

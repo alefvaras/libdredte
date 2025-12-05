@@ -67,6 +67,9 @@ class AkibaraTestSuite {
         // Grupo 9: Pruebas de XML/Firma
         $this->runGroup("GENERACION XML", [$this, 'testXmlGeneration']);
 
+        // Grupo 10: Pruebas de Notificaciones de Folios
+        $this->runGroup("NOTIFICACIONES FOLIOS", [$this, 'testFolioNotifications']);
+
         // Resumen final
         $this->printSummary();
     }
@@ -112,6 +115,11 @@ class AkibaraTestSuite {
         if (!function_exists('wp_schedule_event')) { function wp_schedule_event() { return true; } }
         if (!function_exists('wp_unschedule_event')) { function wp_unschedule_event() { return true; } }
         if (!function_exists('admin_url')) { function admin_url($p = '') { return 'http://example.com/wp-admin/' . $p; } }
+        if (!function_exists('wp_add_dashboard_widget')) { function wp_add_dashboard_widget() { return true; } }
+        if (!function_exists('wp_mail')) { function wp_mail($to, $s, $m, $h = '', $a = []) { return true; } }
+        if (!function_exists('current_user_can')) { function current_user_can($c) { return true; } }
+        if (!function_exists('sanitize_email')) { function sanitize_email($e) { return filter_var($e, FILTER_SANITIZE_EMAIL); } }
+        if (!function_exists('checked')) { function checked($a, $b = 1, $e = true) { if ($a == $b) { if ($e) echo 'checked'; return 'checked'; } return ''; } }
 
     }
 
@@ -172,7 +180,7 @@ class AkibaraTestSuite {
             'Akibara_Boleta' => 'includes/class-boleta.php',
             'Akibara_RCOF' => 'includes/class-rcof.php',
             'Akibara_WooCommerce_Integration' => 'includes/class-woocommerce-integration.php',
-            'Akibara_Folio_Manager' => 'includes/class-folio-manager.php',
+            'Akibara_Folio_Notifications' => 'includes/class-folio-notifications.php',
         ];
 
         foreach ($classes as $className => $file) {
@@ -491,6 +499,72 @@ class AkibaraTestSuite {
         $this->assert(
             strpos($content, 'C14N') !== false || strpos($content, 'canonicalize') !== false,
             "Usa canonicalización XML"
+        );
+    }
+
+    private function testFolioNotifications() {
+        // Verificar que existe la clase
+        $this->assert(
+            class_exists('Akibara_Folio_Notifications'),
+            "Clase Akibara_Folio_Notifications existe"
+        );
+
+        // Verificar métodos estáticos
+        $methods = ['init', 'schedule_cron', 'unschedule_cron', 'check_and_notify',
+                    'get_folio_status', 'send_notification', 'add_dashboard_widget',
+                    'render_dashboard_widget'];
+
+        foreach ($methods as $method) {
+            $ref = new ReflectionClass('Akibara_Folio_Notifications');
+            $exists = $ref->hasMethod($method);
+            $isStatic = $exists && $ref->getMethod($method)->isStatic();
+            $this->assert($exists && $isStatic, "Akibara_Folio_Notifications::$method() existe y es estático");
+        }
+
+        // Verificar constantes
+        $this->assert(
+            defined('Akibara_Folio_Notifications::CRON_HOOK'),
+            "Constante CRON_HOOK definida"
+        );
+
+        // Verificar contenido del archivo
+        $content = file_get_contents(dirname(__DIR__) . '/includes/class-folio-notifications.php');
+
+        // Verificar que usa wp_mail
+        $this->assert(
+            strpos($content, 'wp_mail') !== false,
+            "Notificaciones usan wp_mail()"
+        );
+
+        // Verificar que implementa dashboard widget
+        $this->assert(
+            strpos($content, 'wp_add_dashboard_widget') !== false,
+            "Implementa widget de dashboard"
+        );
+
+        // Verificar opciones de configuración en configuracion.php
+        $configContent = file_get_contents(dirname(__DIR__) . '/admin/views/configuracion.php');
+
+        $this->assert(
+            strpos($configContent, 'folio_notifications') !== false,
+            "Opción folio_notifications en configuración"
+        );
+
+        $this->assert(
+            strpos($configContent, 'folio_alert_threshold') !== false,
+            "Opción folio_alert_threshold en configuración"
+        );
+
+        $this->assert(
+            strpos($configContent, 'folio_notification_email') !== false,
+            "Opción folio_notification_email en configuración"
+        );
+
+        // Verificar que se incluye en el plugin principal
+        $mainContent = file_get_contents(dirname(__DIR__) . '/akibara-sii.php');
+        $this->assert(
+            strpos($mainContent, 'class-folio-notifications.php') !== false,
+            "class-folio-notifications.php incluido en plugin principal"
         );
     }
 
