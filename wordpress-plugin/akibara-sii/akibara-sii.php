@@ -592,7 +592,7 @@ class Akibara_SII {
 
         global $wpdb;
         $pendientes = $wpdb->get_results(
-            "SELECT id FROM {$wpdb->prefix}akibara_boletas WHERE estado_sii = 'generado'"
+            "SELECT id FROM {$wpdb->prefix}akibara_boletas WHERE estado = 'generado'"
         );
 
         $boleta = new Akibara_Boleta();

@@ -164,11 +164,11 @@ if ($caf_activo) {
                 <tr>
                     <td><strong><?php echo $boleta->folio; ?></strong></td>
                     <td><?php echo date('d/m/Y H:i', strtotime($boleta->fecha_emision)); ?></td>
-                    <td><?php echo esc_html($boleta->receptor_rut); ?></td>
+                    <td><?php echo esc_html($boleta->rut_receptor); ?></td>
                     <td>$<?php echo number_format($boleta->monto_total, 0, ',', '.'); ?></td>
                     <td>
-                        <span class="estado-badge estado-<?php echo $boleta->estado_sii; ?>">
-                            <?php echo ucfirst($boleta->estado_sii); ?>
+                        <span class="estado-badge estado-<?php echo $boleta->estado; ?>">
+                            <?php echo ucfirst($boleta->estado); ?>
                         </span>
                     </td>
                 </tr>
