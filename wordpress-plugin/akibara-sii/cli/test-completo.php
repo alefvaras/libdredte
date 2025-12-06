@@ -82,13 +82,13 @@ $emisor = [
 ];
 
 $autorizacionConfig = [
-    'fechaResolucion' => '2014-08-22',
-    'numeroResolucion' => 80,
+    'fechaResolucion' => '2025-11-18',
+    'numeroResolucion' => 0,
 ];
 
 // Paths
-$certPath = '/home/user/libdredte/app/credentials/certificado.p12';
-$certPassword = '5605';
+$certPath = '/home/user/libdredte/app/credentials/certificado.pem';
+$certPassword = ''; // PEM no requiere password
 $cafPath = '/home/user/libdredte/app/credentials/caf_39.xml';
 $outputDir = dirname(__DIR__) . '/uploads/output/';
 
@@ -110,7 +110,15 @@ try {
         throw new Exception("Certificado no encontrado: $certPath");
     }
     $certLoader = new CertificateLoader();
-    $certificate = $certLoader->loadFromFile($certPath, $certPassword);
+
+    // Cargar PEM
+    $pemContent = file_get_contents($certPath);
+    preg_match('/-----BEGIN CERTIFICATE-----.*?-----END CERTIFICATE-----/s', $pemContent, $certMatch);
+    preg_match('/-----BEGIN PRIVATE KEY-----.*?-----END PRIVATE KEY-----/s', $pemContent, $keyMatch);
+    if (empty($keyMatch)) {
+        preg_match('/-----BEGIN RSA PRIVATE KEY-----.*?-----END RSA PRIVATE KEY-----/s', $pemContent, $keyMatch);
+    }
+    $certificate = $certLoader->loadFromKeys($certMatch[0], $keyMatch[0]);
     echo "OK\n";
     echo "  ├─ Titular: {$certificate->getName()}\n";
     echo "  ├─ RUT: {$certificate->getID()}\n";
