@@ -10,6 +10,18 @@ class Akibara_Email_Boleta {
 
     /**
      * Generar PDF de boleta
+     *
+     * Genera el PDF en formato voucher SII e-boleta (80mm) con:
+     * - Código de barras PDF417 (usando TCPDF2DBarcode como LibreDTE)
+     * - Formato compacto para impresión térmica
+     *
+     * El PDF se guarda en AKIBARA_SII_UPLOADS/pdf/ y persiste para:
+     * - Adjuntar a emails
+     * - Permitir descargas posteriores
+     * - Reenvíos al cliente
+     *
+     * @param int $boleta_id ID de la boleta
+     * @return string|false Ruta del PDF o false si falla
      */
     public static function generar_pdf($boleta_id) {
         $boleta = Akibara_Database::get_boleta($boleta_id);
@@ -31,30 +43,14 @@ class Akibara_Email_Boleta {
         }
 
         try {
-            if (!class_exists('libredte\lib\Core\Application')) {
-                error_log('Akibara SII: LibreDTE Application class not found');
+            // Usar el método centralizado de class-sii-client que genera formato voucher
+            $sii_client = new Akibara_SII_Client();
+            $pdfContent = $sii_client->generar_pdf($boleta->xml_documento);
+
+            if (is_wp_error($pdfContent)) {
+                error_log('Akibara SII: Error generando PDF - ' . $pdfContent->get_error_message());
                 return false;
             }
-
-            $app = \libredte\lib\Core\Application::getInstance(environment: 'dev', debug: false);
-            $billingPackage = $app->getPackageRegistry()->getBillingPackage();
-            $documentComponent = $billingPackage->getDocumentComponent();
-            $loaderWorker = $documentComponent->getLoaderWorker();
-            $rendererWorker = $documentComponent->getRendererWorker();
-
-            // Cargar documento desde XML
-            $documentBag = $loaderWorker->loadXml($boleta->xml_documento);
-
-            // Configurar renderer para PDF
-            $documentBag->setOptions([
-                'renderer' => [
-                    'format' => 'pdf',
-                    'template' => 'estandar',
-                ],
-            ]);
-
-            // Generar PDF
-            $pdfContent = $rendererWorker->render($documentBag);
 
             // Guardar archivo
             file_put_contents($pdf_path, $pdfContent);

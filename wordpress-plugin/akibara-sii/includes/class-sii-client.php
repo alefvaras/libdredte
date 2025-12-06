@@ -718,44 +718,183 @@ class Akibara_SII_Client {
 
     /**
      * Generar PDF de boleta desde XML
+     * Formato: Voucher SII e-boleta (80mm)
      *
      * @param string $xml XML del documento
      * @param array $options Opciones de renderizado
      * @return string|WP_Error PDF binario o error
      */
     public function generar_pdf($xml, $options = []) {
-        if (!$this->app) {
-            return new WP_Error('no_libredte', 'LibreDTE no está disponible');
-        }
-
         try {
-            $billingPackage = $this->app->getPackageRegistry()->getBillingPackage();
-            $documentComponent = $billingPackage->getDocumentComponent();
+            // Parsear XML
+            $xmlObj = simplexml_load_string($xml);
+            if (!$xmlObj) {
+                return new WP_Error('xml_error', 'Error parseando XML');
+            }
 
-            // Cargar documento desde XML
-            $loaderWorker = $documentComponent->getLoaderWorker();
-            $documentBag = $loaderWorker->loadXml($xml);
+            $documento = $xmlObj->Documento ?? $xmlObj->children('http://www.sii.cl/SiiDte')[0];
+            $encabezado = $documento->Encabezado;
+            $idDoc = $encabezado->IdDoc;
+            $emisor = $encabezado->Emisor;
+            $receptor = $encabezado->Receptor;
+            $totales = $encabezado->Totales;
 
-            // Configurar opciones de renderizado
-            $rendererOptions = array_merge([
-                'format' => 'pdf',
-                'template' => 'estandar',
-            ], $options);
+            // Extraer datos
+            $tipoDte = (int)$idDoc->TipoDTE;
+            $folio = (string)$idDoc->Folio;
+            $fechaEmision = (string)$idDoc->FchEmis;
+            $rutEmisor = (string)$emisor->RUTEmisor;
+            $razonSocialEmisor = (string)($emisor->RznSocEmisor ?? $emisor->RznSoc);
+            $giroEmisor = (string)($emisor->GiroEmisor ?? $emisor->GiroEmis);
+            $dirEmisor = (string)$emisor->DirOrigen;
+            $cmnaEmisor = (string)$emisor->CmnaOrigen;
+            $rutReceptor = (string)$receptor->RUTRecep;
+            $razonSocialReceptor = (string)$receptor->RznSocRecep;
+            $dirReceptor = (string)$receptor->DirRecep;
+            $montoNeto = (int)$totales->MntNeto;
+            $montoIva = (int)$totales->IVA;
+            $montoExento = (int)($totales->MntExe ?? 0);
+            $montoTotal = (int)$totales->MntTotal;
 
-            // Establecer opciones en el bag
-            $documentBag->setOptions([
-                'renderer' => $rendererOptions,
+            // Detalle items
+            $detalles = [];
+            foreach ($documento->Detalle as $det) {
+                $detalles[] = [
+                    'nombre' => (string)$det->NmbItem,
+                    'cantidad' => (float)$det->QtyItem,
+                    'precio' => (float)$det->PrcItem,
+                    'monto' => (float)$det->MontoItem,
+                    'exento' => isset($det->IndExe) ? (int)$det->IndExe : 0,
+                    'unidad' => (string)($det->UnmdItem ?? ''),
+                ];
+            }
+
+            // TED para PDF417
+            $ted = $documento->TED;
+            $tedString = '';
+            if ($ted) {
+                $dom = new DOMDocument();
+                $dom->loadXML($ted->asXML());
+                $tedString = $dom->saveXML($dom->documentElement);
+                $tedString = preg_replace('/>\s+</', '><', $tedString);
+            }
+
+            // Tipo documento
+            $tipoTexto = $tipoDte == 39 ? 'BOLETA ELECTRONICA' : ($tipoDte == 41 ? 'BOLETA EXENTA' : 'DTE ' . $tipoDte);
+
+            // Generar HTML para mPDF (formato voucher 80mm)
+            $html = $this->generar_html_boleta([
+                'tipo' => $tipoTexto,
+                'folio' => $folio,
+                'fecha' => $fechaEmision,
+                'emisor' => [
+                    'rut' => $rutEmisor,
+                    'razon_social' => $razonSocialEmisor,
+                    'giro' => $giroEmisor,
+                    'direccion' => $dirEmisor,
+                    'comuna' => $cmnaEmisor,
+                ],
+                'receptor' => [
+                    'rut' => $rutReceptor,
+                    'razon_social' => $razonSocialReceptor,
+                    'direccion' => $dirReceptor,
+                ],
+                'detalles' => $detalles,
+                'totales' => [
+                    'neto' => $montoNeto,
+                    'iva' => $montoIva,
+                    'exento' => $montoExento,
+                    'total' => $montoTotal,
+                ],
+                'ted' => $tedString,
             ]);
 
-            // Obtener el renderer y generar PDF
-            $rendererWorker = $documentComponent->getRendererWorker();
-            $pdfContent = $rendererWorker->render($documentBag);
+            // Crear PDF con mPDF
+            $mpdf = new \Mpdf\Mpdf([
+                'mode' => 'utf-8',
+                'format' => [80, 200], // Ancho 80mm, alto inicial 200mm
+                'margin_left' => 5,
+                'margin_right' => 5,
+                'margin_top' => 5,
+                'margin_bottom' => 5,
+            ]);
 
-            return $pdfContent;
+            $mpdf->WriteHTML($html);
+            return $mpdf->Output('', \Mpdf\Output\Destination::STRING_RETURN);
 
         } catch (Exception $e) {
             return new WP_Error('pdf_error', 'Error generando PDF: ' . $e->getMessage());
         }
+    }
+
+    /**
+     * Generar HTML para boleta (formato voucher SII)
+     */
+    private function generar_html_boleta($data) {
+        $html = '<style>
+            body { font-family: "Courier New", monospace; font-size: 9pt; }
+            .header { margin-bottom: 5mm; }
+            .empresa { font-weight: bold; font-size: 10pt; }
+            .tipo-doc { font-weight: bold; margin: 3mm 0; }
+            .linea { border-top: 1px solid #000; margin: 2mm 0; }
+            .item { margin-bottom: 2mm; }
+            .total { font-weight: bold; font-size: 10pt; margin-top: 3mm; }
+            .iva-info { font-size: 8pt; margin: 3mm 0; }
+            .timbre { margin-top: 5mm; text-align: center; }
+            .timbre-texto { font-size: 8pt; margin-top: 2mm; }
+            .right { text-align: right; }
+        </style>';
+
+        // Emisor
+        $html .= '<div class="header">';
+        $html .= '<div class="empresa">' . htmlspecialchars($data['emisor']['razon_social']) . '</div>';
+        $html .= '<div>' . htmlspecialchars($data['emisor']['rut']) . '</div>';
+        $html .= '<div>Giro: ' . htmlspecialchars($data['emisor']['giro']) . '</div>';
+        $html .= '<div>' . htmlspecialchars($data['emisor']['direccion']) . '</div>';
+        $html .= '<div>' . htmlspecialchars($data['emisor']['comuna']) . '</div>';
+        $html .= '</div>';
+
+        // Tipo y numero
+        $html .= '<div class="tipo-doc">' . $data['tipo'] . ' NUMERO: ' . $data['folio'] . '</div>';
+        $html .= '<div>Fecha: ' . $data['fecha'] . '</div>';
+
+        // Receptor (solo si no es consumidor final)
+        if ($data['receptor']['rut'] && $data['receptor']['rut'] != '66666666-6') {
+            $html .= '<div style="margin-top:2mm;">RUT Cliente: ' . htmlspecialchars($data['receptor']['rut']) . '</div>';
+        }
+        if ($data['receptor']['direccion']) {
+            $html .= '<div>Direccion: ' . htmlspecialchars($data['receptor']['direccion']) . '</div>';
+        }
+
+        // Detalle
+        $html .= '<div class="linea"></div>';
+        foreach ($data['detalles'] as $det) {
+            $html .= '<div class="item">';
+            $html .= '<div>' . htmlspecialchars($det['nombre']) . ($det['exento'] ? ' (E)' : '') . '</div>';
+            $cantidad = $det['cantidad'] . ($det['unidad'] ? ' ' . $det['unidad'] : '');
+            $html .= '<div>' . $cantidad . ' x $' . number_format($det['precio'], 0, ',', '.') .
+                     '<span style="float:right;">$ ' . number_format($det['monto'], 0, ',', '.') . '</span></div>';
+            $html .= '</div>';
+        }
+        $html .= '<div class="linea"></div>';
+
+        // Totales
+        $html .= '<div class="total">Venta <span style="float:right;">$ ' . number_format($data['totales']['total'], 0, ',', '.') . '</span></div>';
+        $html .= '<div class="iva-info">El IVA incluido en esta boleta es de: $ ' . number_format($data['totales']['iva'], 0, ',', '.') . '</div>';
+
+        // Timbre PDF417 - Usando TCPDF2DBarcode como LibreDTE (ECL nivel 5)
+        if (!empty($data['ted'])) {
+            $html .= '<div class="timbre">';
+            // Generar imagen PNG del barcode usando metodo de LibreDTE
+            $pdf417 = new \TCPDF2DBarcode($data['ted'], 'PDF417,,5');
+            $pngData = $pdf417->getBarcodePngData(2, 2, [0,0,0]);
+            $base64 = 'data:image/png;base64,' . base64_encode($pngData);
+            $html .= '<img src="' . $base64 . '" style="width:65mm; height:auto;" />';
+            $html .= '<div class="timbre-texto">Timbre Electronico SII<br/>Res. 0 de 2025<br/>Verifique documento en sii.cl</div>';
+            $html .= '</div>';
+        }
+
+        return $html;
     }
 
     /**
@@ -766,30 +905,13 @@ class Akibara_SII_Client {
      * @return string|WP_Error PDF binario o error
      */
     public function generar_pdf_from_bag($documentBag, $options = []) {
-        if (!$this->app) {
-            return new WP_Error('no_libredte', 'LibreDTE no está disponible');
-        }
-
         try {
-            $billingPackage = $this->app->getPackageRegistry()->getBillingPackage();
-            $documentComponent = $billingPackage->getDocumentComponent();
+            // Obtener XML del documento
+            $documento = $documentBag->getDocument();
+            $xml = $documento->getXml();
 
-            // Configurar opciones de renderizado
-            $rendererOptions = array_merge([
-                'format' => 'pdf',
-                'template' => 'estandar',
-            ], $options);
-
-            // Establecer opciones en el bag
-            $documentBag->setOptions([
-                'renderer' => $rendererOptions,
-            ]);
-
-            // Obtener el renderer y generar PDF
-            $rendererWorker = $documentComponent->getRendererWorker();
-            $pdfContent = $rendererWorker->render($documentBag);
-
-            return $pdfContent;
+            // Usar el método generar_pdf que ya tiene toda la lógica
+            return $this->generar_pdf($xml, $options);
 
         } catch (Exception $e) {
             return new WP_Error('pdf_error', 'Error generando PDF: ' . $e->getMessage());

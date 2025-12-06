@@ -233,63 +233,19 @@ class Akibara_WooCommerce_Integration {
 
     /**
      * Generar archivo PDF de boleta
+     *
+     * Usa la clase centralizada Akibara_Email_Boleta para mantener consistencia.
+     * El PDF se guarda en AKIBARA_SII_UPLOADS/pdf/ y persiste para:
+     * - Adjuntar a emails
+     * - Permitir descargas posteriores
+     * - Reenvíos al cliente
+     *
+     * @param int $boleta_id ID de la boleta
+     * @return string|false Ruta del PDF o false si falla
      */
     public static function generate_pdf_file($boleta_id) {
-        $boleta = Akibara_Database::get_boleta($boleta_id);
-        if (!$boleta) {
-            return false;
-        }
-
-        // Directorio de PDFs
-        $upload_dir = wp_upload_dir();
-        $pdf_dir = $upload_dir['basedir'] . '/akibara-sii/pdf/';
-
-        if (!file_exists($pdf_dir)) {
-            wp_mkdir_p($pdf_dir);
-        }
-
-        $pdf_path = $pdf_dir . 'boleta_' . $boleta->folio . '.pdf';
-
-        // Si ya existe, retornarlo
-        if (file_exists($pdf_path)) {
-            return $pdf_path;
-        }
-
-        // Generar PDF usando LibreDTE
-        try {
-            if (!class_exists('libredte\lib\Core\Application')) {
-                return false;
-            }
-
-            $app = \libredte\lib\Core\Application::getInstance(environment: 'dev', debug: false);
-            $billingPackage = $app->getPackageRegistry()->getBillingPackage();
-            $documentComponent = $billingPackage->getDocumentComponent();
-            $loaderWorker = $documentComponent->getLoaderWorker();
-            $rendererWorker = $documentComponent->getRendererWorker();
-
-            // Cargar documento desde XML
-            $documentBag = $loaderWorker->loadXml($boleta->xml_documento);
-
-            // Configurar renderer para PDF
-            $documentBag->setOptions([
-                'renderer' => [
-                    'format' => 'pdf',
-                    'template' => 'estandar',
-                ],
-            ]);
-
-            // Generar PDF
-            $pdfContent = $rendererWorker->render($documentBag);
-
-            // Guardar archivo
-            file_put_contents($pdf_path, $pdfContent);
-
-            return $pdf_path;
-
-        } catch (Exception $e) {
-            error_log('Akibara SII: Error generando PDF - ' . $e->getMessage());
-            return false;
-        }
+        // Usar la clase centralizada de email que genera y guarda el PDF
+        return Akibara_Email_Boleta::generar_pdf($boleta_id);
     }
 
     /**
