@@ -40,17 +40,27 @@ if (isset($_POST['akibara_upload_cert']) && wp_verify_nonce($_POST['_wpnonce'], 
             file_put_contents($cert_dir . '.htaccess', 'deny from all');
         }
 
-        $cert_filename = 'certificado_' . $cert_ambiente . '.p12';
-        $cert_file = $cert_dir . $cert_filename;
+        // Detectar extensión del archivo subido
+        $original_name = $_FILES['certificado']['name'];
+        $extension = strtolower(pathinfo($original_name, PATHINFO_EXTENSION));
 
-        if (move_uploaded_file($_FILES['certificado']['tmp_name'], $cert_file)) {
-            update_option("akibara_cert_{$cert_ambiente}_file", $cert_filename);
-            update_option("akibara_cert_{$cert_ambiente}_password", base64_encode(sanitize_text_field($_POST['cert_password'])));
-            update_option('akibara_cert_path', $cert_file);
-
-            echo '<div class="notice notice-success is-dismissible"><p><strong>Certificado para ambiente ' . strtoupper($cert_ambiente) . ' subido correctamente.</strong></p></div>';
+        // Validar extensión
+        if (!in_array($extension, ['p12', 'pfx', 'pem'])) {
+            echo '<div class="notice notice-error is-dismissible"><p><strong>Formato no soportado.</strong> Use .p12, .pfx o .pem</p></div>';
         } else {
-            echo '<div class="notice notice-error is-dismissible"><p><strong>Error al subir el certificado.</strong> Verifica los permisos del directorio.</p></div>';
+            $cert_filename = 'certificado_' . $cert_ambiente . '.' . $extension;
+            $cert_file = $cert_dir . $cert_filename;
+
+            if (move_uploaded_file($_FILES['certificado']['tmp_name'], $cert_file)) {
+                update_option("akibara_cert_{$cert_ambiente}_file", $cert_filename);
+                update_option("akibara_cert_{$cert_ambiente}_password", base64_encode(sanitize_text_field($_POST['cert_password'] ?? '')));
+                update_option('akibara_cert_path', $cert_file);
+
+                $format_msg = ($extension === 'pem') ? ' (formato PEM)' : ' (formato PKCS#12)';
+                echo '<div class="notice notice-success is-dismissible"><p><strong>Certificado para ambiente ' . strtoupper($cert_ambiente) . ' subido correctamente' . $format_msg . '.</strong></p></div>';
+            } else {
+                echo '<div class="notice notice-error is-dismissible"><p><strong>Error al subir el certificado.</strong> Verifica los permisos del directorio.</p></div>';
+            }
         }
     } else {
         $error_msg = 'No se selecciono ningun archivo.';
@@ -326,15 +336,17 @@ $cert_produccion_file = get_option('akibara_cert_produccion_file', '');
                         </td>
                     </tr>
                     <tr>
-                        <th><label for="certificado">Archivo (.p12 o .pfx)</label></th>
+                        <th><label for="certificado">Archivo (.p12, .pfx o .pem)</label></th>
                         <td>
-                            <input type="file" id="certificado" name="certificado" accept=".p12,.pfx" required>
+                            <input type="file" id="certificado" name="certificado" accept=".p12,.pfx,.pem" required>
+                            <p class="description">Suba su certificado digital. Si tiene problemas con .p12, conviertalo a .pem</p>
                         </td>
                     </tr>
                     <tr>
                         <th><label for="cert_password">Contrasena</label></th>
                         <td>
-                            <input type="password" id="cert_password" name="cert_password" class="regular-text" required>
+                            <input type="password" id="cert_password" name="cert_password" class="regular-text">
+                            <p class="description">Requerida para .p12/.pfx. No necesaria para .pem</p>
                         </td>
                     </tr>
                 </table>

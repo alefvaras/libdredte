@@ -331,7 +331,16 @@ class Akibara_SII {
             wp_mkdir_p($upload_dir);
         }
 
-        $filename = 'cert_' . $ambiente . '_' . time() . '.p12';
+        // Detectar extensión del archivo subido
+        $original_name = $file['name'];
+        $extension = strtolower(pathinfo($original_name, PATHINFO_EXTENSION));
+
+        // Validar extensión permitida
+        if (!in_array($extension, ['p12', 'pfx', 'pem'])) {
+            wp_send_json_error(['message' => 'Formato no soportado. Use .p12, .pfx o .pem']);
+        }
+
+        $filename = 'cert_' . $ambiente . '_' . time() . '.' . $extension;
         $filepath = $upload_dir . $filename;
 
         if (move_uploaded_file($file['tmp_name'], $filepath)) {
@@ -346,10 +355,12 @@ class Akibara_SII {
 
             // Guardar configuración
             update_option("akibara_cert_{$ambiente}_file", $filename);
+            // Para PEM no necesitamos password, pero lo guardamos igual por consistencia
             update_option("akibara_cert_{$ambiente}_password", base64_encode($password));
 
+            $format_msg = ($extension === 'pem') ? ' (formato PEM)' : ' (formato PKCS#12)';
             wp_send_json_success([
-                'message' => 'Certificado cargado correctamente',
+                'message' => 'Certificado cargado correctamente' . $format_msg,
                 'info' => $cert_info,
             ]);
         }

@@ -103,22 +103,45 @@ class Akibara_SII_Client {
             return new WP_Error('cert_not_found', 'Archivo de certificado no encontrado');
         }
 
+        // Si es archivo PEM, cargarlo directamente
+        $extension = strtolower(pathinfo($cert_path, PATHINFO_EXTENSION));
+        if ($extension === 'pem') {
+            return $this->load_certificate_from_pem($cert_path);
+        }
+
         try {
-            // Intentar cargar normalmente
+            // Intentar cargar .p12 normalmente
             return $this->certificate_loader->loadFromFile($cert_path, $cert_password);
         } catch (Exception $e) {
-            // Si falla por algoritmo no soportado (OpenSSL 3.0 + certificado legacy)
-            if (strpos($e->getMessage(), '0308010C') !== false ||
-                strpos($e->getMessage(), 'invalid key length') !== false ||
-                strpos($e->getMessage(), 'Unsupported') !== false) {
+            $error_msg = $e->getMessage();
 
+            // Si falla por algoritmo no soportado (OpenSSL 3.0 + certificado legacy)
+            // Códigos de error comunes: 0308010C, 03000082
+            $is_legacy_error = (
+                strpos($error_msg, '0308010C') !== false ||
+                strpos($error_msg, '03000082') !== false ||
+                strpos($error_msg, 'invalid key length') !== false ||
+                strpos($error_msg, 'Unsupported') !== false ||
+                strpos($error_msg, 'digital envelope') !== false ||
+                strpos($error_msg, 'RC2') !== false
+            );
+
+            if ($is_legacy_error) {
                 // Intentar con método legacy usando shell
                 $legacy_result = $this->load_certificate_legacy($cert_path, $cert_password);
                 if (!is_wp_error($legacy_result)) {
                     return $legacy_result;
                 }
+                // Si también falló el método legacy, mostrar mensaje útil
+                return new WP_Error(
+                    'cert_legacy_error',
+                    'El certificado usa cifrado legacy (RC2/3DES) no compatible con OpenSSL 3.x. ' .
+                    'Solución: Suba un archivo .pem o convierta ejecutando en su PC: ' .
+                    'openssl pkcs12 -in certificado.p12 -out certificado.pem -nodes -legacy ' .
+                    '(Error: ' . $legacy_result->get_error_message() . ')'
+                );
             }
-            return new WP_Error('cert_error', 'Error cargando certificado: ' . $e->getMessage());
+            return new WP_Error('cert_error', 'Error cargando certificado: ' . $error_msg);
         }
     }
 
@@ -130,7 +153,10 @@ class Akibara_SII_Client {
         // Primero, intentar cargar archivo PEM pre-convertido si existe
         $pem_path = preg_replace('/\.p12$/i', '.pem', $cert_path);
         if (file_exists($pem_path)) {
-            return $this->load_certificate_from_pem($pem_path);
+            $result = $this->load_certificate_from_pem($pem_path);
+            if (!is_wp_error($result)) {
+                return $result;
+            }
         }
 
         // Verificar si las funciones shell están disponibles
@@ -146,34 +172,63 @@ class Akibara_SII_Client {
         }
 
         $temp_pem = tempnam(sys_get_temp_dir(), 'cert_') . '.pem';
-        $escaped_pass = escapeshellarg($password);
         $escaped_path = escapeshellarg($cert_path);
 
-        // Intentar extraer con -legacy flag (OpenSSL 3.0+)
-        $cmd = "openssl pkcs12 -in $escaped_path -out $temp_pem -nodes -passin pass:$escaped_pass -legacy 2>&1";
-        $output = $this->safe_shell_exec($cmd);
+        // Usar archivo temporal para la contraseña (más seguro y evita problemas con caracteres especiales)
+        $pass_file = tempnam(sys_get_temp_dir(), 'pass_');
+        file_put_contents($pass_file, $password);
 
-        // Si -legacy no funciona, intentar sin él
-        if (!file_exists($temp_pem) || filesize($temp_pem) === 0) {
-            $cmd = "openssl pkcs12 -in $escaped_path -out $temp_pem -nodes -passin pass:$escaped_pass 2>&1";
+        $output = '';
+
+        // Intentar con diferentes combinaciones de flags
+        $commands = [
+            // OpenSSL 3.0+ con legacy provider
+            "openssl pkcs12 -in $escaped_path -out $temp_pem -nodes -passin file:" . escapeshellarg($pass_file) . " -legacy 2>&1",
+            // OpenSSL 3.0+ con provider explícito
+            "openssl pkcs12 -in $escaped_path -out $temp_pem -nodes -passin file:" . escapeshellarg($pass_file) . " -provider legacy -provider default 2>&1",
+            // Sin flag legacy (OpenSSL < 3.0 o certificado compatible)
+            "openssl pkcs12 -in $escaped_path -out $temp_pem -nodes -passin file:" . escapeshellarg($pass_file) . " 2>&1",
+        ];
+
+        foreach ($commands as $cmd) {
+            @unlink($temp_pem); // Limpiar archivo previo
             $output = $this->safe_shell_exec($cmd);
+
+            if (file_exists($temp_pem) && filesize($temp_pem) > 0) {
+                break; // Éxito
+            }
         }
+
+        @unlink($pass_file); // Limpiar archivo de contraseña
 
         if (!file_exists($temp_pem) || filesize($temp_pem) === 0) {
             @unlink($temp_pem);
-            return new WP_Error('legacy_failed', 'No se pudo convertir el certificado legacy: ' . $output);
+            return new WP_Error('legacy_failed', 'No se pudo convertir el certificado legacy. Output: ' . substr($output, 0, 200));
         }
 
         try {
             $pem_content = file_get_contents($temp_pem);
             @unlink($temp_pem);
 
+            // Guardar PEM para uso futuro (evita conversión repetida)
+            @file_put_contents($pem_path, $pem_content);
+
             // Extraer certificado y clave privada del PEM
             preg_match('/-----BEGIN CERTIFICATE-----.*?-----END CERTIFICATE-----/s', $pem_content, $cert_match);
-            preg_match('/-----BEGIN PRIVATE KEY-----.*?-----END PRIVATE KEY-----/s', $pem_content, $key_match);
+
+            // Buscar diferentes formatos de clave privada
+            $key_match = [];
+            if (preg_match('/-----BEGIN PRIVATE KEY-----.*?-----END PRIVATE KEY-----/s', $pem_content, $key_match)) {
+                // Formato estándar PKCS#8
+            } elseif (preg_match('/-----BEGIN RSA PRIVATE KEY-----.*?-----END RSA PRIVATE KEY-----/s', $pem_content, $key_match)) {
+                // Formato tradicional RSA
+            } elseif (preg_match('/-----BEGIN ENCRYPTED PRIVATE KEY-----.*?-----END ENCRYPTED PRIVATE KEY-----/s', $pem_content, $key_match)) {
+                // Clave encriptada (no debería pasar con -nodes)
+                return new WP_Error('key_encrypted', 'La clave privada está encriptada. Use -nodes en la conversión.');
+            }
 
             if (empty($cert_match[0]) || empty($key_match[0])) {
-                return new WP_Error('parse_failed', 'No se pudo extraer certificado/clave del PEM');
+                return new WP_Error('parse_failed', 'No se pudo extraer certificado/clave del PEM. Contenido: ' . substr($pem_content, 0, 100));
             }
 
             return $this->certificate_loader->loadFromKeys($cert_match[0], $key_match[0]);
@@ -269,15 +324,34 @@ class Akibara_SII_Client {
     }
 
     /**
-     * Validar certificado
+     * Validar certificado (.p12, .pfx o .pem)
      */
     public function validate_certificate($filepath, $password) {
         if (!$this->certificate_loader) {
             return new WP_Error('no_libredte', 'LibreDTE no está disponible');
         }
 
+        $extension = strtolower(pathinfo($filepath, PATHINFO_EXTENSION));
+
         try {
-            $cert = $this->certificate_loader->loadFromFile($filepath, $password);
+            // Si es PEM, cargarlo de forma especial
+            if ($extension === 'pem') {
+                $cert = $this->load_certificate_from_pem($filepath);
+                if (is_wp_error($cert)) {
+                    return $cert;
+                }
+            } else {
+                // Intentar cargar .p12/.pfx
+                try {
+                    $cert = $this->certificate_loader->loadFromFile($filepath, $password);
+                } catch (Exception $e) {
+                    // Si falla, intentar método legacy
+                    $cert = $this->load_certificate_legacy($filepath, $password);
+                    if (is_wp_error($cert)) {
+                        return $cert;
+                    }
+                }
+            }
 
             return [
                 'nombre' => $cert->getName(),
@@ -285,6 +359,7 @@ class Akibara_SII_Client {
                 'vigente' => $cert->isActive(),
                 'valido_desde' => $cert->getFrom(),
                 'valido_hasta' => $cert->getTo(),
+                'formato' => ($extension === 'pem') ? 'PEM' : 'PKCS#12',
             ];
         } catch (Exception $e) {
             return new WP_Error('cert_invalid', 'Certificado inválido: ' . $e->getMessage());
