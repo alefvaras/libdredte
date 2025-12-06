@@ -58,7 +58,12 @@ class FakeReceptorProvider implements ReceptorProviderInterface
             $receptor = $this->receptorFactory->create(['rut' => $receptor]);
         }
 
-        // El emisor se estandariza como SII.
+        // Si el receptor ya tiene razon_social, no sobreescribir (viene del documento)
+        if ($receptor->getRazonSocial() !== null && $receptor->getRazonSocial() !== '') {
+            return $receptor;
+        }
+
+        // Fallback: El receptor se estandariza como SII (solo para pruebas)
         $receptor = Hydrator::hydrate($receptor, [
             'rut' => 60803000,
             'dv' => 'K',

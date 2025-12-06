@@ -56,7 +56,31 @@ class FakeEmisorProvider implements EmisorProviderInterface
             $emisor = $this->emisorFactory->create(['rut' => $emisor]);
         }
 
-        // El emisor se estandariza como SASCO SPA.
+        // Si estamos en WordPress (Akibara SII), usar datos reales
+        if (function_exists('get_option')) {
+            $rut = get_option('akibara_emisor_rut', '');
+            if (!empty($rut)) {
+                $rut_parts = explode('-', str_replace('.', '', $rut));
+                $rut_numero = isset($rut_parts[0]) ? (int) $rut_parts[0] : 0;
+                $rut_dv = isset($rut_parts[1]) ? $rut_parts[1] : '';
+
+                $emisor = Hydrator::hydrate($emisor, [
+                    'rut' => $rut_numero,
+                    'dv' => $rut_dv,
+                    'razon_social' => get_option('akibara_emisor_razon_social', 'Empresa'),
+                    'giro' => get_option('akibara_emisor_giro', 'Comercio'),
+                    'actividad_economica' => (int) get_option('akibara_emisor_actividad_economica', 726000),
+                    'telefono' => get_option('akibara_emisor_telefono', ''),
+                    'email' => get_option('akibara_emisor_email', ''),
+                    'direccion' => get_option('akibara_emisor_direccion', ''),
+                    'comuna' => get_option('akibara_emisor_comuna', ''),
+                ]);
+
+                return $emisor;
+            }
+        }
+
+        // Fallback: El emisor se estandariza como SASCO SPA (solo para pruebas sin WordPress)
         $emisor = Hydrator::hydrate($emisor, [
             'rut' => 76192083,
             'dv' => '9',
