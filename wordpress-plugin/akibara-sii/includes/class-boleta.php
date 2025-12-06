@@ -20,6 +20,10 @@ class Akibara_Boleta {
     /**
      * Emitir boleta
      *
+     * IMPORTANTE: El folio NO se consume hasta que el SII acepte el documento.
+     * - Si hay error antes del envío → el folio se libera automáticamente
+     * - Si se envía y obtiene track_id → el folio se marca como usado
+     *
      * @param array $data Datos de la boleta
      * @return array|WP_Error
      */
@@ -30,7 +34,7 @@ class Akibara_Boleta {
             return $validation;
         }
 
-        // Obtener siguiente folio
+        // Obtener siguiente folio (sin incrementar - se reserva temporalmente)
         $folio = Akibara_Database::get_siguiente_folio(39, $this->ambiente);
         if (is_wp_error($folio)) {
             return $folio;
@@ -42,17 +46,22 @@ class Akibara_Boleta {
         // Generar XML de la boleta
         $xml_result = $this->sii_client->generar_boleta_xml($boleta_data);
         if (is_wp_error($xml_result)) {
-            Akibara_Database::log('error', 'Error generando XML boleta', [
+            // Error antes del envío - el folio NO se consume
+            Akibara_Database::log('error', 'Error generando XML boleta (folio NO consumido)', [
                 'folio' => $folio,
                 'error' => $xml_result->get_error_message(),
+                'detalle' => 'El folio no se consumió porque hubo error antes del envío al SII',
             ]);
-            return $xml_result;
+            return new WP_Error(
+                $xml_result->get_error_code(),
+                $xml_result->get_error_message() . ' [Folio ' . $folio . ' NO consumido - disponible para reuso]'
+            );
         }
 
         // Calcular montos
         $montos = $this->calcular_montos($data['items']);
 
-        // Guardar en base de datos
+        // Guardar en base de datos con estado 'pendiente' (folio aún no confirmado)
         $boleta_id = Akibara_Database::save_boleta([
             'folio' => $folio,
             'tipo_dte' => 39,
@@ -63,31 +72,37 @@ class Akibara_Boleta {
             'monto_iva' => $montos['iva'],
             'monto_exento' => $montos['exento'],
             'monto_total' => $montos['total'],
-            'estado' => 'generado',
+            'estado' => 'pendiente_envio',  // Nuevo estado: folio reservado, no confirmado
             'ambiente' => $this->ambiente,
             'xml_documento' => $xml_result['xml'],
         ]);
 
         if (is_wp_error($boleta_id)) {
-            return $boleta_id;
+            // Error al guardar - el folio NO se consume
+            return new WP_Error(
+                'db_error',
+                'Error guardando boleta: ' . $boleta_id->get_error_message() . ' [Folio ' . $folio . ' NO consumido]'
+            );
         }
 
-        // Incrementar folio
-        Akibara_Database::incrementar_folio(39, $this->ambiente);
+        // NO incrementar folio aquí - se hará cuando el SII acepte
+        // Akibara_Database::incrementar_folio(39, $this->ambiente);  // REMOVIDO
 
         // Log
-        Akibara_Database::log('boleta', 'Boleta generada', [
+        Akibara_Database::log('boleta', 'Boleta generada (pendiente envío SII)', [
             'id' => $boleta_id,
             'folio' => $folio,
             'total' => $montos['total'],
+            'nota' => 'Folio reservado, se confirmará al enviar al SII',
         ]);
 
         $result = [
             'id' => $boleta_id,
             'folio' => $folio,
             'total' => $montos['total'],
-            'estado' => 'generado',
-            'mensaje' => 'Boleta generada correctamente',
+            'estado' => 'pendiente_envio',
+            'mensaje' => 'Boleta generada (pendiente envío al SII)',
+            'folio_confirmado' => false,
         ];
 
         // Verificar si envío automático está habilitado
@@ -99,9 +114,11 @@ class Akibara_Boleta {
                 $result['track_id'] = $envio_result['track_id'];
                 $result['estado'] = 'enviado';
                 $result['mensaje'] = 'Boleta generada y enviada al SII';
+                $result['folio_confirmado'] = true;
             } else {
                 $result['enviado'] = false;
                 $result['error_envio'] = $envio_result->get_error_message();
+                $result['folio_confirmado'] = false;
             }
         }
 
@@ -111,6 +128,9 @@ class Akibara_Boleta {
     /**
      * Enviar boleta al SII
      *
+     * IMPORTANTE: El folio se confirma (consume) SOLO cuando el SII acepta el documento.
+     * Si hay error en el envío, el folio NO se consume.
+     *
      * @param int $boleta_id ID de la boleta
      * @return array|WP_Error
      */
@@ -118,29 +138,45 @@ class Akibara_Boleta {
         $boleta = Akibara_Database::get_boleta($boleta_id);
 
         if (!$boleta) {
-            return new WP_Error('not_found', 'Boleta no encontrada');
+            return new WP_Error('not_found', 'Boleta no encontrada (ID: ' . $boleta_id . ')');
         }
 
         if ($boleta->enviado_sii) {
-            return new WP_Error('already_sent', 'La boleta ya fue enviada al SII');
+            return new WP_Error('already_sent', 'La boleta folio ' . $boleta->folio . ' ya fue enviada al SII (Track ID: ' . $boleta->track_id . ')');
         }
 
         // Crear sobre de envío
         $sobre_result = $this->sii_client->crear_sobre_boleta($boleta);
         if (is_wp_error($sobre_result)) {
-            return $sobre_result;
+            // Error al crear sobre - el folio NO se consume
+            Akibara_Database::log('error', 'Error creando sobre (folio NO consumido)', [
+                'boleta_id' => $boleta_id,
+                'folio' => $boleta->folio,
+                'error' => $sobre_result->get_error_message(),
+            ]);
+            return new WP_Error(
+                $sobre_result->get_error_code(),
+                'Error creando sobre de envío: ' . $sobre_result->get_error_message() . ' [Folio ' . $boleta->folio . ' NO consumido]'
+            );
         }
 
         // Enviar al SII
         $envio_result = $this->sii_client->enviar_documento($sobre_result['xml'], $boleta->ambiente);
         if (is_wp_error($envio_result)) {
-            Akibara_Database::log('error', 'Error enviando boleta al SII', [
+            // Error al enviar - el folio NO se consume
+            Akibara_Database::log('error', 'Error enviando al SII (folio NO consumido)', [
                 'boleta_id' => $boleta_id,
                 'folio' => $boleta->folio,
                 'error' => $envio_result->get_error_message(),
             ]);
-            return $envio_result;
+            return new WP_Error(
+                $envio_result->get_error_code(),
+                'Error enviando al SII: ' . $envio_result->get_error_message() . ' [Folio ' . $boleta->folio . ' NO consumido]'
+            );
         }
+
+        // ¡ÉXITO! El SII aceptó el documento - AHORA confirmamos el folio
+        Akibara_Database::incrementar_folio(39, $boleta->ambiente);
 
         // Actualizar boleta
         Akibara_Database::update_boleta($boleta_id, [
@@ -152,16 +188,18 @@ class Akibara_Boleta {
             'respuesta_sii' => json_encode($envio_result),
         ]);
 
-        // Log
-        Akibara_Database::log('envio', 'Boleta enviada al SII', [
+        // Log exitoso
+        Akibara_Database::log('envio', 'Boleta enviada al SII - Folio CONFIRMADO', [
             'boleta_id' => $boleta_id,
             'folio' => $boleta->folio,
             'track_id' => $envio_result['track_id'],
+            'folio_consumido' => true,
         ]);
 
         return [
             'track_id' => $envio_result['track_id'],
             'estado' => $envio_result['estado'],
+            'folio_confirmado' => true,
         ];
     }
 
