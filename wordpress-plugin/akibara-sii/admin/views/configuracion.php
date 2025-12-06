@@ -29,9 +29,12 @@ if (isset($_POST['akibara_save_config']) && wp_verify_nonce($_POST['_wpnonce'], 
     echo '<div class="notice notice-success is-dismissible"><p><strong>Configuracion guardada correctamente.</strong></p></div>';
 }
 
-// Procesar certificado (formulario separado)
+// Procesar certificado (acepta archivo combinado o separados)
 if (isset($_POST['akibara_upload_cert']) && wp_verify_nonce($_POST['_wpnonce'], 'akibara_cert_upload')) {
-    if (!empty($_FILES['certificado']['tmp_name']) && $_FILES['certificado']['error'] === UPLOAD_ERR_OK) {
+    $cert_ok = !empty($_FILES['certificado']['tmp_name']) && $_FILES['certificado']['error'] === UPLOAD_ERR_OK;
+    $key_ok = !empty($_FILES['clave_privada']['tmp_name']) && $_FILES['clave_privada']['error'] === UPLOAD_ERR_OK;
+
+    if ($cert_ok) {
         $cert_ambiente = sanitize_text_field($_POST['cert_ambiente'] ?? 'certificacion');
         $cert_dir = AKIBARA_SII_UPLOADS . 'certs/';
 
@@ -40,42 +43,51 @@ if (isset($_POST['akibara_upload_cert']) && wp_verify_nonce($_POST['_wpnonce'], 
             file_put_contents($cert_dir . '.htaccess', 'deny from all');
         }
 
-        // Detectar extensión del archivo subido
-        $original_name = $_FILES['certificado']['name'];
-        $extension = strtolower(pathinfo($original_name, PATHINFO_EXTENSION));
+        // Leer contenido del certificado
+        $cert_content = file_get_contents($_FILES['certificado']['tmp_name']);
 
-        // Validar extensión
-        if (!in_array($extension, ['p12', 'pem'])) {
-            echo '<div class="notice notice-error is-dismissible"><p><strong>Formato no soportado.</strong> Use .p12 o .pem</p></div>';
+        // Verificar si el certificado ya tiene la clave privada
+        $has_cert = strpos($cert_content, '-----BEGIN CERTIFICATE-----') !== false;
+        $has_key_in_cert = strpos($cert_content, '-----BEGIN PRIVATE KEY-----') !== false ||
+                          strpos($cert_content, '-----BEGIN RSA PRIVATE KEY-----') !== false;
+
+        // Si subio archivo de clave separado, leerlo
+        $key_content = '';
+        if ($key_ok) {
+            $key_content = file_get_contents($_FILES['clave_privada']['tmp_name']);
+        }
+
+        $has_key_separate = strpos($key_content, '-----BEGIN PRIVATE KEY-----') !== false ||
+                           strpos($key_content, '-----BEGIN RSA PRIVATE KEY-----') !== false;
+
+        // Validaciones
+        if (!$has_cert) {
+            echo '<div class="notice notice-error is-dismissible"><p><strong>Error:</strong> El archivo no contiene un certificado valido (debe tener BEGIN CERTIFICATE)</p></div>';
+        } elseif (!$has_key_in_cert && !$has_key_separate) {
+            echo '<div class="notice notice-error is-dismissible"><p><strong>Error:</strong> Falta la clave privada. Suba el archivo de clave privada o use un PEM que contenga ambos.</p></div>';
         } else {
-            $cert_filename = 'certificado_' . $cert_ambiente . '.' . $extension;
+            // Combinar contenido (si la clave viene separada)
+            $pem_content = trim($cert_content);
+            if ($has_key_separate && !$has_key_in_cert) {
+                $pem_content .= "\n" . trim($key_content);
+            }
+
+            $cert_filename = 'certificado_' . $cert_ambiente . '.pem';
             $cert_file = $cert_dir . $cert_filename;
 
-            if (move_uploaded_file($_FILES['certificado']['tmp_name'], $cert_file)) {
+            if (file_put_contents($cert_file, $pem_content)) {
                 update_option("akibara_cert_{$cert_ambiente}_file", $cert_filename);
-                update_option("akibara_cert_{$cert_ambiente}_password", base64_encode(sanitize_text_field($_POST['cert_password'] ?? '')));
+                update_option("akibara_cert_{$cert_ambiente}_password", '');
                 update_option('akibara_cert_path', $cert_file);
 
-                $format_msg = ($extension === 'pem') ? ' (formato PEM)' : ' (formato PKCS#12)';
-                echo '<div class="notice notice-success is-dismissible"><p><strong>Certificado para ambiente ' . strtoupper($cert_ambiente) . ' subido correctamente' . $format_msg . '.</strong></p></div>';
+                $msg = $has_key_in_cert ? ' (archivo combinado)' : ' (certificado + clave separados)';
+                echo '<div class="notice notice-success is-dismissible"><p><strong>Certificado para ambiente ' . strtoupper($cert_ambiente) . ' subido correctamente' . $msg . '.</strong></p></div>';
             } else {
-                echo '<div class="notice notice-error is-dismissible"><p><strong>Error al subir el certificado.</strong> Verifica los permisos del directorio.</p></div>';
+                echo '<div class="notice notice-error is-dismissible"><p><strong>Error al guardar el certificado.</strong> Verifica los permisos del directorio.</p></div>';
             }
         }
     } else {
-        $error_msg = 'No se selecciono ningun archivo.';
-        if (!empty($_FILES['certificado']['error'])) {
-            $upload_errors = [
-                UPLOAD_ERR_INI_SIZE => 'El archivo excede el tamano maximo permitido.',
-                UPLOAD_ERR_FORM_SIZE => 'El archivo excede el tamano maximo del formulario.',
-                UPLOAD_ERR_PARTIAL => 'El archivo se subio parcialmente.',
-                UPLOAD_ERR_NO_FILE => 'No se selecciono ningun archivo.',
-                UPLOAD_ERR_NO_TMP_DIR => 'Falta la carpeta temporal.',
-                UPLOAD_ERR_CANT_WRITE => 'No se pudo escribir el archivo.',
-            ];
-            $error_msg = $upload_errors[$_FILES['certificado']['error']] ?? 'Error desconocido.';
-        }
-        echo '<div class="notice notice-error is-dismissible"><p><strong>Error:</strong> ' . esc_html($error_msg) . '</p></div>';
+        echo '<div class="notice notice-error is-dismissible"><p><strong>Error:</strong> Debe subir al menos el archivo de certificado.</p></div>';
     }
 }
 
@@ -336,17 +348,17 @@ $cert_produccion_file = get_option('akibara_cert_produccion_file', '');
                         </td>
                     </tr>
                     <tr>
-                        <th><label for="certificado">Archivo (.p12 o .pem)</label></th>
+                        <th><label for="certificado">Certificado (.crt, .cer, .pem)</label></th>
                         <td>
-                            <input type="file" id="certificado" name="certificado" accept=".p12,.pem" required>
-                            <p class="description">Suba su certificado digital. Si tiene problemas con .p12, conviertalo a .pem</p>
+                            <input type="file" id="certificado" name="certificado" accept=".crt,.cer,.pem" required>
+                            <p class="description">Archivo con el certificado (BEGIN CERTIFICATE). Puede incluir la clave privada.</p>
                         </td>
                     </tr>
                     <tr>
-                        <th><label for="cert_password">Contrasena</label></th>
+                        <th><label for="clave_privada">Clave Privada (.key, .pem)</label></th>
                         <td>
-                            <input type="password" id="cert_password" name="cert_password" class="regular-text">
-                            <p class="description">Requerida para .p12. No necesaria para .pem</p>
+                            <input type="file" id="clave_privada" name="clave_privada" accept=".key,.pem">
+                            <p class="description">Opcional si el certificado ya incluye la clave privada</p>
                         </td>
                     </tr>
                 </table>

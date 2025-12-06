@@ -87,14 +87,13 @@ class Akibara_SII_Client {
     }
 
     /**
-     * Cargar certificado
+     * Cargar certificado (solo PEM)
      */
     private function load_certificate($ambiente) {
         $cert_file = get_option("akibara_cert_{$ambiente}_file", '');
-        $cert_password = base64_decode(get_option("akibara_cert_{$ambiente}_password", ''));
 
         if (empty($cert_file)) {
-            return new WP_Error('no_cert', 'No hay certificado configurado');
+            return new WP_Error('no_cert', 'No hay certificado configurado. Suba su certificado en formato PEM.');
         }
 
         $cert_path = AKIBARA_SII_UPLOADS . 'certs/' . $cert_file;
@@ -103,46 +102,7 @@ class Akibara_SII_Client {
             return new WP_Error('cert_not_found', 'Archivo de certificado no encontrado');
         }
 
-        // Si es archivo PEM, cargarlo directamente
-        $extension = strtolower(pathinfo($cert_path, PATHINFO_EXTENSION));
-        if ($extension === 'pem') {
-            return $this->load_certificate_from_pem($cert_path);
-        }
-
-        try {
-            // Intentar cargar .p12 normalmente
-            return $this->certificate_loader->loadFromFile($cert_path, $cert_password);
-        } catch (Exception $e) {
-            $error_msg = $e->getMessage();
-
-            // Si falla por algoritmo no soportado (OpenSSL 3.0 + certificado legacy)
-            // Códigos de error comunes: 0308010C, 03000082
-            $is_legacy_error = (
-                strpos($error_msg, '0308010C') !== false ||
-                strpos($error_msg, '03000082') !== false ||
-                strpos($error_msg, 'invalid key length') !== false ||
-                strpos($error_msg, 'Unsupported') !== false ||
-                strpos($error_msg, 'digital envelope') !== false ||
-                strpos($error_msg, 'RC2') !== false
-            );
-
-            if ($is_legacy_error) {
-                // Intentar con método legacy usando shell
-                $legacy_result = $this->load_certificate_legacy($cert_path, $cert_password);
-                if (!is_wp_error($legacy_result)) {
-                    return $legacy_result;
-                }
-                // Si también falló el método legacy, mostrar mensaje útil
-                return new WP_Error(
-                    'cert_legacy_error',
-                    'El certificado usa cifrado legacy (RC2/3DES) no compatible con OpenSSL 3.x. ' .
-                    'Solución: Suba un archivo .pem o convierta ejecutando en su PC: ' .
-                    'openssl pkcs12 -in certificado.p12 -out certificado.pem -nodes -legacy ' .
-                    '(Error: ' . $legacy_result->get_error_message() . ')'
-                );
-            }
-            return new WP_Error('cert_error', 'Error cargando certificado: ' . $error_msg);
-        }
+        return $this->load_certificate_from_pem($cert_path);
     }
 
     /**

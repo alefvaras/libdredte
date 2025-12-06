@@ -317,36 +317,56 @@ class Akibara_SII {
             wp_send_json_error(['message' => 'Sin permisos']);
         }
 
+        // Requiere al menos el certificado
         if (empty($_FILES['cert_file'])) {
-            wp_send_json_error(['message' => 'No se recibió archivo']);
+            wp_send_json_error(['message' => 'Debe subir el archivo de certificado']);
         }
 
-        $password = sanitize_text_field($_POST['cert_password'] ?? '');
         $ambiente = sanitize_text_field($_POST['ambiente'] ?? 'certificacion');
-
-        $file = $_FILES['cert_file'];
         $upload_dir = AKIBARA_SII_UPLOADS . 'certs/';
 
         if (!file_exists($upload_dir)) {
             wp_mkdir_p($upload_dir);
         }
 
-        // Detectar extensión del archivo subido
-        $original_name = $file['name'];
-        $extension = strtolower(pathinfo($original_name, PATHINFO_EXTENSION));
+        // Leer contenido del certificado
+        $cert_content = file_get_contents($_FILES['cert_file']['tmp_name']);
 
-        // Validar extensión permitida
-        if (!in_array($extension, ['p12', 'pem'])) {
-            wp_send_json_error(['message' => 'Formato no soportado. Use .p12 o .pem']);
+        // Verificar si ya tiene la clave
+        $has_cert = strpos($cert_content, '-----BEGIN CERTIFICATE-----') !== false;
+        $has_key_in_cert = strpos($cert_content, '-----BEGIN PRIVATE KEY-----') !== false ||
+                          strpos($cert_content, '-----BEGIN RSA PRIVATE KEY-----') !== false;
+
+        // Si subio archivo de clave separado
+        $key_content = '';
+        $has_key_separate = false;
+        if (!empty($_FILES['key_file']) && $_FILES['key_file']['error'] === UPLOAD_ERR_OK) {
+            $key_content = file_get_contents($_FILES['key_file']['tmp_name']);
+            $has_key_separate = strpos($key_content, '-----BEGIN PRIVATE KEY-----') !== false ||
+                               strpos($key_content, '-----BEGIN RSA PRIVATE KEY-----') !== false;
         }
 
-        $filename = 'cert_' . $ambiente . '_' . time() . '.' . $extension;
+        if (!$has_cert) {
+            wp_send_json_error(['message' => 'El archivo no contiene un certificado valido (debe contener BEGIN CERTIFICATE)']);
+        }
+
+        if (!$has_key_in_cert && !$has_key_separate) {
+            wp_send_json_error(['message' => 'Falta la clave privada. Suba el archivo de clave o use un PEM que contenga ambos.']);
+        }
+
+        // Combinar en un solo PEM
+        $pem_content = trim($cert_content);
+        if ($has_key_separate && !$has_key_in_cert) {
+            $pem_content .= "\n" . trim($key_content);
+        }
+
+        $filename = 'cert_' . $ambiente . '_' . time() . '.pem';
         $filepath = $upload_dir . $filename;
 
-        if (move_uploaded_file($file['tmp_name'], $filepath)) {
-            // Validar certificado
+        if (file_put_contents($filepath, $pem_content)) {
+            // Validar certificado combinado
             $sii = new Akibara_SII_Client();
-            $cert_info = $sii->validate_certificate($filepath, $password);
+            $cert_info = $sii->validate_certificate($filepath, '');
 
             if (is_wp_error($cert_info)) {
                 unlink($filepath);
@@ -355,10 +375,9 @@ class Akibara_SII {
 
             // Guardar configuración
             update_option("akibara_cert_{$ambiente}_file", $filename);
-            // Para PEM no necesitamos password, pero lo guardamos igual por consistencia
-            update_option("akibara_cert_{$ambiente}_password", base64_encode($password));
+            update_option("akibara_cert_{$ambiente}_password", '');
 
-            $format_msg = ($extension === 'pem') ? ' (formato PEM)' : ' (formato PKCS#12)';
+            $format_msg = $has_key_in_cert ? ' (archivo combinado)' : ' (cert + clave separados)';
             wp_send_json_success([
                 'message' => 'Certificado cargado correctamente' . $format_msg,
                 'info' => $cert_info,
