@@ -165,6 +165,15 @@ class Akibara_SII {
             'akibara-rcof',
             [Akibara_Admin::instance(), 'render_rcof']
         );
+
+        add_submenu_page(
+            'akibara-sii',
+            __('Certificacion SII', 'akibara-sii'),
+            __('Certificacion', 'akibara-sii'),
+            'manage_options',
+            'akibara-certificacion',
+            [Akibara_Admin::instance(), 'render_certificacion_sii']
+        );
     }
 
     public function admin_scripts($hook) {
