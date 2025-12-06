@@ -138,18 +138,28 @@ class Akibara_Boleta {
         $boleta = Akibara_Database::get_boleta($boleta_id);
 
         if (!$boleta) {
+            Akibara_Database::log('error', 'Boleta no encontrada para envío', [
+                'boleta_id' => $boleta_id,
+            ]);
             return new WP_Error('not_found', 'Boleta no encontrada (ID: ' . $boleta_id . ')');
         }
 
         if ($boleta->enviado_sii) {
-            return new WP_Error('already_sent', 'La boleta folio ' . $boleta->folio . ' ya fue enviada al SII (Track ID: ' . $boleta->track_id . ')');
+            return new WP_Error('already_sent', 'La boleta folio ' . $boleta->folio . ' ya fue enviada al SII (Track ID: ' . ($boleta->track_id ?: 'N/A') . ')');
         }
+
+        // Log inicio del envío
+        Akibara_Database::log('envio', 'Iniciando envío al SII', [
+            'boleta_id' => $boleta_id,
+            'folio' => $boleta->folio,
+            'ambiente' => $boleta->ambiente,
+        ]);
 
         // Crear sobre de envío
         $sobre_result = $this->sii_client->crear_sobre_boleta($boleta);
         if (is_wp_error($sobre_result)) {
             // Error al crear sobre - el folio NO se consume
-            Akibara_Database::log('error', 'Error creando sobre (folio NO consumido)', [
+            Akibara_Database::log('error', 'Error creando sobre de envío (folio NO consumido)', [
                 'boleta_id' => $boleta_id,
                 'folio' => $boleta->folio,
                 'error' => $sobre_result->get_error_message(),
@@ -167,6 +177,7 @@ class Akibara_Boleta {
             Akibara_Database::log('error', 'Error enviando al SII (folio NO consumido)', [
                 'boleta_id' => $boleta_id,
                 'folio' => $boleta->folio,
+                'ambiente' => $boleta->ambiente,
                 'error' => $envio_result->get_error_message(),
             ]);
             return new WP_Error(
@@ -175,29 +186,49 @@ class Akibara_Boleta {
             );
         }
 
+        // Validar que el track_id existe y es válido
+        $track_id = $envio_result['track_id'] ?? null;
+        if (empty($track_id) || $track_id === '0' || (is_numeric($track_id) && intval($track_id) <= 0)) {
+            Akibara_Database::log('error', 'Track ID inválido o vacío recibido del SII', [
+                'boleta_id' => $boleta_id,
+                'folio' => $boleta->folio,
+                'track_id_recibido' => $track_id,
+                'respuesta_completa' => json_encode($envio_result),
+            ]);
+            return new WP_Error('invalid_track_id', 'El SII no devolvió un Track ID válido. Respuesta: ' . json_encode($envio_result));
+        }
+
         // ¡ÉXITO! El SII aceptó el documento - AHORA confirmamos el folio
         Akibara_Database::incrementar_folio(39, $boleta->ambiente);
 
         // Actualizar boleta
-        Akibara_Database::update_boleta($boleta_id, [
+        $update_result = Akibara_Database::update_boleta($boleta_id, [
             'xml_sobre' => $sobre_result['xml'],
-            'track_id' => $envio_result['track_id'],
+            'track_id' => $track_id,
             'estado' => 'enviado',
             'enviado_sii' => 1,
             'fecha_envio' => current_time('mysql'),
             'respuesta_sii' => json_encode($envio_result),
         ]);
 
+        if ($update_result === false) {
+            Akibara_Database::log('error', 'Error guardando track_id en base de datos', [
+                'boleta_id' => $boleta_id,
+                'track_id' => $track_id,
+            ]);
+        }
+
         // Log exitoso
         Akibara_Database::log('envio', 'Boleta enviada al SII - Folio CONFIRMADO', [
             'boleta_id' => $boleta_id,
             'folio' => $boleta->folio,
-            'track_id' => $envio_result['track_id'],
+            'ambiente' => $boleta->ambiente,
+            'track_id' => $track_id,
             'folio_consumido' => true,
         ]);
 
         return [
-            'track_id' => $envio_result['track_id'],
+            'track_id' => $track_id,
             'estado' => $envio_result['estado'],
             'folio_confirmado' => true,
         ];

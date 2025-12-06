@@ -4,11 +4,18 @@ if (!defined('ABSPATH')) exit;
 $ambiente = get_option('akibara_ambiente', 'certificacion');
 $emisor_rut = get_option('akibara_emisor_rut', '');
 $emisor_razon = get_option('akibara_emisor_razon_social', '');
+$envio_automatico = get_option('akibara_envio_automatico', 0);
+
+// Certificados
+$cert_certificacion = get_option('akibara_cert_certificacion_file', '');
+$cert_produccion = get_option('akibara_cert_produccion_file', '');
+$cert_actual = $ambiente === 'produccion' ? $cert_produccion : $cert_certificacion;
 
 // Estadísticas
 global $wpdb;
 $table_boletas = $wpdb->prefix . 'akibara_boletas';
 $table_caf = $wpdb->prefix . 'akibara_caf';
+$table_log = $wpdb->prefix . 'akibara_log';
 
 $total_boletas = $wpdb->get_var("SELECT COUNT(*) FROM $table_boletas");
 $boletas_hoy = $wpdb->get_var($wpdb->prepare(
@@ -20,6 +27,16 @@ $monto_hoy = $wpdb->get_var($wpdb->prepare(
     date('Y-m-d')
 ));
 
+// Boletas sin track_id (problema potencial)
+$boletas_sin_track = $wpdb->get_var(
+    "SELECT COUNT(*) FROM $table_boletas WHERE enviado_sii = 1 AND (track_id IS NULL OR track_id = '' OR track_id = '0')"
+);
+
+// Últimos errores
+$ultimos_errores = $wpdb->get_results(
+    "SELECT * FROM $table_log WHERE tipo = 'error' ORDER BY created_at DESC LIMIT 5"
+);
+
 $caf_activo = $wpdb->get_row($wpdb->prepare(
     "SELECT * FROM $table_caf WHERE tipo_dte = 39 AND ambiente = %s AND activo = 1 ORDER BY folio_desde DESC LIMIT 1",
     $ambiente
@@ -28,6 +45,61 @@ $caf_activo = $wpdb->get_row($wpdb->prepare(
 $folios_disponibles = 0;
 if ($caf_activo) {
     $folios_disponibles = $caf_activo->folio_hasta - $caf_activo->folio_actual + 1;
+}
+
+// Diagnóstico de configuración
+$diagnostico = [];
+
+// Verificar ambiente
+$diagnostico['ambiente'] = [
+    'nombre' => 'Ambiente',
+    'valor' => strtoupper($ambiente),
+    'estado' => !empty($ambiente) ? 'ok' : 'error',
+    'mensaje' => !empty($ambiente) ? 'Configurado: ' . $ambiente : 'No configurado',
+];
+
+// Verificar certificado
+$cert_path = AKIBARA_SII_UPLOADS . 'certs/' . $cert_actual;
+$cert_existe = !empty($cert_actual) && file_exists($cert_path);
+$diagnostico['certificado'] = [
+    'nombre' => 'Certificado (' . strtoupper($ambiente) . ')',
+    'valor' => $cert_actual ?: 'No configurado',
+    'estado' => $cert_existe ? 'ok' : 'error',
+    'mensaje' => $cert_existe ? 'Archivo existe' : 'Archivo no encontrado o no configurado',
+];
+
+// Verificar CAF
+$diagnostico['caf'] = [
+    'nombre' => 'CAF (' . strtoupper($ambiente) . ')',
+    'valor' => $caf_activo ? 'Folios ' . $caf_activo->folio_desde . '-' . $caf_activo->folio_hasta : 'No configurado',
+    'estado' => $caf_activo ? 'ok' : 'error',
+    'mensaje' => $caf_activo ? $folios_disponibles . ' folios disponibles' : 'Debe subir un CAF',
+];
+
+// Verificar emisor
+$diagnostico['emisor'] = [
+    'nombre' => 'Emisor',
+    'valor' => $emisor_rut ?: 'No configurado',
+    'estado' => !empty($emisor_rut) ? 'ok' : 'error',
+    'mensaje' => !empty($emisor_rut) ? $emisor_razon : 'Debe configurar datos del emisor',
+];
+
+// Verificar envío automático
+$diagnostico['envio_auto'] = [
+    'nombre' => 'Envío Automático',
+    'valor' => $envio_automatico ? 'Activado' : 'Desactivado',
+    'estado' => 'info',
+    'mensaje' => $envio_automatico ? 'Las boletas se enviarán automáticamente' : 'Debe enviar manualmente desde historial',
+];
+
+// Verificar boletas sin track_id
+if ($boletas_sin_track > 0) {
+    $diagnostico['track_id'] = [
+        'nombre' => 'Boletas sin Track ID',
+        'valor' => $boletas_sin_track,
+        'estado' => 'warning',
+        'mensaje' => 'Hay boletas enviadas sin Track ID válido. Verifique los logs.',
+    ];
 }
 ?>
 
@@ -51,6 +123,62 @@ if ($caf_activo) {
                 No hay empresa configurada.
                 <a href="<?php echo admin_url('admin.php?page=akibara-configuracion'); ?>">Configurar ahora</a>
             </p>
+        <?php endif; ?>
+    </div>
+
+    <!-- Panel de Diagnóstico -->
+    <div class="diagnostico-card card">
+        <h2>Diagnóstico de Configuración</h2>
+        <table class="widefat diagnostico-table">
+            <thead>
+                <tr>
+                    <th>Componente</th>
+                    <th>Valor</th>
+                    <th>Estado</th>
+                    <th>Detalle</th>
+                </tr>
+            </thead>
+            <tbody>
+                <?php foreach ($diagnostico as $item): ?>
+                <tr class="diag-<?php echo $item['estado']; ?>">
+                    <td><strong><?php echo esc_html($item['nombre']); ?></strong></td>
+                    <td><code><?php echo esc_html($item['valor']); ?></code></td>
+                    <td>
+                        <?php if ($item['estado'] === 'ok'): ?>
+                            <span class="estado-badge estado-aceptado">OK</span>
+                        <?php elseif ($item['estado'] === 'error'): ?>
+                            <span class="estado-badge estado-rechazado">ERROR</span>
+                        <?php elseif ($item['estado'] === 'warning'): ?>
+                            <span class="estado-badge estado-pendiente">ALERTA</span>
+                        <?php else: ?>
+                            <span class="estado-badge estado-enviado">INFO</span>
+                        <?php endif; ?>
+                    </td>
+                    <td><?php echo esc_html($item['mensaje']); ?></td>
+                </tr>
+                <?php endforeach; ?>
+            </tbody>
+        </table>
+        <?php if (!empty($ultimos_errores)): ?>
+        <h3 style="margin-top: 20px;">Últimos Errores</h3>
+        <table class="widefat">
+            <thead>
+                <tr>
+                    <th>Fecha</th>
+                    <th>Mensaje</th>
+                    <th>Datos</th>
+                </tr>
+            </thead>
+            <tbody>
+                <?php foreach ($ultimos_errores as $error): ?>
+                <tr>
+                    <td><?php echo date('d/m/Y H:i', strtotime($error->created_at)); ?></td>
+                    <td><?php echo esc_html($error->mensaje); ?></td>
+                    <td><code style="font-size: 10px;"><?php echo esc_html(substr($error->datos ?: '-', 0, 100)); ?></code></td>
+                </tr>
+                <?php endforeach; ?>
+            </tbody>
+        </table>
         <?php endif; ?>
     </div>
 
