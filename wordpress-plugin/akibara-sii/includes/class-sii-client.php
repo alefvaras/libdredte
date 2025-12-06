@@ -882,10 +882,14 @@ class Akibara_SII_Client {
         $html .= '<div class="total">Venta <span style="float:right;">$ ' . number_format($data['totales']['total'], 0, ',', '.') . '</span></div>';
         $html .= '<div class="iva-info">El IVA incluido en esta boleta es de: $ ' . number_format($data['totales']['iva'], 0, ',', '.') . '</div>';
 
-        // Timbre PDF417
+        // Timbre PDF417 - Usando TCPDF2DBarcode como LibreDTE (ECL nivel 5)
         if (!empty($data['ted'])) {
             $html .= '<div class="timbre">';
-            $html .= '<barcode code="' . htmlspecialchars($data['ted']) . '" type="PDF417" height="1.5" class="barcode" />';
+            // Generar imagen PNG del barcode usando metodo de LibreDTE
+            $pdf417 = new \TCPDF2DBarcode($data['ted'], 'PDF417,,5');
+            $pngData = $pdf417->getBarcodePngData(2, 2, [0,0,0]);
+            $base64 = 'data:image/png;base64,' . base64_encode($pngData);
+            $html .= '<img src="' . $base64 . '" style="width:65mm; height:auto;" />';
             $html .= '<div class="timbre-texto">Timbre Electronico SII<br/>Res. 0 de 2025<br/>Verifique documento en sii.cl</div>';
             $html .= '</div>';
         }

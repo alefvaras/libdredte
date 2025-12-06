@@ -98,9 +98,10 @@ class BoletaPDF extends TCPDF {
     public function Footer() {}
 }
 
-// Formato papel: ancho 80mm (voucher termico) o carta
+// Formato papel: ancho 80mm (voucher termico), alto variable
 $anchoVoucher = 80; // mm
-$pdf = new BoletaPDF('P', 'mm', [$anchoVoucher, 200], true, 'UTF-8');
+$altoVoucher = 280; // mm - suficiente para contenido + barcode
+$pdf = new BoletaPDF('P', 'mm', [$anchoVoucher, $altoVoucher], true, 'UTF-8');
 
 $pdf->SetCreator('Akibara SII');
 $pdf->SetAuthor($razonSocialEmisor);
@@ -214,19 +215,26 @@ $pdf->MultiCell(70, 4, 'El IVA incluido en esta boleta es de: $ ' . number_forma
 $y = $pdf->GetY() + 5;
 
 // === TIMBRE ELECTRONICO PDF417 ===
+// Usando TCPDF2DBarcode como LibreDTE (ECL nivel 5 requerido por SII)
 if (!empty($tedString)) {
-    $style = [
-        'border' => false,
-        'padding' => 0,
-        'fgcolor' => [0, 0, 0],
-        'bgcolor' => false,
-        'module_width' => 0.25,
-        'module_height' => 0.8,
-    ];
-
     try {
-        $pdf->write2DBarcode($tedString, 'PDF417', 8, $y, 64, 25, $style);
-        $y += 28;
+        // Generar barcode como PNG usando el metodo de LibreDTE
+        $pdf417 = new TCPDF2DBarcode($tedString, 'PDF417,,5');
+        $pngData = $pdf417->getBarcodePngData(2, 2, [0,0,0]);
+
+        // Guardar temporalmente para insertar en PDF
+        $tmpFile = tempnam(sys_get_temp_dir(), 'barcode_');
+        file_put_contents($tmpFile, $pngData);
+
+        // Insertar imagen del barcode (ancho 65mm, alto proporcional)
+        $pdf->Image($tmpFile, 5, $y, 65, 0, 'PNG');
+
+        // Calcular alto de imagen insertada
+        $imgInfo = getimagesize($tmpFile);
+        $imgHeight = ($imgInfo[1] / $imgInfo[0]) * 65; // alto proporcional
+        $y += $imgHeight + 3;
+
+        unlink($tmpFile);
     } catch (Exception $e) {
         $pdf->SetFont('courier', '', 5);
         $pdf->SetXY(5, $y);
