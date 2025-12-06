@@ -139,7 +139,7 @@ function ejecutar_set_pruebas_certificacion($email) {
     ];
 
     try {
-        $sii_client = new Akibara_SII_Client();
+        $boleta_emisor = new Akibara_Boleta();
 
         foreach ($casos_prueba as $i => $caso) {
             $caso_num = $i + 1;
@@ -159,8 +159,8 @@ function ejecutar_set_pruebas_certificacion($email) {
                     'referencia' => 'CASO-' . $caso_num,
                 ];
 
-                // Emitir boleta
-                $resultado = $sii_client->emitir_boleta($boleta_data);
+                // Emitir boleta usando Akibara_Boleta
+                $resultado = $boleta_emisor->emitir($boleta_data);
 
                 if (is_wp_error($resultado)) {
                     throw new Exception($resultado->get_error_message());
@@ -169,7 +169,15 @@ function ejecutar_set_pruebas_certificacion($email) {
                 $resultado_caso['estado'] = 'emitida';
                 $resultado_caso['folio'] = $resultado['folio'] ?? null;
                 $resultado_caso['track_id'] = $resultado['track_id'] ?? null;
-                $resultado_caso['boleta_id'] = $resultado['boleta_id'] ?? null;
+                $resultado_caso['boleta_id'] = $resultado['id'] ?? null;
+
+                // Si no se envió automáticamente, enviar ahora
+                if (empty($resultado['track_id']) && !empty($resultado_caso['boleta_id'])) {
+                    $envio = $boleta_emisor->enviar_al_sii($resultado_caso['boleta_id']);
+                    if (!is_wp_error($envio)) {
+                        $resultado_caso['track_id'] = $envio['track_id'];
+                    }
+                }
 
                 if ($resultado_caso['track_id']) {
                     $resultados['track_ids'][] = $resultado_caso['track_id'];
@@ -225,7 +233,7 @@ function emitir_boleta_prueba($email) {
     ];
 
     try {
-        $sii_client = new Akibara_SII_Client();
+        $boleta_emisor = new Akibara_Boleta();
 
         $boleta_data = [
             'receptor' => [
@@ -238,7 +246,7 @@ function emitir_boleta_prueba($email) {
             'referencia' => 'TEST-' . date('His'),
         ];
 
-        $resultado = $sii_client->emitir_boleta($boleta_data);
+        $resultado = $boleta_emisor->emitir($boleta_data);
 
         if (is_wp_error($resultado)) {
             throw new Exception($resultado->get_error_message());
@@ -249,8 +257,16 @@ function emitir_boleta_prueba($email) {
             'estado' => 'emitida',
             'folio' => $resultado['folio'] ?? null,
             'track_id' => $resultado['track_id'] ?? null,
-            'boleta_id' => $resultado['boleta_id'] ?? null,
+            'boleta_id' => $resultado['id'] ?? null,
         ];
+
+        // Si no se envió automáticamente, enviar ahora
+        if (empty($caso['track_id']) && !empty($caso['boleta_id'])) {
+            $envio = $boleta_emisor->enviar_al_sii($caso['boleta_id']);
+            if (!is_wp_error($envio)) {
+                $caso['track_id'] = $envio['track_id'];
+            }
+        }
 
         // Generar PDF
         if (!empty($caso['boleta_id'])) {
@@ -263,8 +279,8 @@ function emitir_boleta_prueba($email) {
 
         $resultados['casos'][] = $caso;
 
-        if (!empty($resultado['track_id'])) {
-            $resultados['track_ids'][] = $resultado['track_id'];
+        if (!empty($caso['track_id'])) {
+            $resultados['track_ids'][] = $caso['track_id'];
         }
 
         // Enviar email con PDF adjunto
