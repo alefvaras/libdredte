@@ -58,7 +58,7 @@ class Akibara_Boleta {
             'tipo_dte' => 39,
             'fecha_emision' => date('Y-m-d'),
             'rut_receptor' => sanitize_text_field($data['receptor']['rut'] ?? '66666666-6'),
-            'razon_social_receptor' => sanitize_text_field($data['receptor']['razon_social'] ?? 'CLIENTE'),
+            'razon_social_receptor' => sanitize_text_field($data['receptor']['razon_social'] ?? $data['receptor']['nombre'] ?? 'CLIENTE'),
             'monto_neto' => $montos['neto'],
             'monto_iva' => $montos['iva'],
             'monto_exento' => $montos['exento'],
@@ -292,7 +292,7 @@ class Akibara_Boleta {
                 'Emisor' => $this->emisor,
                 'Receptor' => [
                     'RUTRecep' => sanitize_text_field($data['receptor']['rut'] ?? '66666666-6'),
-                    'RznSocRecep' => sanitize_text_field($data['receptor']['razon_social'] ?? 'CLIENTE'),
+                    'RznSocRecep' => sanitize_text_field($data['receptor']['razon_social'] ?? $data['receptor']['nombre'] ?? 'CLIENTE'),
                     'DirRecep' => sanitize_text_field($data['receptor']['direccion'] ?? 'Santiago'),
                     'CmnaRecep' => sanitize_text_field($data['receptor']['comuna'] ?? 'Santiago'),
                 ],

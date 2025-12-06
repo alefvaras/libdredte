@@ -69,7 +69,7 @@ class FakeEmisorProvider implements EmisorProviderInterface
                     'dv' => $rut_dv,
                     'razon_social' => get_option('akibara_emisor_razon_social', 'Empresa'),
                     'giro' => get_option('akibara_emisor_giro', 'Comercio'),
-                    'actividad_economica' => (int) get_option('akibara_emisor_actividad_economica', 726000),
+                    'actividad_economica' => (int) get_option('akibara_emisor_acteco', 726000),
                     'telefono' => get_option('akibara_emisor_telefono', ''),
                     'email' => get_option('akibara_emisor_email', ''),
                     'direccion' => get_option('akibara_emisor_direccion', ''),

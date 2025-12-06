@@ -66,7 +66,7 @@ class Akibara_SII_Client {
                 }
 
                 // Log del reintento
-                error_log("Akibara SII: Reintento $attempt/$attempt de $operationName - Error: $errorMessage");
+                error_log("Akibara SII: Reintento $attempt/" . self::MAX_RETRIES . " de $operationName - Error: $errorMessage");
 
                 // Esperar con backoff exponencial
                 usleep($delay * 1000);
