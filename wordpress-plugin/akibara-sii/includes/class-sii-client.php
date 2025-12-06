@@ -127,10 +127,22 @@ class Akibara_SII_Client {
      * Útil para certificados .p12 con cifrado RC2-40-CBC en OpenSSL 3.0
      */
     private function load_certificate_legacy($cert_path, $password) {
-        // Verificar que openssl está disponible
-        $openssl_check = shell_exec('which openssl 2>/dev/null');
-        if (empty($openssl_check)) {
-            return new WP_Error('no_openssl', 'OpenSSL command not available');
+        // Primero, intentar cargar archivo PEM pre-convertido si existe
+        $pem_path = preg_replace('/\.p12$/i', '.pem', $cert_path);
+        if (file_exists($pem_path)) {
+            return $this->load_certificate_from_pem($pem_path);
+        }
+
+        // Verificar si las funciones shell están disponibles
+        if (!$this->is_shell_exec_available()) {
+            return new WP_Error(
+                'shell_disabled',
+                'El certificado .p12 usa cifrado legacy (RC2-40-CBC) que requiere conversión. ' .
+                'Las funciones shell están deshabilitadas en este hosting. ' .
+                'Por favor, convierta su certificado a PEM ejecutando en su PC: ' .
+                'openssl pkcs12 -in certificado.p12 -out certificado.pem -nodes -legacy ' .
+                'y suba el archivo .pem junto al .p12'
+            );
         }
 
         $temp_pem = tempnam(sys_get_temp_dir(), 'cert_') . '.pem';
@@ -139,12 +151,12 @@ class Akibara_SII_Client {
 
         // Intentar extraer con -legacy flag (OpenSSL 3.0+)
         $cmd = "openssl pkcs12 -in $escaped_path -out $temp_pem -nodes -passin pass:$escaped_pass -legacy 2>&1";
-        $output = shell_exec($cmd);
+        $output = $this->safe_shell_exec($cmd);
 
         // Si -legacy no funciona, intentar sin él
         if (!file_exists($temp_pem) || filesize($temp_pem) === 0) {
             $cmd = "openssl pkcs12 -in $escaped_path -out $temp_pem -nodes -passin pass:$escaped_pass 2>&1";
-            $output = shell_exec($cmd);
+            $output = $this->safe_shell_exec($cmd);
         }
 
         if (!file_exists($temp_pem) || filesize($temp_pem) === 0) {
@@ -170,6 +182,63 @@ class Akibara_SII_Client {
             @unlink($temp_pem);
             return new WP_Error('legacy_load_failed', 'Error cargando certificado convertido: ' . $e->getMessage());
         }
+    }
+
+    /**
+     * Cargar certificado desde archivo PEM pre-convertido
+     */
+    private function load_certificate_from_pem($pem_path) {
+        try {
+            $pem_content = file_get_contents($pem_path);
+
+            preg_match('/-----BEGIN CERTIFICATE-----.*?-----END CERTIFICATE-----/s', $pem_content, $cert_match);
+            preg_match('/-----BEGIN PRIVATE KEY-----.*?-----END PRIVATE KEY-----/s', $pem_content, $key_match);
+
+            // También buscar RSA PRIVATE KEY
+            if (empty($key_match[0])) {
+                preg_match('/-----BEGIN RSA PRIVATE KEY-----.*?-----END RSA PRIVATE KEY-----/s', $pem_content, $key_match);
+            }
+
+            if (empty($cert_match[0]) || empty($key_match[0])) {
+                return new WP_Error('pem_invalid', 'El archivo PEM no contiene certificado y clave válidos');
+            }
+
+            return $this->certificate_loader->loadFromKeys($cert_match[0], $key_match[0]);
+
+        } catch (Exception $e) {
+            return new WP_Error('pem_load_failed', 'Error cargando certificado PEM: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Verificar si shell_exec está disponible
+     */
+    private function is_shell_exec_available() {
+        // Verificar si la función existe y no está deshabilitada
+        if (!function_exists('shell_exec')) {
+            return false;
+        }
+
+        $disabled = ini_get('disable_functions');
+        if (!empty($disabled)) {
+            $disabled_functions = array_map('trim', explode(',', $disabled));
+            if (in_array('shell_exec', $disabled_functions)) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    /**
+     * Ejecutar comando shell de forma segura
+     */
+    private function safe_shell_exec($cmd) {
+        if (!$this->is_shell_exec_available()) {
+            return '';
+        }
+
+        return @shell_exec($cmd);
     }
 
     /**
