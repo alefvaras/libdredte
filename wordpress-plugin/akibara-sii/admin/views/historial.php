@@ -194,7 +194,7 @@ $stats = $wpdb->get_row($wpdb->prepare(
                         </span>
                     </td>
                     <td>
-                        <?php if ($boleta->track_id): ?>
+                        <?php if (!empty($boleta->track_id) && $boleta->track_id !== '0' && intval($boleta->track_id) > 0): ?>
                         <code class="track-id-link" data-id="<?php echo $boleta->id; ?>"
                               title="Click para consultar estado en SII"
                               style="cursor: pointer; text-decoration: underline;">
@@ -214,7 +214,7 @@ $stats = $wpdb->get_row($wpdb->prepare(
                                 data-id="<?php echo $boleta->id; ?>" title="Enviar al SII">
                             <span class="dashicons dashicons-upload"></span>
                         </button>
-                        <?php elseif ($boleta->track_id): ?>
+                        <?php elseif (!empty($boleta->track_id) && $boleta->track_id !== '0' && intval($boleta->track_id) > 0): ?>
                         <button type="button" class="button button-small btn-consultar-sii"
                                 data-id="<?php echo $boleta->id; ?>" title="Consultar Estado SII">
                             <span class="dashicons dashicons-update"></span>
@@ -327,7 +327,7 @@ jQuery(document).ready(function($) {
                     html += '<h3>Estado SII</h3>';
                     html += '<table class="form-table">';
                     html += '<tr><th>Estado:</th><td><span class="estado-badge estado-' + b.estado + '">' + b.estado.toUpperCase() + '</span></td></tr>';
-                    html += '<tr><th>Track ID:</th><td>' + (b.track_id || '-') + '</td></tr>';
+                    html += '<tr><th>Track ID:</th><td>' + (b.track_id && b.track_id !== '0' && parseInt(b.track_id) > 0 ? b.track_id : '-') + '</td></tr>';
                     html += '<tr><th>Fecha Envio:</th><td>' + (b.fecha_envio || '-') + '</td></tr>';
                     html += '</table></div>';
                     html += '</div>';
@@ -344,7 +344,7 @@ jQuery(document).ready(function($) {
                     html += '<div class="detalle-acciones">';
                     if (b.estado === 'generado') {
                         html += '<button type="button" class="button button-primary btn-enviar-sii" data-id="' + b.id + '">Enviar al SII</button> ';
-                    } else if (b.track_id) {
+                    } else if (b.track_id && b.track_id !== '0' && parseInt(b.track_id) > 0) {
                         html += '<button type="button" class="button button-primary btn-consultar-sii" data-id="' + b.id + '">Consultar Estado SII</button> ';
                     }
                     html += '<button type="button" class="button btn-enviar-email" data-id="' + b.id + '" data-folio="' + b.folio + '"><span class="dashicons dashicons-email"></span> Enviar por Email</button> ';

@@ -156,7 +156,7 @@ $rcof_automatico = get_option('akibara_rcof_automatico', 0);
                             <?php echo ucfirst($rcof->estado); ?>
                         </span>
                     </td>
-                    <td><?php echo $rcof->track_id ?: '-'; ?></td>
+                    <td><?php echo (!empty($rcof->track_id) && $rcof->track_id !== '0' && intval($rcof->track_id) > 0) ? $rcof->track_id : '-'; ?></td>
                     <td>
                         <?php if ($rcof->estado === 'generado'): ?>
                         <form method="post" style="display:inline;">
@@ -166,7 +166,7 @@ $rcof_automatico = get_option('akibara_rcof_automatico', 0);
                                 Enviar al SII
                             </button>
                         </form>
-                        <?php elseif ($rcof->track_id): ?>
+                        <?php elseif (!empty($rcof->track_id) && $rcof->track_id !== '0' && intval($rcof->track_id) > 0): ?>
                         <button type="button" class="button button-small btn-consultar-rcof" data-id="<?php echo $rcof->id; ?>">
                             Consultar Estado
                         </button>

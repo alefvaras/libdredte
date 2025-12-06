@@ -197,8 +197,8 @@ class Akibara_Boleta {
             return new WP_Error('not_found', 'Boleta no encontrada');
         }
 
-        if (!$boleta->track_id) {
-            return new WP_Error('no_track', 'La boleta no tiene Track ID');
+        if (empty($boleta->track_id) || $boleta->track_id === '0' || intval($boleta->track_id) <= 0) {
+            return new WP_Error('no_track', 'La boleta no tiene Track ID válido');
         }
 
         $estado = $this->sii_client->consultar_estado($boleta->track_id, $boleta->ambiente);
