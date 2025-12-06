@@ -174,7 +174,10 @@ function ejecutar_set_pruebas_certificacion($email) {
                 // Si no se envió automáticamente, enviar ahora
                 if (empty($resultado['track_id']) && !empty($resultado_caso['boleta_id'])) {
                     $envio = $boleta_emisor->enviar_al_sii($resultado_caso['boleta_id']);
-                    if (!is_wp_error($envio)) {
+                    if (is_wp_error($envio)) {
+                        $resultado_caso['error_envio'] = $envio->get_error_message();
+                        $resultados['errores'][] = "Caso $caso_num envío: " . $envio->get_error_message();
+                    } else {
                         $resultado_caso['track_id'] = $envio['track_id'];
                     }
                 }
@@ -263,7 +266,10 @@ function emitir_boleta_prueba($email) {
         // Si no se envió automáticamente, enviar ahora
         if (empty($caso['track_id']) && !empty($caso['boleta_id'])) {
             $envio = $boleta_emisor->enviar_al_sii($caso['boleta_id']);
-            if (!is_wp_error($envio)) {
+            if (is_wp_error($envio)) {
+                $caso['error_envio'] = $envio->get_error_message();
+                $resultados['errores'][] = "Error envío: " . $envio->get_error_message();
+            } else {
                 $caso['track_id'] = $envio['track_id'];
             }
         }
@@ -437,8 +443,13 @@ function enviar_email_certificacion($email, $resultados, $pdf_paths = []) {
                         </span>
                     </td>
                     <td><?php echo $caso['folio'] ? esc_html($caso['folio']) : '-'; ?></td>
-                    <td><?php echo $caso['track_id'] ? esc_html($caso['track_id']) : '-'; ?></td>
-                    <td><?php echo $caso['error'] ? esc_html($caso['error']) : '-'; ?></td>
+                    <td><?php echo $caso['track_id'] ? esc_html($caso['track_id']) : '<span style="color:orange">Sin enviar</span>'; ?></td>
+                    <td><?php
+                        $errores = [];
+                        if (!empty($caso['error'])) $errores[] = $caso['error'];
+                        if (!empty($caso['error_envio'])) $errores[] = 'Envío: ' . $caso['error_envio'];
+                        echo $errores ? esc_html(implode(' | ', $errores)) : '-';
+                    ?></td>
                 </tr>
                 <?php endforeach; ?>
             </tbody>

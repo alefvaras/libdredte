@@ -29,6 +29,7 @@ class Akibara_Folio_Manager {
     private $folioDesde;
     private $folioHasta;
     private $usedFolios = [];
+    private $reservedFolios = [];  // Folios reservados temporalmente
     private $ambiente;
     private $tipoDte;
 
@@ -127,17 +128,41 @@ class Akibara_Folio_Manager {
     }
 
     /**
-     * Cargar registro de folios usados
+     * Cargar registro de folios usados y reservados
      */
     private function loadRegistry(): void {
         if (file_exists($this->folioRegistryPath)) {
             $data = json_decode(file_get_contents($this->folioRegistryPath), true);
             $this->usedFolios = $data['used_folios'] ?? [];
+            $this->reservedFolios = $data['reserved_folios'] ?? [];
+
+            // Limpiar reservas expiradas (más de 1 hora)
+            $this->cleanExpiredReservations();
         }
     }
 
     /**
-     * Guardar registro de folios usados
+     * Limpiar reservas expiradas (más de 1 hora sin confirmar)
+     */
+    private function cleanExpiredReservations(): void {
+        $now = time();
+        $expireTime = 3600; // 1 hora
+        $cleaned = false;
+
+        foreach ($this->reservedFolios as $folio => $timestamp) {
+            if (($now - $timestamp) > $expireTime) {
+                unset($this->reservedFolios[$folio]);
+                $cleaned = true;
+            }
+        }
+
+        if ($cleaned) {
+            $this->saveRegistry();
+        }
+    }
+
+    /**
+     * Guardar registro de folios usados y reservados
      */
     private function saveRegistry(): void {
         $dir = dirname($this->folioRegistryPath);
@@ -154,6 +179,7 @@ class Akibara_Folio_Manager {
             'folio_desde' => $this->folioDesde,
             'folio_hasta' => $this->folioHasta,
             'used_folios' => $this->usedFolios,
+            'reserved_folios' => $this->reservedFolios,
             'last_updated' => date('Y-m-d H:i:s'),
         ];
 
@@ -161,11 +187,11 @@ class Akibara_Folio_Manager {
     }
 
     /**
-     * Obtener el siguiente folio disponible
+     * Obtener el siguiente folio disponible (no usado ni reservado)
      */
     public function getNextFolio(): int {
         for ($folio = $this->folioDesde; $folio <= $this->folioHasta; $folio++) {
-            if (!in_array($folio, $this->usedFolios)) {
+            if (!in_array($folio, $this->usedFolios) && !isset($this->reservedFolios[$folio])) {
                 return $folio;
             }
         }
@@ -174,14 +200,77 @@ class Akibara_Folio_Manager {
     }
 
     /**
-     * Obtener N folios consecutivos disponibles
+     * Reservar un folio temporalmente (no lo marca como usado hasta confirmar)
+     *
+     * @return int El folio reservado
+     */
+    public function reserveFolio(): int {
+        $folio = $this->getNextFolio();
+        $this->reservedFolios[$folio] = time();
+        $this->saveRegistry();
+        return $folio;
+    }
+
+    /**
+     * Confirmar un folio reservado (marcarlo como usado definitivamente)
+     * Usar cuando el SII acepta el documento
+     *
+     * @param int $folio El folio a confirmar
+     * @return bool true si se confirmó, false si no estaba reservado
+     */
+    public function confirmFolio(int $folio): bool {
+        if (isset($this->reservedFolios[$folio])) {
+            unset($this->reservedFolios[$folio]);
+            $this->markAsUsed($folio);
+            return true;
+        }
+        // Si no está reservado pero tampoco usado, marcarlo como usado
+        if (!in_array($folio, $this->usedFolios)) {
+            $this->markAsUsed($folio);
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     * Liberar un folio reservado (no fue enviado o hubo error antes del envío)
+     * IMPORTANTE: Solo liberar si el documento NO fue enviado al SII
+     *
+     * @param int $folio El folio a liberar
+     * @return bool true si se liberó, false si no estaba reservado
+     */
+    public function releaseFolio(int $folio): bool {
+        if (isset($this->reservedFolios[$folio])) {
+            unset($this->reservedFolios[$folio]);
+            $this->saveRegistry();
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     * Verificar si un folio está reservado
+     */
+    public function isReserved(int $folio): bool {
+        return isset($this->reservedFolios[$folio]);
+    }
+
+    /**
+     * Obtener todos los folios reservados
+     */
+    public function getReservedFolios(): array {
+        return $this->reservedFolios;
+    }
+
+    /**
+     * Obtener N folios consecutivos disponibles (no usados ni reservados)
      */
     public function getNextFolios(int $count): array {
         $folios = [];
         $currentFolio = $this->folioDesde;
 
         while (count($folios) < $count && $currentFolio <= $this->folioHasta) {
-            if (!in_array($currentFolio, $this->usedFolios)) {
+            if (!in_array($currentFolio, $this->usedFolios) && !isset($this->reservedFolios[$currentFolio])) {
                 $folios[] = $currentFolio;
             }
             $currentFolio++;
@@ -219,13 +308,13 @@ class Akibara_Folio_Manager {
     }
 
     /**
-     * Verificar si un folio esta disponible
+     * Verificar si un folio esta disponible (no usado ni reservado)
      */
     public function isAvailable(int $folio): bool {
         if ($folio < $this->folioDesde || $folio > $this->folioHasta) {
             return false;
         }
-        return !in_array($folio, $this->usedFolios);
+        return !in_array($folio, $this->usedFolios) && !isset($this->reservedFolios[$folio]);
     }
 
     /**
@@ -234,7 +323,8 @@ class Akibara_Folio_Manager {
     public function getStats(): array {
         $totalFolios = $this->folioHasta - $this->folioDesde + 1;
         $usedCount = count($this->usedFolios);
-        $availableCount = $totalFolios - $usedCount;
+        $reservedCount = count($this->reservedFolios);
+        $availableCount = $totalFolios - $usedCount - $reservedCount;
 
         return [
             'ambiente' => $this->ambiente,
@@ -245,8 +335,10 @@ class Akibara_Folio_Manager {
             'caf_hasta' => $this->folioHasta,
             'total' => $totalFolios,
             'used' => $usedCount,
+            'reserved' => $reservedCount,
             'available' => $availableCount,
             'used_folios' => $this->usedFolios,
+            'reserved_folios' => array_keys($this->reservedFolios),
             'next_available' => $availableCount > 0 ? $this->getNextFolio() : null,
         ];
     }
