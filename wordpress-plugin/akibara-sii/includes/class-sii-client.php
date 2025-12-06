@@ -441,7 +441,9 @@ class Akibara_SII_Client {
     }
 
     /**
-     * Crear sobre de envío para boleta
+     * Crear sobre de envío para boleta (EnvioBOLETA)
+     *
+     * Genera el sobre XML firmado con la Carátula requerida por el SII
      */
     public function crear_sobre_boleta($boleta) {
         if (!$this->app) {
@@ -457,20 +459,36 @@ class Akibara_SII_Client {
         try {
             $billingPackage = $this->app->getPackageRegistry()->getBillingPackage();
             $documentComponent = $billingPackage->getDocumentComponent();
+
+            // Cargar documento desde XML guardado
+            $loaderWorker = $documentComponent->getLoaderWorker();
+            $documentBag = $loaderWorker->loadXml($boleta->xml_documento);
+
+            // Asignar certificado al bag
+            $documentBag->setCertificate($certificate);
+
+            // Asignar autorización DTE al emisor (requerido para la Carátula)
+            $emisor = $documentBag->getEmisor();
+            if ($emisor) {
+                $autorizacionConfig = Akibara_SII::get_autorizacion_config();
+                $autorizacionDte = new AutorizacionDte(
+                    $autorizacionConfig['fechaResolucion'],
+                    $autorizacionConfig['numeroResolucion']
+                );
+                $emisor->setAutorizacionDte($autorizacionDte);
+            }
+
+            // Crear sobre usando el DispatcherWorker (genera EnvioBOLETA firmado)
             $dispatcherWorker = $documentComponent->getDispatcherWorker();
+            $envelope = $dispatcherWorker->create($documentBag);
 
-            // Cargar documento desde XML
-            $xmlDoc = new \Derafu\Xml\XmlDocument();
-            $xmlDoc->loadXml($boleta->xml_documento);
+            // Obtener XML del sobre firmado
+            $xmlDocument = $envelope->getXmlDocument();
+            $xmlSobre = $xmlDocument->saveXML();
 
-            // Crear sobre
-            $envelope = new \libredte\lib\Core\Package\Billing\Component\Document\Support\DocumentEnvelope();
-            $envelope->setCertificate($certificate);
-
-            // Aquí necesitaríamos reconstruir el DocumentBag desde el XML
-            // Por ahora retornamos el XML individual
             return [
-                'xml' => $boleta->xml_documento,
+                'xml' => $xmlSobre,
+                'envelope' => $envelope,
             ];
         } catch (Exception $e) {
             return new WP_Error('sobre_error', 'Error creando sobre: ' . $e->getMessage());
@@ -672,6 +690,86 @@ class Akibara_SII_Client {
             ];
         } catch (Exception $e) {
             return new WP_Error('rcof_error', 'Error generando RCOF: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Generar PDF de boleta desde XML
+     *
+     * @param string $xml XML del documento
+     * @param array $options Opciones de renderizado
+     * @return string|WP_Error PDF binario o error
+     */
+    public function generar_pdf($xml, $options = []) {
+        if (!$this->app) {
+            return new WP_Error('no_libredte', 'LibreDTE no está disponible');
+        }
+
+        try {
+            $billingPackage = $this->app->getPackageRegistry()->getBillingPackage();
+            $documentComponent = $billingPackage->getDocumentComponent();
+
+            // Cargar documento desde XML
+            $loaderWorker = $documentComponent->getLoaderWorker();
+            $documentBag = $loaderWorker->loadXml($xml);
+
+            // Configurar opciones de renderizado
+            $rendererOptions = array_merge([
+                'format' => 'pdf',
+                'template' => 'estandar',
+            ], $options);
+
+            // Establecer opciones en el bag
+            $documentBag->setOptions([
+                'renderer' => $rendererOptions,
+            ]);
+
+            // Obtener el renderer y generar PDF
+            $rendererWorker = $documentComponent->getRendererWorker();
+            $pdfContent = $rendererWorker->render($documentBag);
+
+            return $pdfContent;
+
+        } catch (Exception $e) {
+            return new WP_Error('pdf_error', 'Error generando PDF: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Generar PDF de boleta desde DocumentBag (cuando se acaba de crear)
+     *
+     * @param DocumentBagInterface $documentBag DocumentBag con el documento
+     * @param array $options Opciones de renderizado
+     * @return string|WP_Error PDF binario o error
+     */
+    public function generar_pdf_from_bag($documentBag, $options = []) {
+        if (!$this->app) {
+            return new WP_Error('no_libredte', 'LibreDTE no está disponible');
+        }
+
+        try {
+            $billingPackage = $this->app->getPackageRegistry()->getBillingPackage();
+            $documentComponent = $billingPackage->getDocumentComponent();
+
+            // Configurar opciones de renderizado
+            $rendererOptions = array_merge([
+                'format' => 'pdf',
+                'template' => 'estandar',
+            ], $options);
+
+            // Establecer opciones en el bag
+            $documentBag->setOptions([
+                'renderer' => $rendererOptions,
+            ]);
+
+            // Obtener el renderer y generar PDF
+            $rendererWorker = $documentComponent->getRendererWorker();
+            $pdfContent = $rendererWorker->render($documentBag);
+
+            return $pdfContent;
+
+        } catch (Exception $e) {
+            return new WP_Error('pdf_error', 'Error generando PDF: ' . $e->getMessage());
         }
     }
 

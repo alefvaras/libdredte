@@ -333,7 +333,10 @@ class Akibara_Boleta {
     }
 
     /**
-     * Obtener PDF de boleta (si está disponible)
+     * Obtener PDF de boleta
+     *
+     * @param int $boleta_id ID de la boleta
+     * @return string|WP_Error PDF binario o error
      */
     public function get_pdf($boleta_id) {
         $boleta = Akibara_Database::get_boleta($boleta_id);
@@ -342,19 +345,86 @@ class Akibara_Boleta {
             return new WP_Error('not_found', 'Boleta no encontrada');
         }
 
-        // Generar PDF usando template
-        return $this->generar_pdf($boleta);
+        if (empty($boleta->xml_documento)) {
+            return new WP_Error('no_xml', 'La boleta no tiene XML generado');
+        }
+
+        // Generar PDF usando LibreDTE
+        return $this->sii_client->generar_pdf($boleta->xml_documento);
     }
 
     /**
-     * Generar PDF de boleta
+     * Obtener PDF de boleta y guardarlo/descargarlo
+     *
+     * @param int $boleta_id ID de la boleta
+     * @param bool $download Si es true, fuerza descarga. Si es false, retorna contenido
+     * @return void|string|WP_Error
      */
-    private function generar_pdf($boleta) {
-        // Aquí se puede integrar una librería de PDF como TCPDF o Dompdf
-        // Por ahora retornamos el XML
-        return [
-            'folio' => $boleta->folio,
-            'xml' => $boleta->xml_documento,
-        ];
+    public function descargar_pdf($boleta_id, $download = true) {
+        $boleta = Akibara_Database::get_boleta($boleta_id);
+
+        if (!$boleta) {
+            return new WP_Error('not_found', 'Boleta no encontrada');
+        }
+
+        $pdf = $this->get_pdf($boleta_id);
+
+        if (is_wp_error($pdf)) {
+            return $pdf;
+        }
+
+        $filename = sprintf('boleta_%s_%d.pdf', $boleta->folio, $boleta->tipo_dte);
+
+        if ($download) {
+            header('Content-Type: application/pdf');
+            header('Content-Disposition: attachment; filename="' . $filename . '"');
+            header('Content-Length: ' . strlen($pdf));
+            header('Cache-Control: private, max-age=0, must-revalidate');
+            header('Pragma: public');
+            echo $pdf;
+            exit;
+        }
+
+        return $pdf;
+    }
+
+    /**
+     * Guardar PDF de boleta en disco
+     *
+     * @param int $boleta_id ID de la boleta
+     * @return string|WP_Error Ruta del archivo o error
+     */
+    public function guardar_pdf($boleta_id) {
+        $boleta = Akibara_Database::get_boleta($boleta_id);
+
+        if (!$boleta) {
+            return new WP_Error('not_found', 'Boleta no encontrada');
+        }
+
+        $pdf = $this->get_pdf($boleta_id);
+
+        if (is_wp_error($pdf)) {
+            return $pdf;
+        }
+
+        // Crear directorio si no existe
+        $pdf_dir = AKIBARA_SII_UPLOADS . 'pdf/';
+        if (!file_exists($pdf_dir)) {
+            wp_mkdir_p($pdf_dir);
+        }
+
+        $filename = sprintf('boleta_%d_%s_%d.pdf', $boleta->id, $boleta->folio, $boleta->tipo_dte);
+        $filepath = $pdf_dir . $filename;
+
+        if (file_put_contents($filepath, $pdf) === false) {
+            return new WP_Error('save_failed', 'No se pudo guardar el PDF');
+        }
+
+        // Actualizar registro con ruta del PDF
+        Akibara_Database::update_boleta($boleta_id, [
+            'pdf_file' => $filename,
+        ]);
+
+        return $filepath;
     }
 }

@@ -11,6 +11,35 @@
 
 defined('ABSPATH') || exit;
 
+// Verificar version minima de PHP
+define('AKIBARA_SII_MIN_PHP_VERSION', '8.4.0');
+
+if (version_compare(PHP_VERSION, AKIBARA_SII_MIN_PHP_VERSION, '<')) {
+    add_action('admin_notices', function() {
+        $message = sprintf(
+            '<strong>Akibara SII</strong> requiere PHP %s o superior. Tu version actual es PHP %s. Por favor actualiza PHP en tu servidor.',
+            AKIBARA_SII_MIN_PHP_VERSION,
+            PHP_VERSION
+        );
+        echo '<div class="notice notice-error"><p>' . $message . '</p></div>';
+    });
+
+    // Desactivar el plugin si se intenta activar con version incorrecta
+    add_action('admin_init', function() {
+        if (is_plugin_active(plugin_basename(__FILE__))) {
+            deactivate_plugins(plugin_basename(__FILE__));
+            if (isset($_GET['activate'])) {
+                unset($_GET['activate']);
+            }
+            add_action('admin_notices', function() {
+                echo '<div class="notice notice-error"><p><strong>Akibara SII</strong> ha sido desactivado porque requiere PHP ' . AKIBARA_SII_MIN_PHP_VERSION . ' o superior.</p></div>';
+            });
+        }
+    });
+
+    return; // No cargar el resto del plugin
+}
+
 // Constantes del plugin
 define('AKIBARA_SII_VERSION', '1.0.0');
 define('AKIBARA_SII_PATH', plugin_dir_path(__FILE__));
@@ -76,6 +105,7 @@ class Akibara_SII {
         add_action('wp_ajax_akibara_consultar_rcof', [$this, 'ajax_consultar_rcof']);
         add_action('wp_ajax_akibara_upload_caf', [$this, 'ajax_upload_caf']);
         add_action('wp_ajax_akibara_upload_certificado', [$this, 'ajax_upload_certificado']);
+        add_action('wp_ajax_akibara_descargar_pdf', [$this, 'ajax_descargar_pdf']);
     }
 
     public function activate() {
@@ -385,6 +415,47 @@ class Akibara_SII {
         }
 
         wp_send_json_error(['message' => 'Error al subir archivo']);
+    }
+
+    /**
+     * AJAX: Descargar PDF de boleta
+     */
+    public function ajax_descargar_pdf() {
+        check_ajax_referer('akibara_nonce', 'nonce');
+
+        if (!current_user_can('manage_options')) {
+            wp_die('Sin permisos');
+        }
+
+        $id = intval($_REQUEST['id']);
+
+        if (!$id) {
+            wp_die('ID de boleta no proporcionado');
+        }
+
+        $boleta = new Akibara_Boleta();
+        $pdf = $boleta->get_pdf($id);
+
+        if (is_wp_error($pdf)) {
+            wp_die('Error generando PDF: ' . $pdf->get_error_message());
+        }
+
+        // Obtener datos de la boleta para el nombre del archivo
+        $boleta_data = Akibara_Database::get_boleta($id);
+        $filename = sprintf('boleta_%s_folio_%s.pdf',
+            $boleta_data->tipo_dte ?? 39,
+            $boleta_data->folio ?? $id
+        );
+
+        // Enviar headers para descarga
+        header('Content-Type: application/pdf');
+        header('Content-Disposition: inline; filename="' . $filename . '"');
+        header('Content-Length: ' . strlen($pdf));
+        header('Cache-Control: private, max-age=0, must-revalidate');
+        header('Pragma: public');
+
+        echo $pdf;
+        exit;
     }
 
     /**
