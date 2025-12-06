@@ -676,6 +676,86 @@ class Akibara_SII_Client {
     }
 
     /**
+     * Generar PDF de boleta desde XML
+     *
+     * @param string $xml XML del documento
+     * @param array $options Opciones de renderizado
+     * @return string|WP_Error PDF binario o error
+     */
+    public function generar_pdf($xml, $options = []) {
+        if (!$this->app) {
+            return new WP_Error('no_libredte', 'LibreDTE no está disponible');
+        }
+
+        try {
+            $billingPackage = $this->app->getPackageRegistry()->getBillingPackage();
+            $documentComponent = $billingPackage->getDocumentComponent();
+
+            // Cargar documento desde XML
+            $loaderWorker = $documentComponent->getLoaderWorker();
+            $documentBag = $loaderWorker->loadXml($xml);
+
+            // Configurar opciones de renderizado
+            $rendererOptions = array_merge([
+                'format' => 'pdf',
+                'template' => 'estandar',
+            ], $options);
+
+            // Establecer opciones en el bag
+            $documentBag->setOptions([
+                'renderer' => $rendererOptions,
+            ]);
+
+            // Obtener el renderer y generar PDF
+            $rendererWorker = $documentComponent->getRendererWorker();
+            $pdfContent = $rendererWorker->render($documentBag);
+
+            return $pdfContent;
+
+        } catch (Exception $e) {
+            return new WP_Error('pdf_error', 'Error generando PDF: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Generar PDF de boleta desde DocumentBag (cuando se acaba de crear)
+     *
+     * @param DocumentBagInterface $documentBag DocumentBag con el documento
+     * @param array $options Opciones de renderizado
+     * @return string|WP_Error PDF binario o error
+     */
+    public function generar_pdf_from_bag($documentBag, $options = []) {
+        if (!$this->app) {
+            return new WP_Error('no_libredte', 'LibreDTE no está disponible');
+        }
+
+        try {
+            $billingPackage = $this->app->getPackageRegistry()->getBillingPackage();
+            $documentComponent = $billingPackage->getDocumentComponent();
+
+            // Configurar opciones de renderizado
+            $rendererOptions = array_merge([
+                'format' => 'pdf',
+                'template' => 'estandar',
+            ], $options);
+
+            // Establecer opciones en el bag
+            $documentBag->setOptions([
+                'renderer' => $rendererOptions,
+            ]);
+
+            // Obtener el renderer y generar PDF
+            $rendererWorker = $documentComponent->getRendererWorker();
+            $pdfContent = $rendererWorker->render($documentBag);
+
+            return $pdfContent;
+
+        } catch (Exception $e) {
+            return new WP_Error('pdf_error', 'Error generando PDF: ' . $e->getMessage());
+        }
+    }
+
+    /**
      * Firmar XML (corregido para coincidir con LibreDTE)
      *
      * Proceso de firma:

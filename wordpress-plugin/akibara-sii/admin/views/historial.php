@@ -225,6 +225,11 @@ $stats = $wpdb->get_row($wpdb->prepare(
                                 title="Enviar por Email">
                             <span class="dashicons dashicons-email"></span>
                         </button>
+                        <a href="<?php echo admin_url('admin-ajax.php?action=akibara_descargar_pdf&id=' . $boleta->id . '&nonce=' . wp_create_nonce('akibara_nonce')); ?>"
+                           class="button button-small btn-descargar-pdf" target="_blank"
+                           data-id="<?php echo $boleta->id; ?>" title="Ver PDF">
+                            <span class="dashicons dashicons-pdf"></span>
+                        </a>
                         <a href="#" class="button button-small btn-descargar-xml"
                            data-id="<?php echo $boleta->id; ?>" title="Descargar XML">
                             <span class="dashicons dashicons-download"></span>
@@ -343,6 +348,7 @@ jQuery(document).ready(function($) {
                         html += '<button type="button" class="button button-primary btn-consultar-sii" data-id="' + b.id + '">Consultar Estado SII</button> ';
                     }
                     html += '<button type="button" class="button btn-enviar-email" data-id="' + b.id + '" data-folio="' + b.folio + '"><span class="dashicons dashicons-email"></span> Enviar por Email</button> ';
+                    html += '<a href="<?php echo admin_url('admin-ajax.php'); ?>?action=akibara_descargar_pdf&id=' + b.id + '&nonce=<?php echo wp_create_nonce('akibara_nonce'); ?>" class="button" target="_blank"><span class="dashicons dashicons-pdf"></span> Ver PDF</a> ';
                     html += '<button type="button" class="button btn-descargar-xml" data-id="' + b.id + '">Descargar XML</button>';
                     html += '</div>';
 

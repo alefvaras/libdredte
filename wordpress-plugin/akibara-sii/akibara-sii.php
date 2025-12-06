@@ -105,6 +105,7 @@ class Akibara_SII {
         add_action('wp_ajax_akibara_consultar_rcof', [$this, 'ajax_consultar_rcof']);
         add_action('wp_ajax_akibara_upload_caf', [$this, 'ajax_upload_caf']);
         add_action('wp_ajax_akibara_upload_certificado', [$this, 'ajax_upload_certificado']);
+        add_action('wp_ajax_akibara_descargar_pdf', [$this, 'ajax_descargar_pdf']);
     }
 
     public function activate() {
@@ -414,6 +415,47 @@ class Akibara_SII {
         }
 
         wp_send_json_error(['message' => 'Error al subir archivo']);
+    }
+
+    /**
+     * AJAX: Descargar PDF de boleta
+     */
+    public function ajax_descargar_pdf() {
+        check_ajax_referer('akibara_nonce', 'nonce');
+
+        if (!current_user_can('manage_options')) {
+            wp_die('Sin permisos');
+        }
+
+        $id = intval($_REQUEST['id']);
+
+        if (!$id) {
+            wp_die('ID de boleta no proporcionado');
+        }
+
+        $boleta = new Akibara_Boleta();
+        $pdf = $boleta->get_pdf($id);
+
+        if (is_wp_error($pdf)) {
+            wp_die('Error generando PDF: ' . $pdf->get_error_message());
+        }
+
+        // Obtener datos de la boleta para el nombre del archivo
+        $boleta_data = Akibara_Database::get_boleta($id);
+        $filename = sprintf('boleta_%s_folio_%s.pdf',
+            $boleta_data->tipo_dte ?? 39,
+            $boleta_data->folio ?? $id
+        );
+
+        // Enviar headers para descarga
+        header('Content-Type: application/pdf');
+        header('Content-Disposition: inline; filename="' . $filename . '"');
+        header('Content-Length: ' . strlen($pdf));
+        header('Cache-Control: private, max-age=0, must-revalidate');
+        header('Pragma: public');
+
+        echo $pdf;
+        exit;
     }
 
     /**
