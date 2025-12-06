@@ -1,5 +1,8 @@
 *.p12
 caf_*.xml
 app/output/*.xml
+app/output/*.pdf
+app/credentials/
+folio_registry*.json
 wordpress/
 wordpress-plugin/akibara-sii/cli/smtp_config.php
