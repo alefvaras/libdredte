@@ -9,6 +9,7 @@ $fecha_desde = isset($_GET['fecha_desde']) ? sanitize_text_field($_GET['fecha_de
 $fecha_hasta = isset($_GET['fecha_hasta']) ? sanitize_text_field($_GET['fecha_hasta']) : date('Y-m-d');
 $estado_filtro = isset($_GET['estado']) ? sanitize_text_field($_GET['estado']) : '';
 $buscar = isset($_GET['buscar']) ? sanitize_text_field($_GET['buscar']) : '';
+$track_id_buscar = isset($_GET['track_id']) ? sanitize_text_field($_GET['track_id']) : '';
 
 // Construir query
 $where = "WHERE DATE(fecha_emision) BETWEEN %s AND %s";
@@ -24,6 +25,11 @@ if ($buscar) {
     $params[] = '%' . $wpdb->esc_like($buscar) . '%';
     $params[] = '%' . $wpdb->esc_like($buscar) . '%';
     $params[] = '%' . $wpdb->esc_like($buscar) . '%';
+}
+
+if ($track_id_buscar) {
+    $where .= " AND track_id LIKE %s";
+    $params[] = '%' . $wpdb->esc_like($track_id_buscar) . '%';
 }
 
 // Paginacion
@@ -123,6 +129,11 @@ $stats = $wpdb->get_row($wpdb->prepare(
                 <input type="text" name="buscar" value="<?php echo esc_attr($buscar); ?>" placeholder="Folio, RUT, Nombre...">
             </div>
 
+            <div class="filtro-group">
+                <label>Track ID:</label>
+                <input type="text" name="track_id" value="<?php echo esc_attr($track_id_buscar); ?>" placeholder="Buscar por Track ID...">
+            </div>
+
             <button type="submit" class="button">Filtrar</button>
             <a href="<?php echo admin_url('admin.php?page=akibara-historial'); ?>" class="button">Limpiar</a>
         </form>
@@ -184,7 +195,11 @@ $stats = $wpdb->get_row($wpdb->prepare(
                     </td>
                     <td>
                         <?php if ($boleta->track_id): ?>
-                        <code><?php echo $boleta->track_id; ?></code>
+                        <code class="track-id-link" data-id="<?php echo $boleta->id; ?>"
+                              title="Click para consultar estado en SII"
+                              style="cursor: pointer; text-decoration: underline;">
+                            <?php echo $boleta->track_id; ?>
+                        </code>
                         <?php else: ?>
                         <span class="no-track">-</span>
                         <?php endif; ?>
@@ -368,13 +383,11 @@ jQuery(document).ready(function($) {
         });
     });
 
-    // Consultar estado SII
-    $(document).on('click', '.btn-consultar-sii', function() {
-        var $btn = $(this);
-        var id = $btn.data('id');
-
-        $btn.prop('disabled', true);
-        $btn.find('.dashicons').addClass('spin');
+    // Consultar estado SII (desde botón o click en Track ID)
+    function consultarEstadoSII(id, $element) {
+        if ($element) {
+            $element.css('opacity', '0.5');
+        }
 
         $.ajax({
             url: ajaxurl,
@@ -386,9 +399,12 @@ jQuery(document).ready(function($) {
             },
             success: function(response) {
                 if (response.success) {
-                    var msg = 'Estado: ' + response.data.estado;
+                    var msg = 'Estado SII: ' + response.data.estado.toUpperCase();
                     if (response.data.glosa) {
-                        msg += '\n' + response.data.glosa;
+                        msg += '\n\nDetalle: ' + response.data.glosa;
+                    }
+                    if (response.data.fecha_recepcion) {
+                        msg += '\nFecha recepción: ' + response.data.fecha_recepcion;
                     }
                     alert(msg);
                     location.reload();
@@ -396,11 +412,32 @@ jQuery(document).ready(function($) {
                     alert('Error: ' + response.data);
                 }
             },
+            error: function() {
+                alert('Error de conexión al consultar estado');
+            },
             complete: function() {
-                $btn.prop('disabled', false);
-                $btn.find('.dashicons').removeClass('spin');
+                if ($element) {
+                    $element.css('opacity', '1');
+                    $element.find('.dashicons').removeClass('spin');
+                    $element.prop('disabled', false);
+                }
             }
         });
+    }
+
+    // Click en botón consultar
+    $(document).on('click', '.btn-consultar-sii', function() {
+        var $btn = $(this);
+        var id = $btn.data('id');
+        $btn.prop('disabled', true);
+        $btn.find('.dashicons').addClass('spin');
+        consultarEstadoSII(id, $btn);
+    });
+
+    // Click en Track ID
+    $(document).on('click', '.track-id-link', function() {
+        var id = $(this).data('id');
+        consultarEstadoSII(id, $(this));
     });
 
     // Consultar seleccionados
@@ -593,6 +630,18 @@ jQuery(document).ready(function($) {
 .numero { text-align: right; }
 .acciones .button-small { padding: 0 5px; }
 .acciones .dashicons { vertical-align: middle; }
+
+.track-id-link {
+    cursor: pointer;
+    color: #2271b1;
+    transition: all 0.2s;
+}
+.track-id-link:hover {
+    background: #2271b1;
+    color: white;
+    padding: 2px 5px;
+    border-radius: 3px;
+}
 
 .spin { animation: spin 1s linear infinite; }
 @keyframes spin { 100% { transform: rotate(360deg); } }
