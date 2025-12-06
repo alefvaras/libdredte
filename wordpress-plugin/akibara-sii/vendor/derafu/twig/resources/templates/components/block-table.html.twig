@@ -1,0 +1,132 @@
+{# templates/components/block-table.html.twig #}
+{% macro render_cell_classes(columnIndex, colConfig, rowData, rowClasses) %}
+    {% set classes = [] %}
+
+    {# Alineación de columna #}
+    {% if colConfig[columnIndex].align is defined %}
+        {% set classes = classes|merge(['text-' ~ colConfig[columnIndex].align]) %}
+    {% endif %}
+
+    {# Clases específicas de columna #}
+    {% if colConfig[columnIndex].class is defined %}
+        {% set classes = classes|merge([colConfig[columnIndex].class]) %}
+    {% endif %}
+
+    {# Clases condicionales basadas en el valor #}
+    {% for rowClass in rowClasses %}
+        {% if rowClass.col == columnIndex and rowClass.values[rowData] is defined %}
+            {% set classes = classes|merge([rowClass.values[rowData]]) %}
+        {% endif %}
+    {% endfor %}
+
+    {{ classes|join(' ') }}
+{% endmacro %}
+
+{% import _self as renderer %}
+
+<div
+    class="derafu-block-table {{ attributes.render('class') }}"
+    {{ attributes }}
+    id="{{ this.id }}"
+>
+   {# Actions Menu #}
+   {% if this.actions|length > 0 %}
+       <div class="derafu-block-table__actions mb-3 text-end">
+           <div class="dropdown">
+               <button type="button" class="btn btn-primary dropdown-toggle" data-bs-toggle="dropdown">
+                   <i class="fas fa-ellipsis-v"></i>
+                   <span class="ms-1">Actions</span>
+               </button>
+               <ul class="dropdown-menu dropdown-menu-end">
+                   {% for action in this.actions %}
+                       {% if action.type == 'divider' %}
+                           <li><hr class="dropdown-divider"></li>
+                       {% else %}
+                           <li>
+                               <a class="dropdown-item"
+                                  {% if action.url %}href="{{ action.url }}"{% endif %}
+                                  {% if action.onclick %}onclick="{{ action.onclick }}"{% endif %}>
+                                   {% if action.icon %}
+                                       <i class="{{ action.icon }} me-2"></i>
+                                   {% endif %}
+                                   {{ action.text }}
+                               </a>
+                           </li>
+                       {% endif %}
+                   {% endfor %}
+               </ul>
+           </div>
+
+           {% if this.toggleable %}
+               <button type="button" class="btn btn-primary ms-2"
+                       onclick="document.getElementById('table-{{ this.id }}').classList.toggle('d-none')">
+                   <i class="fas fa-eye"></i>
+               </button>
+           {% endif %}
+       </div>
+   {% endif %}
+
+   {# Table Container #}
+   <div class="table-responsive" {% if this.maxHeight %}style="max-height: {{ this.maxHeight }}px"{% endif %}>
+       <table id="table-{{ this.id }}"
+              class="table {{ this.striped ? 'table-striped' : '' }}
+                     {{ this.bordered ? 'table-bordered' : '' }}
+                     {{ this.hover ? 'table-hover' : '' }}
+                     {{ this.small ? 'table-sm' : '' }}
+                     {% if not this.visible %}d-none{% endif %}">
+
+           {% if this.caption %}
+               <caption>{{ this.caption }}</caption>
+           {% endif %}
+
+           {# Headers #}
+           {% if this.headers|length > 0 %}
+               <thead>
+                   {% for headerRow in this.headers %}
+                       <tr>
+                           {% for cell in headerRow %}
+                               <th {% if cell.scope %}scope="{{ cell.scope }}"{% endif %}
+                                   {% if cell.colspan %}colspan="{{ cell.colspan }}"{% endif %}
+                                   {% if cell.rowspan %}rowspan="{{ cell.rowspan }}"{% endif %}
+                                   {% if cell.width %}style="width: {{ cell.width }}"{% endif %}
+                                   class="{{ renderer.render_cell_classes(loop.index0, columns, '', rowClasses) }}">
+                                   {{ cell.text|raw }}
+                               </th>
+                           {% endfor %}
+                       </tr>
+                   {% endfor %}
+               </thead>
+           {% endif %}
+
+           {# Body #}
+           <tbody>
+               {% for row in this.rows %}
+                   <tr>
+                       {% for cell in row %}
+                           <td class="{{ renderer.render_cell_classes(loop.index0, columns, cell, rowClasses) }}">
+                               {{ cell|raw }}
+                           </td>
+                       {% endfor %}
+                   </tr>
+               {% endfor %}
+           </tbody>
+
+           {# Footer #}
+           {% if this.footer|length > 0 %}
+               <tfoot>
+                   {% for footerRow in this.footer %}
+                       <tr>
+                           {% for cell in footerRow %}
+                               <td {% if cell.colspan %}colspan="{{ cell.colspan }}"{% endif %}
+                                   {% if cell.rowspan %}rowspan="{{ cell.rowspan }}"{% endif %}
+                                   class="{{ renderer.render_cell_classes(loop.index0, columns, cell.text, rowClasses) }}">
+                                   {{ cell.text|raw }}
+                               </td>
+                           {% endfor %}
+                       </tr>
+                   {% endfor %}
+               </tfoot>
+           {% endif %}
+       </table>
+   </div>
+</div>

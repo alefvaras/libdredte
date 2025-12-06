@@ -1,0 +1,64 @@
+{# templates/components/block-grid.html.twig #}
+
+<div class="derafu-block-grid {{ attributes.render('class') }}" {{ attributes }} id="{{ this.id }}">
+    {% if cols is not empty %}
+        <div style="display: grid; grid-template-columns: repeat({{ cols }}, 1fr); gap: 10px;">
+            {% for item in items %}
+                <div class="derafu-block-grid__item">
+                    {{ item|raw }}
+                </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        {% set total = items|length %}
+
+        {# Determinar el tamaño base de filas #}
+        {% set baseRowSize = 0 %}
+        {% if total % 6 == 0 %}
+            {% set baseRowSize = 6 %}
+        {% elseif total % 4 == 0 %}
+            {% set baseRowSize = 4 %}
+        {% elseif total % 3 == 0 %}
+            {% set baseRowSize = 3 %}
+        {% endif %}
+
+        {# Calcular cuántas filas necesitaremos #}
+        {% set rows = [] %}
+        {% set remaining = total %}
+        {% set offset = 0 %}
+
+        {% for i in range(0, ((total / 2)|round(0, 'ceil') - 1)) %}
+            {% if remaining > 0 %}
+                {% set rowSize = 0 %}
+
+                {% if baseRowSize > 0 %}
+                    {% set rowSize = baseRowSize %}
+                {% elseif remaining >= 4 %}
+                    {% set rowSize = 4 %}
+                {% elseif remaining == 3 %}
+                    {% set rowSize = 3 %}
+                {% elseif remaining == 2 %}
+                    {% set rowSize = 2 %}
+                {% elseif remaining == 1 %}
+                    {% set rowSize = 1 %}
+                {% endif %}
+
+                {% if remaining == 5 and offset == 0 %}
+                    {% set rowSize = 3 %}
+                {% endif %}
+
+                <div class="derafu-block-grid__row">
+                    {% for j in range(0, rowSize - 1) %}
+                        {% set item = items[offset + j] %}
+                        <div class="derafu-block-grid__item derafu-block-grid__item--{{ rowSize }}">
+                            {{ item|raw }}
+                        </div>
+                    {% endfor %}
+                </div>
+
+                {% set offset = offset + rowSize %}
+                {% set remaining = remaining - rowSize %}
+            {% endif %}
+        {% endfor %}
+    {% endif %}
+</div>

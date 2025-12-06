@@ -1,0 +1,213 @@
+/*
+ * Footer - Variables base
+ */
+ :root {
+    /* Footer - Colores */
+    --footer-bg: var(--bs-secondary-bg, #f8f9fa);
+    --footer-text: var(--bs-secondary-color, #495057);
+    --footer-title: var(--bs-body-color, #212529);
+    --footer-link: var(--bs-primary, #0d6efd);
+    --footer-link-hover: var(--bs-link-hover-color, #0a58ca);
+    --footer-social-icon: var(--bs-secondary-color, #6c757d);
+    --footer-social-icon-hover: var(--bs-primary, #0d6efd);
+    --footer-social-icon-bg: var(--bs-light, #f8f9fa);
+    --footer-social-icon-bg-hover: var(--bs-primary-subtle, #cfe2ff);
+    --footer-bottom-bg: var(--bs-tertiary-bg, #e9ecef);
+    --footer-bottom-text: var(--bs-body-color, #212529);
+
+    /* Footer - Estructura */
+    --footer-padding-top: 4rem;
+    --footer-padding-bottom: 0;
+    --footer-title-margin-bottom: 1.5rem;
+    --footer-item-margin-bottom: 0.75rem;
+    --footer-social-gap: 1rem;
+    --footer-social-icon-size: 2.5em;
+    --footer-social-icon-border-radius: 50%;
+    --footer-bottom-padding: 1.5rem 0;
+    --footer-bottom-margin-top: 3rem;
+
+    /* Footer - Tipografía */
+    --footer-title-font-weight: 600;
+    --footer-bottom-font-size: 0.875rem;
+    --footer-transition-speed: 0.2s;
+
+    /* Footer - Responsive */
+    --footer-mobile-breakpoint: 768px;
+    --footer-mobile-padding-top: 3rem;
+    --footer-mobile-title-margin-bottom: 1rem;
+    --footer-mobile-links-margin-bottom: 2rem;
+    --footer-mobile-bottom-margin-bottom: 0.5rem;
+    --footer-mobile-bottom-text-margin-bottom: 0.5rem;
+  }
+
+  /*
+   * Componente principal de footer
+   */
+  .derafu-block-footer {
+    background-color: var(--footer-bg);
+    color: var(--footer-text);
+    padding: var(--footer-padding-top) 0 0;
+  }
+
+  /*
+   * Títulos del footer
+   */
+  .derafu-block-footer__title {
+    color: var(--footer-title);
+    font-weight: var(--footer-title-font-weight);
+    margin-bottom: var(--footer-title-margin-bottom);
+  }
+
+  /*
+   * Enlaces del footer
+   */
+  .derafu-block-footer__links {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .derafu-block-footer__links li {
+    margin-bottom: var(--footer-item-margin-bottom);
+    color: var(--footer-link);
+  }
+
+  .derafu-block-footer__links a {
+    color: var(--footer-link);
+    text-decoration: none;
+    transition: color var(--footer-transition-speed) ease;
+  }
+
+  .derafu-block-footer__links a:hover {
+    color: var(--footer-link-hover);
+    text-decoration: underline;
+  }
+
+  /*
+   * Iconos sociales
+   */
+  .derafu-block-footer__social {
+    display: flex;
+    gap: var(--footer-social-gap);
+  }
+
+  .derafu-block-footer__social-icon {
+    color: var(--social-icon-color, var(--footer-social-icon));
+    text-decoration: none;
+    transition: color var(--footer-transition-speed) ease;
+  }
+
+  .derafu-block-footer__social-icon:hover {
+    color: var(--footer-social-icon-hover);
+  }
+
+  .derafu-block-footer__social-icon--circular {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: var(--footer-social-icon-size);
+    height: var(--footer-social-icon-size);
+    border-radius: var(--footer-social-icon-border-radius);
+    background-color: var(--footer-social-icon-bg);
+  }
+
+  .derafu-block-footer__social-icon--circular:hover {
+    background-color: var(--footer-social-icon-bg-hover);
+  }
+
+  /*
+   * Parte inferior del footer
+   */
+  .derafu-block-footer__bottom {
+    background-color: var(--footer-bottom-bg);
+    padding: var(--footer-bottom-padding);
+    margin-top: var(--footer-bottom-margin-top);
+  }
+
+  .derafu-block-footer__bottom-text {
+    color: var(--footer-bottom-text);
+    font-size: var(--footer-bottom-font-size);
+  }
+
+  .derafu-block-footer__bottom-text a {
+    color: var(--footer-link);
+    text-decoration: none;
+    transition: color var(--footer-transition-speed) ease;
+  }
+
+  .derafu-block-footer__bottom-text a:hover {
+    color: var(--footer-link-hover);
+  }
+
+  .derafu-block-footer.container {
+    margin-left: auto;
+    margin-right: auto;
+    padding-left: var(--spacing-md, 1.5rem);
+    padding-right: var(--spacing-md, 1.5rem);
+}
+
+  /*
+   * Ajustes responsive
+   */
+  @media (max-width: 767px) {
+    /* Estructura general responsive */
+    .derafu-block-footer {
+      padding: var(--footer-mobile-padding-top) 0 0;
+    }
+
+    .derafu-block-footer .row {
+      flex-direction: column;
+    }
+
+    .derafu-block-footer .col {
+      width: 100%;
+      margin-bottom: var(--footer-mobile-links-margin-bottom);
+      text-align: left;
+      padding: 0 1rem;
+    }
+
+    /* Títulos responsive */
+    .derafu-block-footer__title {
+      margin-bottom: var(--footer-mobile-title-margin-bottom);
+      font-size: 1.25rem;
+    }
+
+    /* Enlaces responsive */
+    .derafu-block-footer__links {
+      display: inline-block;
+      margin-bottom: var(--footer-mobile-links-margin-bottom);
+      padding: 0;
+    }
+
+    .derafu-block-footer__links li {
+      margin-bottom: 0.5rem;
+    }
+
+    /* Iconos sociales responsive */
+    .derafu-block-footer__social {
+      justify-content: center;
+      margin-top: 1rem;
+    }
+
+    /* Footer inferior responsive */
+    .derafu-block-footer__bottom .row {
+      flex-direction: column;
+    }
+
+    .derafu-block-footer__bottom .col-md {
+      width: 100%;
+      text-align: center;
+      margin-bottom: var(--footer-mobile-bottom-text-margin-bottom);
+      padding: 0 1rem;
+    }
+
+    .derafu-block-footer__bottom-text {
+      text-align: center;
+      margin-bottom: var(--footer-mobile-bottom-text-margin-bottom);
+      font-size: 0.875rem;
+    }
+
+    .derafu-block-footer__bottom-text:last-child {
+      margin-bottom: 0;
+    }
+  }

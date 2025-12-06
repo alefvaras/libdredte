@@ -1,0 +1,277 @@
+/*
+ * Modal - Base Variables
+ */
+ :root {
+    /* Structure */
+    --modal-margin: 0.75rem;
+    --modal-margin-mobile: 0.5rem;
+    --modal-border-radius: 0.5rem;
+    --modal-padding: 1rem;
+    --modal-header-padding: 1rem;
+    --modal-footer-padding: 1rem;
+    --modal-body-padding: 1rem;
+    --modal-body-padding-mobile: 0.75rem;
+
+    /* Responsive */
+    --modal-mobile-margin: var(--modal-margin-mobile);
+    --modal-mobile-padding: var(--modal-padding);
+    --modal-mobile-header-padding: var(--modal-header-padding);
+    --modal-mobile-footer-padding: var(--modal-footer-padding);
+    --modal-mobile-body-padding: var(--modal-body-padding-mobile);
+    --modal-mobile-border-radius: var(--modal-border-radius);
+
+    /* Sizes */
+    --modal-max-height-mobile: 90vh;
+    --modal-max-width-sm: 400px;
+    --modal-max-width-md: 500px;
+    --modal-max-width-lg: 800px;
+    --modal-max-width-xl: 1140px;
+
+    /* Colors */
+    --modal-border-color: var(--bs-border-color, #dee2e6);
+    --modal-background: var(--bs-white, #fff);
+    --modal-box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+
+    /* Buttons */
+    --modal-btn-primary-bg: var(--bs-primary, #0d6efd);
+    --modal-btn-primary-color: var(--bs-white, #fff);
+    --modal-btn-primary-border-color: var(--bs-primary, #0d6efd);
+    --modal-btn-primary-hover-bg: var(--bs-btn-primary-hover-bg, #0b5ed7);
+    --modal-btn-primary-hover-color: var(--bs-white, #fff);
+    --modal-btn-spacing: 0.5rem;
+
+    /* Animation */
+    --modal-transition: all 0.3s ease-in-out;
+  }
+
+  /*
+   * Modal Dialog - Base styles
+   * Note: Do NOT modify the original Bootstrap .modal class
+   * We only apply our custom styles to specific elements
+   */
+  .modal-dialog {
+    position: relative;
+    width: auto;
+    margin: var(--modal-margin) auto;
+    pointer-events: auto;
+    display: flex;
+    align-items: center;
+    min-height: calc(100% - (var(--modal-margin) * 2));
+    max-width: var(--modal-max-width-md);
+  }
+
+  /*
+   * Remove transformations that might cause issues
+   */
+  .modal.show .modal-dialog {
+    /* Transform and opacity removed to avoid affecting the site */
+  }
+
+  /*
+   * Modal Content
+   */
+  .modal-content {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    pointer-events: auto;
+    background-color: var(--modal-background);
+    background-clip: padding-box;
+    border: 1px solid var(--modal-border-color);
+    border-radius: var(--modal-border-radius);
+    box-shadow: var(--modal-box-shadow);
+    outline: 0;
+    max-height: calc(100vh - (var(--modal-margin) * 2));
+    overflow: hidden;
+  }
+
+  .modal-content a {
+    text-decoration: none;
+  }
+
+  .modal-content a:hover {
+    text-decoration: underline;
+  }
+
+  /*
+   * Modal Header
+   */
+  .modal-header {
+    display: flex;
+    flex-shrink: 0;
+    align-items: center;
+    justify-content: space-between;
+    padding: var(--modal-header-padding);
+    border-bottom: 1px solid var(--modal-border-color);
+    border-top-left-radius: calc(var(--modal-border-radius) - 1px);
+    border-top-right-radius: calc(var(--modal-border-radius) - 1px);
+  }
+
+  .modal-title {
+    margin: 0;
+    line-height: 1.5;
+    font-size: 1.25rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  /*
+   * Modal Body
+   */
+  .modal-body {
+    position: relative;
+    flex: 1 1 auto;
+    padding: var(--modal-body-padding);
+    overflow-y: auto;
+  }
+
+  /*
+   * Modal Footer
+   */
+  .modal-footer {
+    display: flex;
+    flex-wrap: wrap;
+    flex-shrink: 0;
+    align-items: center;
+    justify-content: flex-end;
+    padding: var(--modal-footer-padding);
+    border-top: 1px solid var(--modal-border-color);
+    border-bottom-right-radius: calc(var(--modal-border-radius) - 1px);
+    border-bottom-left-radius: calc(var(--modal-border-radius) - 1px);
+    gap: var(--modal-btn-spacing);
+  }
+
+  /*
+   * Footer Buttons
+   */
+  .modal-footer .btn-primary {
+    background-color: var(--modal-btn-primary-bg);
+    color: var(--modal-btn-primary-color);
+    border-color: var(--modal-btn-primary-border-color);
+  }
+
+  .modal-footer .btn-primary:hover {
+    background-color: var(--modal-btn-primary-hover-bg);
+    color: var(--modal-btn-primary-hover-color);
+  }
+
+  /*
+   * Modal Size Variants
+   */
+  .modal-dialog.modal-sm {
+    max-width: var(--modal-max-width-sm);
+  }
+
+  .modal-dialog.modal-lg {
+    max-width: var(--modal-max-width-lg);
+  }
+
+  .modal-dialog.modal-xl {
+    max-width: var(--modal-max-width-xl);
+  }
+
+  /*
+   * Fullscreen Modal
+   */
+  .modal-dialog.modal-fullscreen {
+    margin: var(--modal-margin);
+    padding: var(--modal-padding);
+  }
+
+  .modal-dialog.modal-fullscreen .modal-content {
+    border: 0;
+    border-radius: var(--modal-border-radius);
+    min-height: 100vh;
+  }
+  .modal.container {
+    margin-left: auto;
+    margin-right: auto;
+    padding-left: var(--spacing-md, 1.5rem);
+    padding-right: var(--spacing-md, 1.5rem);
+}
+  /*
+   * Responsive Styles
+   */
+  /* Medium screens */
+  @media (max-width: 991.98px) {
+    .modal-dialog.modal-lg,
+    .modal-dialog.modal-xl {
+      max-width: 90%;
+    }
+  }
+
+  /* Small screens */
+  @media (max-width: 767.98px) {
+    .modal-dialog {
+      margin: var(--modal-mobile-margin);
+      min-height: calc(100% - (var(--modal-mobile-margin) * 2));
+    }
+
+    .modal-content {
+      border-radius: var(--modal-mobile-border-radius);
+      max-height: calc(100vh - (var(--modal-mobile-margin) * 2));
+    }
+
+    .modal-header {
+      padding: var(--modal-mobile-header-padding);
+    }
+
+    .modal-body {
+      padding: var(--modal-mobile-body-padding);
+    }
+
+    .modal-footer {
+      padding: var(--modal-mobile-footer-padding);
+    }
+
+    .modal-title {
+      font-size: 1.125rem;
+    }
+  }
+
+  /* Extra small screens */
+  @media (max-width: 575.98px) {
+    /* Adjust all modal sizes for mobile */
+    .modal-dialog,
+    .modal-dialog.modal-sm,
+    .modal-dialog.modal-lg,
+    .modal-dialog.modal-xl {
+      margin: var(--modal-mobile-margin);
+      max-width: calc(100% - (var(--modal-mobile-margin) * 2));
+    }
+
+    /* Tighter padding for small screens */
+    .modal-header {
+      padding: 0.5rem 0.75rem;
+    }
+
+    .modal-body {
+      padding: 0.75rem;
+    }
+
+    .modal-footer {
+      padding: 0.5rem 0.75rem;
+    }
+
+    /* Title adjustments for very small mobile screens */
+    .modal-title {
+      font-size: 1rem;
+      max-width: 80%;
+    }
+
+    /* Stack buttons vertically on very small screens */
+    .modal-footer {
+      flex-direction: column;
+      align-items: stretch;
+    }
+
+    .modal-footer .btn {
+      margin-bottom: 0.5rem;
+    }
+
+    .modal-footer .btn:last-child {
+      margin-bottom: 0;
+    }
+  }

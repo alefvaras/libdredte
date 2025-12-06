@@ -1,0 +1,37 @@
+{# templates/components/block-offcanvas.html.twig #}
+
+<div
+    class="offcanvas offcanvas-{{ this.position }} {{ attributes.render('class') }}"
+    {{ attributes }}
+    id="{{ this.id }}"
+    tabindex="-1"
+    aria-labelledby="{{ this.id }}-label"
+    {% if not this.backdrop %}data-bs-backdrop="false"{% endif %}
+    {% if this.scroll %}data-bs-scroll="true"{% endif %}
+>
+    {% if this.title or this.showClose %}
+        <div class="offcanvas-header">
+            {% if this.title %}
+                <h5 class="offcanvas-title" id="{{ this.id }}-label">{{ this.title }}</h5>
+            {% endif %}
+            {% if this.showClose %}
+                <button type="button" class="btn-close text-reset" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+            {% endif %}
+        </div>
+    {% endif %}
+    <div class="offcanvas-body">
+        {{ this.content|raw }}
+        {% if this.buttons|length > 0 %}
+            <div class="derafu-block-offcanvas__buttons">
+                {% for button in this.buttons %}
+                    <button type="button"
+                        class="btn btn-{{ button.type|default('secondary') }}"
+                        {% if button.dismiss|default(false) %}data-bs-dismiss="offcanvas"{% endif %}
+                        {{ button.attributes|default('')|raw }}>
+                        {{ button.text }}
+                    </button>
+                {% endfor %}
+            </div>
+        {% endif %}
+    </div>
+</div>

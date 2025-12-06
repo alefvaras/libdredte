@@ -1,0 +1,24 @@
+{# templates/components/block-stats.html.twig #}
+
+<div
+    class="derafu-block-stats derafu-block-stats--{{ this.textPosition }} {{ attributes.render('class') }}"
+    {{ attributes }}
+    id="{{ this.id }}"
+>
+    <div class="row justify-content-center">
+        {% for stat in this.stats %}
+            {% set cols = this.stats|length %}
+            <div class="col-6 col-md-4 {% if cols == 4 %}col-lg-3{% elseif cols == 5 %}col-lg-20{% elseif cols >= 6 %}col-lg-2{% endif %}">
+                <div class="derafu-block-stats__item">
+                    {% if this.textPosition == 'top' %}
+                        <div class="derafu-block-stats__text">{{ stat.text|raw }}</div>
+                    {% endif %}
+                    <div class="derafu-block-stats__value">{{ stat.value|raw }}</div>
+                    {% if this.textPosition == 'bottom' %}
+                        <div class="derafu-block-stats__text">{{ stat.text|raw }}</div>
+                    {% endif %}
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+</div>

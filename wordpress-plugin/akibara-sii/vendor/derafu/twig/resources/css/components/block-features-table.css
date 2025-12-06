@@ -1,0 +1,254 @@
+/*
+ * Features Table - Variables base
+ */
+ :root {
+  /* Features Table - General */
+  --features-table-margin-bottom: 1.5rem;
+
+  /* Features Table - Estructura */
+  --features-table-cell-padding: 1rem;
+  --features-table-icon-size: 2.5em;
+  --features-table-icon-border-radius: 50%;
+  --features-table-feature-gap: 1rem;
+  --features-table-content-gap: 0.25rem;
+
+  /* Features Table - Colores */
+  --features-table-border: var(--bs-border-color, #dee2e6);
+  --features-table-header-bg: var(--bs-primary, #0d6efd);
+  --features-table-header-text: var(--bs-white, #fff);
+  --features-table-icon-bg: var(--bs-light, #f8f9fa);
+  --features-table-icon-text: var(--bs-primary, #0d6efd);
+  --features-table-feature-text: var(--bs-body-color, #212529);
+  --features-table-content-text: var(--bs-body-color, #212529);
+  --features-table-check-color: var(--bs-success, #198754);
+  --features-table-cross-color: var(--bs-danger, #dc3545);
+
+  /* Features Table - Tipografía */
+  --features-table-header-font-weight: bold;
+  --features-table-feature-name-font-weight: bold;
+  --features-table-content-font-size: 0.875rem;
+  --features-table-icon-font-size: 1.2rem;
+
+  /* Features Table - Responsive */
+  --features-table-mobile-breakpoint: 768px;
+  --features-table-mobile-cell-padding: 0.75rem;
+  --features-table-mobile-icon-size: 2em;
+
+  /* Nuevas variables para los encabezados de sección */
+  --features-table-section-header-bg: var(--bs-light, #f8f9fa);
+  --features-table-section-header-text: var(--bs-primary, #0d6efd);
+  --features-table-section-header-font-weight: 600;
+  --features-table-section-header-font-size: 1.05em;
+  --features-table-section-header-padding: 0.75rem 1rem;
+}
+
+/*
+ * Componente principal
+ */
+.derafu-block-features-table {
+  width: 100%;
+  margin-bottom: var(--features-table-margin-bottom);
+}
+
+/*
+ * Estructura de la tabla
+ */
+.derafu-block-features-table__table {
+  width: 100%;
+  border-collapse: collapse;
+  border: 1px solid var(--features-table-border);
+}
+
+/*
+ * Estilos para encabezados
+ */
+.derafu-block-features-table__header {
+  background-color: var(--features-table-header-bg);
+  color: var(--features-table-header-text);
+  padding: var(--features-table-cell-padding);
+  text-align: center;
+  font-weight: var(--features-table-header-font-weight);
+  border: 1px solid var(--features-table-border);
+}
+
+.derafu-block-features-table__header--feature {
+  text-align: left;
+}
+
+/*
+ * Estilos para celdas
+ */
+.derafu-block-features-table__cell {
+  padding: var(--features-table-cell-padding);
+  text-align: center;
+  border: 1px solid var(--features-table-border);
+  vertical-align: middle;
+}
+
+.derafu-block-features-table__cell--feature {
+  text-align: left;
+}
+
+.derafu-block-features-table__cell a {
+  text-decoration: none;
+}
+
+.derafu-block-features-table__cell a:hover {
+  text-decoration: underline;
+}
+
+/*
+ * Contenido de características
+ */
+.derafu-block-features-table__feature {
+  display: flex;
+  align-items: flex-start;
+  /* Se quita el gap para aplicarlo condicionalmente */
+}
+
+/* Aplicar gap solo cuando hay icono */
+.derafu-block-features-table__feature.has-icon {
+  gap: var(--features-table-feature-gap);
+}
+
+.derafu-block-features-table__icon {
+  width: var(--features-table-icon-size);
+  height: var(--features-table-icon-size);
+  background-color: var(--features-table-icon-bg);
+  color: var(--features-table-icon-text);
+  border-radius: var(--features-table-icon-border-radius);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.derafu-block-features-table__feature-content {
+  display: flex;
+  flex-direction: column;
+  gap: var(--features-table-content-gap);
+}
+
+.derafu-block-features-table__feature-name {
+  font-weight: var(--features-table-feature-name-font-weight);
+  color: var(--features-table-feature-text);
+}
+
+.derafu-block-features-table__feature-content {
+  color: var(--features-table-content-text);
+  font-size: var(--features-table-content-font-size);
+}
+
+/*
+ * Indicadores de disponibilidad
+ */
+.derafu-block-features-table__check {
+  color: var(--features-table-check-color);
+  font-size: var(--features-table-icon-font-size);
+}
+
+.derafu-block-features-table__cross {
+  color: var(--features-table-cross-color);
+  font-size: var(--features-table-icon-font-size);
+}
+
+/*
+ * Estilos para encabezados de sección
+ */
+.derafu-block-features-table__row--header {
+  background-color: var(--features-table-section-header-bg);
+}
+
+.derafu-block-features-table__cell--header {
+  padding: var(--features-table-section-header-padding);
+  border: 1px solid var(--features-table-border);
+  text-align: left;
+}
+
+.derafu-block-features-table__section-header {
+  display: flex;
+  align-items: center;
+}
+
+.derafu-block-features-table__section-header.has-icon {
+  gap: var(--features-table-feature-gap);
+}
+
+.derafu-block-features-table__section-title {
+  font-weight: var(--features-table-section-header-font-weight);
+  font-size: var(--features-table-section-header-font-size);
+  color: var(--features-table-section-header-text);
+}
+
+.derafu-block-features-table__cell--header .derafu-block-features-table__icon {
+  width: calc(var(--features-table-icon-size) * 0.8);
+  height: calc(var(--features-table-icon-size) * 0.8);
+  background-color: var(--features-table-section-header-text);
+  color: var(--features-table-section-header-bg);
+}
+
+.derafu-block-features-table__row--header + .derafu-block-features-table__row {
+  border-top: none;
+}
+
+.derafu-block-features-table.container {
+  margin-left: auto;
+  margin-right: auto;
+  padding-left: var(--spacing-md, 1.5rem);
+  padding-right: var(--spacing-md, 1.5rem);
+}
+
+/*
+ * Responsive table con scroll horizontal
+ */
+.table-responsive {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  margin-bottom: 1rem;
+}
+
+/*
+ * Personalización de scrollbar
+ */
+.table-responsive::-webkit-scrollbar {
+  height: 6px;
+}
+
+.table-responsive::-webkit-scrollbar-track {
+  background: #f8f9fa;
+  border-radius: 3px;
+}
+
+.table-responsive::-webkit-scrollbar-thumb {
+  background: #dee2e6;
+  border-radius: 3px;
+}
+
+/*
+ * Media queries para responsive
+ */
+@media (max-width: 768px) {
+  .derafu-block-features-table__cell {
+    padding: var(--features-table-mobile-cell-padding);
+  }
+
+  .derafu-block-features-table__icon {
+    width: var(--features-table-mobile-icon-size);
+    height: var(--features-table-mobile-icon-size);
+  }
+
+  .derafu-block-features-table__header {
+    white-space: nowrap;
+  }
+
+  /* Ajustes responsivos para encabezados de sección */
+  .derafu-block-features-table__cell--header {
+    padding: calc(var(--features-table-mobile-cell-padding) * 1.1);
+  }
+
+  .derafu-block-features-table__cell--header .derafu-block-features-table__icon {
+    width: calc(var(--features-table-mobile-icon-size) * 0.8);
+    height: calc(var(--features-table-mobile-icon-size) * 0.8);
+  }
+}

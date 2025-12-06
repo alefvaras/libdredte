@@ -1,0 +1,74 @@
+{# templates/components/block-features-table.html.twig #}
+
+<div class="derafu-block-features-table {{ attributes.render('class') }}" {{ attributes }} id="{{ this.id }}">
+    <div class="table-responsive">
+        <table class="derafu-block-features-table__table">
+            <thead>
+                <tr>
+                    <th class="derafu-block-features-table__header derafu-block-features-table__header--feature">{{ this.title|raw }}</th>
+                    {% for plan in features|filter(feature => feature.values is defined)|first.values|keys %}
+                        <th class="derafu-block-features-table__header">{{ plan }}</th>
+                    {% endfor %}
+                </tr>
+            </thead>
+            <tbody>
+                {% for feature in features %}
+                    {% if feature.isHeader %}
+                        {# Esta es una fila de encabezado de sección #}
+                        <tr class="derafu-block-features-table__row derafu-block-features-table__row--header">
+                            <td class="derafu-block-features-table__cell derafu-block-features-table__cell--header"
+                                colspan="{{ features|filter(feature => feature.values is defined)|first.values|keys|length + 1 }}">
+                                <div class="derafu-block-features-table__section-header {% if feature.icon %}has-icon{% endif %}">
+                                    {% if feature.icon %}
+                                    <span class="derafu-block-features-table__icon">
+                                        <i class="{{ feature.icon }}"></i>
+                                    </span>
+                                    {% endif %}
+                                    <span class="derafu-block-features-table__section-title">{{ feature.title|raw }}</span>
+                                </div>
+                            </td>
+                        </tr>
+                    {% else %}
+                        {# Esta es una fila de característica normal #}
+                        <tr class="derafu-block-features-table__row">
+                            <td class="derafu-block-features-table__cell derafu-block-features-table__cell--feature">
+                                <div class="derafu-block-features-table__feature {% if feature.icon %}has-icon{% endif %}">
+                                    {% if feature.icon %}
+                                    <span class="derafu-block-features-table__icon">
+                                        <i class="{{ feature.icon }}"></i>
+                                    </span>
+                                    {% endif %}
+                                    <div class="derafu-block-features-table__feature-content">
+                                        <span class="derafu-block-features-table__feature-name">{{ feature.title|raw }}</span>
+                                        {% if feature.content %}
+                                            <small class="derafu-block-features-table__feature-content">{{ feature.content|raw }}</small>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </td>
+                            {% if feature.values %}
+                                {% for plan in features|filter(feature => feature.values)|first.values|keys %}
+                                    <td class="derafu-block-features-table__cell">
+                                        {% if feature.values[plan] is defined %}
+                                            {% set value = feature.values[plan] %}
+                                            {% if value is same as(true) %}
+                                                <i class="fa-solid fa-check derafu-block-features-table__check"></i>
+                                            {% elseif value is same as(false) %}
+                                                <i class="fa-solid fa-xmark derafu-block-features-table__cross"></i>
+                                            {% else %}
+                                                {{ value|raw }}
+                                            {% endif %}
+                                        {% else %}
+                                            {# En caso de que este plan no tenga valor definido #}
+                                            <span class="derafu-block-features-table__empty">-</span>
+                                        {% endif %}
+                                    </td>
+                                {% endfor %}
+                            {% endif %}
+                        </tr>
+                    {% endif %}
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>

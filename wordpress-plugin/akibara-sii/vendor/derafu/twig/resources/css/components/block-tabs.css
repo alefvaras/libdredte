@@ -1,0 +1,150 @@
+:root {
+    /* Tabs - Color Variables */
+    --tab-inactive-text: var(--bs-gray-600, #6c757d);
+    --tab-inactive-bg: var(--bs-gray-200, #e9ecef);
+    --tab-hover-text: var(--bs-gray-700, #495057);
+    --tab-hover-bg: var(--bs-gray-300, #dee2e6);
+    --tab-active-text: var(--bs-white, #fff);
+    --tab-active-bg: var(--bs-primary, #0d6efd);
+
+    /* Tabs - Content Colors */
+    --tab-content-bg: var(--bs-white, #fff);
+
+    /* Tabs - Structure */
+    --tab-border-radius: var(--bs-border-radius, 0.375rem);
+    --tab-content-border-radius: var(--bs-border-radius-lg, 0.5rem);
+    --tab-content-padding: 1.5rem;
+    --tab-gap: 0;
+
+    /* Responsive Variables */
+    --tab-mobile-content-padding: 1rem;
+    --tab-mobile-font-size: 0.875rem;
+    --tab-mobile-padding: 0.5rem 0.75rem;
+    --tab-tablet-padding: 0.625rem 1rem;
+
+    /* Breakpoints */
+    --mobile-breakpoint: 576px;
+    --tablet-breakpoint: 768px;
+}
+
+/* Base Tab Styles */
+.derafu-block-tabs .nav-link {
+    color: var(--tab-inactive-text);
+    background-color: var(--tab-inactive-bg);
+    border-radius: 0;
+    margin: 0;
+    padding: 0.75rem 1.25rem;
+    transition: all 0.2s ease-in-out;
+    font-weight: 500;
+}
+
+/* Horizontal Tabs */
+.derafu-block-tabs .nav-pills:not(.flex-column) {
+    gap: var(--tab-gap);
+    flex-wrap: wrap;
+    justify-content: flex-start;
+}
+
+/* Vertical Tabs */
+.derafu-block-tabs .nav-pills.flex-column {
+    gap: var(--tab-gap);
+    width: 100%;
+}
+
+/* Tab States */
+.derafu-block-tabs .nav-link:hover:not(.active) {
+    color: var(--tab-hover-text);
+    background-color: var(--tab-hover-bg);
+}
+
+.derafu-block-tabs .nav-link.active {
+    color: var(--tab-active-text);
+    background-color: var(--tab-active-bg);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* Tab Content */
+.derafu-block-tabs .tab-content {
+    background-color: var(--tab-content-bg);
+    border-radius: var(--tab-content-border-radius);
+    padding: var(--tab-content-padding);
+    margin-top: 0.5rem;
+}
+
+.derafu-block-tabs .tab-content.with-shadow {
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+/* Tablet Breakpoint */
+@media (max-width: 768px) {
+    .derafu-block-tabs .nav-link {
+        padding: var(--tab-tablet-padding);
+        font-size: 0.9375rem;
+    }
+
+    .derafu-block-tabs .tab-content {
+        padding: 1.25rem;
+    }
+}
+
+/* Mobile Breakpoint */
+@media (max-width: 576px) {
+    .derafu-block-tabs .nav-link {
+        padding: var(--tab-mobile-padding);
+        font-size: var(--tab-mobile-font-size);
+        text-align: left;
+        white-space: normal;
+    }
+
+    .derafu-block-tabs .tab-content {
+        padding: var(--tab-mobile-content-padding);
+    }
+
+    /* Always Vertical Tabs */
+    .derafu-block-tabs .nav-pills.flex-column,
+    .derafu-block-tabs .nav-pills[position="vertical"] {
+        flex-direction: column !important;
+        width: 100%;
+        gap: 0.5rem;
+    }
+
+    .derafu-block-tabs .nav-pills.flex-column .nav-link,
+    .derafu-block-tabs .nav-pills[position="vertical"] .nav-link {
+        width: 100%;
+        margin-bottom: 0.5rem;
+        text-align: left;
+        white-space: normal;
+        word-break: break-word;
+        overflow-wrap: break-word;
+    }
+}
+
+/* Specific Small Device Range */
+@media (min-width: 260px) and (max-width: 455px) {
+    .derafu-block-tabs .nav-pills[position="vertical"],
+    .derafu-block-tabs .nav-pills.flex-column[position="vertical"] {
+        display: flex;
+        flex-direction: column !important;
+        width: 100%;
+        align-items: stretch;
+    }
+
+    .derafu-block-tabs .nav-pills[position="vertical"] .nav-link,
+    .derafu-block-tabs .nav-pills.flex-column[position="vertical"] .nav-link {
+        display: block;
+        width: 100%;
+        margin-bottom: 0.5rem;
+        padding: 0.5rem 0.75rem;
+        text-align: left;
+        word-break: break-word;
+        white-space: normal;
+    }
+}
+
+/* Accessibility */
+.derafu-block-tabs .nav-link:focus {
+    outline: 2px solid var(--tab-active-bg);
+    outline-offset: 2px;
+    position: relative;
+    z-index: 1;
+}

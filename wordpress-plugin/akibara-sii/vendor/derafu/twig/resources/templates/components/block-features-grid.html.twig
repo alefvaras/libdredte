@@ -1,0 +1,30 @@
+{# templates/components/block-features-grid.html.twig #}
+
+<div class="derafu-block-features-grid {{ attributes.render('class') }}" {{ attributes }} id="{{ this.id }}">
+    <div class="derafu-block-features-grid__row">
+        {% for block in blocks %}
+            <div class="derafu-block-features-grid__block">
+                <div class="derafu-block-features-grid__header">
+                    <h3 class="derafu-block-features-grid__title">{{ block.title|raw }}</h3>
+                    <p class="derafu-block-features-grid__subtitle">{{ block.subtitle|raw }}</p>
+                </div>
+
+                <div class="derafu-block-features-grid__features">
+                    {% for feature in block.features %}
+                        <div class="derafu-block-features-grid__feature">
+                            <div class="derafu-block-features-grid__icon">
+                                <i class="{{ feature.icon }}"></i>
+                            </div>
+                            <div class="derafu-block-features-grid__content">
+                                <h4 class="derafu-block-features-grid__feature-title">{{ feature.title|raw  }}</h4>
+                                <div class="derafu-block-features-grid__content">
+                                    {{ feature.content|raw }}
+                                </div>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+</div>

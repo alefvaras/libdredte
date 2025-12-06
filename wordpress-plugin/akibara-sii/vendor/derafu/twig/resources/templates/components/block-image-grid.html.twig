@@ -1,0 +1,30 @@
+{# templates/components/block-image-grid.html.twig #}
+
+<div class="derafu-block-image-grid {{ attributes.render('class') }}" {{ attributes }} id="{{ this.id }}">
+    <div class="row g-4">
+        {% for image in this.images %}
+            <div class="col-6 col-md-4 {% if this.cols == 4 %}col-lg-3{% elseif this.cols == 3 %}col-lg-4{% else %}col-lg-2{% endif %}">
+                <div class="derafu-block-image-grid__item p-2">
+                    {% if image.url %}
+                        <a href="{{ image.url }}" class="derafu-block-image-grid__link" {% if image.tooltip %}data-bs-toggle="tooltip" title="{{ image.tooltip }}"{% endif %}>
+                            <img src="{{ image.image }}" alt="{{ image.tooltip|default('') }}" class="derafu-block-image-grid__image">
+                        </a>
+                    {% else %}
+                        <img src="{{ image.image }}" alt="{{ image.tooltip|default('') }}" class="derafu-block-image-grid__image" {% if image.tooltip %}data-bs-toggle="tooltip" title="{{ image.tooltip }}"{% endif %}>
+                    {% endif %}
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+</div>
+
+{% block javascripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const tooltipTriggerList = [].slice.call(document.querySelectorAll('[title]'));
+        tooltipTriggerList.map(function(tooltipTriggerEl) {
+            return new bootstrap.Tooltip(tooltipTriggerEl);
+        });
+    });
+</script>
+{% endblock %}

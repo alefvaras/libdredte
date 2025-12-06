@@ -1,0 +1,18 @@
+{# templates/components/block-title.html.twig #}
+
+<div
+    class="derafu-block-title {{ attributes.render('class') }}"
+    {{ attributes }}
+    id="{{ this.id }}"
+>
+    <div class="derafu-block-title__wrapper text-{{ this.align }}{% if this.border %} derafu-block-title__wrapper--bordered{% endif %}">
+        <h{{ this.level }} class="derafu-block-title__title">
+            {{ this.title|raw }}
+        </h{{ this.level }}>
+        {% if this.subtitle %}
+            <p class="derafu-block-title__subtitle">
+                {{ this.subtitle|raw }}
+            </p>
+        {% endif %}
+    </div>
+</div>

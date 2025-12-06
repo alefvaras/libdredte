@@ -1,0 +1,73 @@
+{# templates/components/block-comparison.html.twig #}
+
+<div class="derafu-block-comparison {{ attributes.render('class') }}" {{ attributes }} id="{{ this.id }}">
+    <div class="row g-4">
+        {% for plan in plans %}
+            <div class="col-12 {% if plans|length == 2 %}col-lg-6
+                {% elseif plans|length == 3 %}col-lg-4
+                {% else %}col-lg-3{% endif %}">
+
+                <div class="derafu-block-comparison__plan {% if plan.highlighted %}derafu-block-comparison__plan--highlighted{% endif %}">
+                    {# Title section #}
+                    <div class="derafu-block-comparison__title-section {% if plan.highlighted %}derafu-block-comparison__title-section--highlighted{% endif %}">
+                        <h3 class="derafu-block-comparison__title">{{ plan.title }}</h3>
+                    </div>
+
+                    {# Price section #}
+                    <div class="derafu-block-comparison__price-section">
+                        <div class="derafu-block-comparison__price">
+                            {% if plan.priceIcon %}
+                                    <i class="{{ plan.priceIcon }}"></i>
+                            {% else %}
+                                {{ plan.price|raw }}
+                            {% endif %}
+                        </div>
+                        {% if plan.period %}
+                            <div class="derafu-block-comparison__period">{{ plan.period }}</div>
+                        {% endif %}
+                    </div>
+
+                    {# Features #}
+                    <div class="derafu-block-comparison__features">
+                        {% for feature in plan.features %}
+                            <div class="derafu-block-comparison__feature"
+                                    {% if feature.tooltip %}
+                                    title="{{ feature.tooltip }}"
+                                    {% endif %}
+                            >
+                                {% if feature.value is same as(true) %}
+                                    <i class="fa-solid fa-check-circle text-success"></i>
+                                {% elseif feature.value is same as(false) %}
+                                    <i class="fa-solid fa-times-circle text-danger"></i>
+                                {% elseif feature.value is not empty %}
+                                    <span class="derafu-block-comparison__value">{{ feature.value }}</span>
+                                {% endif %}
+                                <span class="derafu-block-comparison__text">{{ feature.text|raw }}</span>
+                            </div>
+                        {% endfor %}
+                    </div>
+
+                    {# Footer #}
+                    <div class="derafu-block-comparison__footer">
+                        {% if plan.note %}
+                            <div class="derafu-block-comparison__note">{{ plan.note }}</div>
+                        {% endif %}
+                        <a href="{{ plan.buttonUrl }}" class="derafu-block-comparison__button">
+                            {{ plan.buttonText }}
+                        </a>
+                    </div>
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+
+    {# Initialize tooltips #}
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const tooltipTriggerList = [].slice.call(document.querySelectorAll('[title]'));
+            tooltipTriggerList.map(function(tooltipTriggerEl) {
+                return new bootstrap.Tooltip(tooltipTriggerEl);
+            });
+        });
+    </script>
+</div>

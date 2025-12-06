@@ -1,0 +1,10 @@
+blog_list:
+    path: /blog
+    controller: App\Controller\BlogController::list
+
+users_show:
+    path: /users/{id}
+    controller: App\Controller\UserController::show
+    parameters:
+        requirements:
+            id: \d+

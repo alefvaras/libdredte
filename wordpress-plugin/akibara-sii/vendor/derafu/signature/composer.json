@@ -1,0 +1,51 @@
+{
+    "name": "derafu/signature",
+    "description": "Derafu: Signature - Library for digital signatures",
+    "type": "library",
+    "homepage": "https://www.derafu.dev/docs/data/signature",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Esteban De La Fuente Rubio / Derafu",
+            "homepage": "https://www.derafu.dev"
+        }
+    ],
+    "support": {
+        "issues": "https://github.com/derafu/signature/issues",
+        "source": "https://github.com/derafu/signature"
+    },
+    "autoload": {
+        "psr-4": {
+            "Derafu\\Signature\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Derafu\\TestsSignature\\": "tests/src/"
+        }
+    },
+    "require": {
+        "php": "^8.3",
+        "ext-openssl": "*",
+        "ext-mbstring": "*",
+        "derafu/certificate": "dev-main",
+        "derafu/xml": "dev-main"
+    },
+    "require-dev": {
+        "ext-xdebug": "*",
+        "friendsofphp/php-cs-fixer": "^3.63",
+        "phpstan/phpstan": "^1.12",
+        "phpunit/phpunit": "^11.4"
+    },
+    "scripts": {
+        "docs": "php tools/phpdocumentor run --config=phpdoc.xml",
+        "tests": "XDEBUG_MODE=coverage vendor/bin/phpunit --configuration=phpunit.xml",
+        "phpcs-fix": "vendor/bin/php-cs-fixer fix -v --config=php-cs-fixer.php",
+        "phpcs": "vendor/bin/php-cs-fixer fix -v --dry-run --diff --config=php-cs-fixer.php",
+        "phpstan": "vendor/bin/phpstan analyse --configuration=phpstan.neon --memory-limit=1G",
+        "phpstan-export": "vendor/bin/phpstan analyse --configuration=phpstan.neon --level 9 --generate-baseline",
+        "build": "npm run build"
+    },
+    "minimum-stability": "dev",
+    "prefer-stable": true
+}

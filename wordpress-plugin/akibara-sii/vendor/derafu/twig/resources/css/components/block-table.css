@@ -1,0 +1,245 @@
+:root {
+    /* Table - Structure */
+    --table-padding: 0.75rem;
+    --table-border-width: 1px;
+    --table-border-width-header: 2px;
+    --table-margin-bottom: 0rem;
+    --table-transition-duration: 0.2s;
+    --table-sm-padding: 0.3rem;
+
+    /* Table - Colors */
+    --table-bg: var(--bs-table-bg, #ffffff);
+    --table-text: var(--bs-table-color, #212529);
+    --table-border: var(--bs-table-border-color, #dee2e6);
+    --table-header-bg: var(--bs-table-bg, #ffffff);
+    --table-header-text: var(--bs-table-color, #212529);
+    --table-stripe-bg: var(--bs-table-striped-bg, rgba(0, 0, 0, 0.05));
+    --table-hover-bg: var(--bs-table-hover-bg, rgba(0, 0, 0, 0.075));
+    --table-hover-text: var(--bs-table-hover-color, #212529);
+    --table-active-bg: var(--bs-table-active-bg, rgba(0, 0, 0, 0.1));
+
+    /* Table - Responsive */
+    --table-actions-gap: 0.5rem;
+    --table-mobile-breakpoint: 768px;
+    --table-mobile-padding: 0.5rem;
+    --table-mobile-font-size: 0.9rem;
+    --table-mobile-header-font-size: 1rem;
+    --table-mobile-row-spacing: 1rem;
+
+    /* Primary Button Styles */
+    --bs-btn-primary-color: var(--bs-white, #fff);
+    --bs-btn-primary-bg: var(--bs-primary, #0d6efd);
+    --bs-btn-primary-border-color: var(--bs-primary, #0d6efd);
+    --bs-btn-primary-hover-color: var(--bs-white, #fff);
+    --bs-btn-primary-hover-bg: var(--bs-btn-primary-hover-bg, #0b5ed7);
+    --bs-btn-primary-hover-border-color: var(--bs-btn-primary-hover-border-color, #0a58ca);
+    --bs-btn-primary-focus-shadow-rgb: var(--bs-btn-primary-focus-shadow-rgb, 49, 132, 253);
+    --bs-btn-primary-active-color: var(--bs-white, #fff);
+    --bs-btn-primary-active-bg: var(--bs-btn-primary-active-bg, #0a58ca);
+    --bs-btn-primary-active-border-color: var(--bs-btn-primary-active-border-color, #0a53be);
+
+    /* Dropdown Specific Styles */
+    --bs-dropdown-link-hover-bg: var(--bs-gray-100, #f8f9fa);
+    --bs-dropdown-link-active-bg: var(--bs-primary, #0d6efd);
+    --bs-dropdown-link-active-color: var(--bs-white, #fff);
+    --bs-dropdown-border-color: var(--bs-border-color-translucent, rgba(0, 0, 0, 0.175));
+    --bs-dropdown-divider-bg: var(--bs-gray-200, #e9ecef);
+    --bs-dropdown-padding-y: 0.5rem;
+    --bs-dropdown-item-padding-x: 1rem;
+    --bs-dropdown-item-padding-y: 0.25rem;
+}
+
+/* Main Container */
+.derafu-block-table {
+    position: relative;
+    width: 100%;
+}
+
+/* Actions Container */
+.derafu-block-table__actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: var(--table-actions-gap);
+    margin-bottom: 1rem;
+}
+
+/* Button Hover Styles */
+.derafu-block-table__actions .btn-primary:hover,
+.derafu-block-table__actions .btn-primary:focus {
+    background-color: var(--bs-btn-primary-hover-bg);
+    border-color: var(--bs-btn-primary-hover-border-color);
+}
+
+/* Base Table Styles */
+.derafu-block-table .table {
+    margin-bottom: var(--table-margin-bottom);
+    width: 100%;
+    color: var(--table-text);
+    background-color: var(--table-bg);
+    border-collapse: collapse;
+    transition: all var(--table-transition-duration) ease-in-out;
+}
+
+/* Table Headers */
+.derafu-block-table .table > thead {
+    background-color: var(--table-header-bg);
+}
+
+.derafu-block-table .table > thead > tr > th {
+    background-color: var(--table-header-bg);
+    color: var(--table-header-text);
+    font-weight: 600;
+    vertical-align: bottom;
+    border-bottom-width: var(--table-border-width-header);
+    white-space: nowrap;
+}
+
+/* Alignment Modifiers */
+.derafu-block-table .text-start {
+    text-align: left;
+}
+
+.derafu-block-table .text-center {
+    text-align: center;
+}
+
+.derafu-block-table .text-end {
+    text-align: right;
+}
+
+.derafu-block-table .text-center a {
+    text-decoration: none;
+}
+
+.derafu-block-table .text-center a:hover {
+    text-decoration: underline;
+}
+
+/* Borders */
+.derafu-block-table .table-bordered {
+    border: var(--table-border-width) solid var(--table-border);
+}
+
+.derafu-block-table .table-bordered > :not(caption) > * > * {
+    border: var(--table-border-width) solid var(--table-border);
+}
+
+/* Striped Rows */
+.derafu-block-table .table-striped > tbody > tr:nth-of-type(odd) > * {
+    background-color: var(--table-stripe-bg);
+}
+
+/* Hover Effect */
+.derafu-block-table .table-hover > tbody > tr:hover > * {
+    background-color: var(--table-hover-bg);
+    color: var(--table-hover-text);
+}
+
+/* Caption */
+.derafu-block-table .table > caption {
+    padding-top: var(--table-padding);
+    padding-bottom: var(--table-padding);
+    color: var(--table-text);
+    text-align: left;
+    caption-side: top;
+}
+
+/* Footer */
+.derafu-block-table .table > tfoot {
+    border-top: var(--table-border-width-header) solid var(--table-border);
+}
+
+/* Responsive Container */
+.derafu-block-table .table-responsive {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: thin;
+}
+
+.derafu-block-table .table-responsive::-webkit-scrollbar {
+    height: 6px;
+}
+
+.derafu-block-table .table-responsive::-webkit-scrollbar-thumb {
+    background-color: rgba(0, 0, 0, 0.2);
+    border-radius: 3px;
+}
+
+.derafu-block-table .table-responsive::-webkit-scrollbar-track {
+    background-color: rgba(0, 0, 0, 0.05);
+}
+
+/* Small Size */
+.derafu-block-table .table-sm > :not(caption) > * > * {
+    padding: var(--table-sm-padding);
+}
+
+.derafu-block-table table,
+.derafu-block-table th,
+.derafu-block-table td {
+    border-radius: 0 !important;
+}
+
+/* Responsive Breakpoints */
+@media (max-width: 991px) {
+    .derafu-block-table .table-responsive {
+        margin-bottom: 1rem;
+        border-radius: 0.25rem;
+    }
+
+    .derafu-block-table .table > thead > tr > th,
+    .derafu-block-table .table > tbody > tr > td {
+        padding: 0.625rem;
+    }
+}
+
+@media (max-width: 768px) {
+    .derafu-block-table__actions {
+        flex-direction: column;
+        align-items: stretch;
+        gap: var(--table-actions-gap);
+        margin-bottom: 0.75rem;
+    }
+
+    .derafu-block-table__actions .btn {
+        width: 100%;
+        padding: 0.5rem;
+        font-size: 0.95rem;
+    }
+
+    /* Mobile Table Adjustments */
+    .derafu-block-table .table > thead > tr > th,
+    .derafu-block-table .table > tbody > tr > td {
+        padding: var(--table-mobile-padding);
+        font-size: var(--table-mobile-font-size);
+    }
+
+    .derafu-block-table .table > thead > tr > th {
+        font-size: var(--table-mobile-header-font-size);
+    }
+
+    /* Scroll Indicator */
+    .derafu-block-table .table-responsive::after {
+        content: '';
+        position: absolute;
+        top: 0;
+        right: 0;
+        width: 20px;
+        height: 100%;
+        background: linear-gradient(to right, transparent, rgba(255, 255, 255, 0.8));
+        pointer-events: none;
+        opacity: 0.7;
+    }
+}
+
+/* Small Screen Card-like View */
+@media (max-width: 576px) {
+    .derafu-block-table .table {
+        font-size: 0.85rem;
+    }
+
+    .derafu-block-table .table > thead > tr > th,
+    .derafu-block-table .table > tbody > tr > td {
+        padding: 0.4rem;
+    }
+}

@@ -1,0 +1,48 @@
+{# templates/components/block-card-grid.html.twig #}
+
+<div class="derafu-block-card-grid {{ attributes.render('class') }}" {{ attributes }} id="{{ this.id }}">
+    <div class="row g-4">
+        {% for card in cards %}
+            <div class="col-sm-6 {% if cols == 1 %}col-lg-12
+                {% elseif cols == 2 %}col-lg-6
+                {% elseif cols == 3 %}col-lg-4
+                {% elseif cols == 4 %}col-lg-3
+                {% else %}col-lg-2{% endif %}
+                {% if card.offset is not null %}offset-lg-{{ card.offset }}{% endif %}
+            ">
+                <div class="derafu-block-card-grid__card">
+                    {% if card.image %}
+                        <div class="derafu-block-card-grid__image">
+                            <img src="{{ card.image }}" alt="{{ card.title }}" class="img-fluid">
+                        </div>
+                    {% endif %}
+
+                    <div class="derafu-block-card-grid__content">
+                        {% if card.title %}
+                            <h3 class="derafu-block-card-grid__title">{{ card.title }}</h3>
+                        {% endif %}
+
+                        {% if card.content %}
+                            <div class="derafu-block-card-grid__content">
+                                {{ card.content|raw }}
+                            </div>
+                        {% endif %}
+                    </div>
+
+                    {% if card.buttonText %}
+                        <div class="derafu-block-card-grid__footer">
+                            <a href="{{ card.buttonUrl }}"
+                            class="btn w-100
+                                    {% if card.buttonColor is defined and card.buttonColor %}btn-{{ card.buttonColor }}{% else %}btn-primary{% endif %}
+                                    {% if card.buttonUrl is empty %}disabled{% endif %}"
+                            role="button"
+                            {% if card.buttonStyle is defined and card.buttonStyle %}style="{{ card.buttonStyle }}"{% endif %}>
+                                {{ card.buttonText }}
+                            </a>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+</div>

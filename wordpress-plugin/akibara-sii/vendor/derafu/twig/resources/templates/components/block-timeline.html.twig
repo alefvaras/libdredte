@@ -1,0 +1,76 @@
+{# templates/components/block-timeline.html.twig #}
+
+{% macro eventContent(event, dateFormat, monthFormat) %}
+<div class="derafu-block-timeline__content">
+    <i class="{{ event.icon }} derafu-block-timeline__icon"></i>
+    <div class="derafu-block-timeline__header">
+        <div class="derafu-block-timeline__title-row">
+            {% if event.title %}
+                <h3 class="derafu-block-timeline__title">{{ event.title }}</h3>
+            {% endif %}
+            {% if event.showFullDate %}
+                <span class="derafu-block-timeline__date">
+                    {{ event.date|date(dateFormat) }}
+                </span>
+            {% elseif event.showMonthYear %}
+                <span class="derafu-block-timeline__date">
+                    {{ event.date|date(monthFormat) }}
+                </span>
+            {% endif %}
+        </div>
+    </div>
+    <div class="derafu-block-timeline__text">
+        {{ event.content|raw }}
+    </div>
+</div>
+{% endmacro %}
+
+<div
+    class="derafu-block-timeline {{ attributes.render('class') }}"
+    {{ attributes }}
+    id="{{ this.id }}"
+>
+    <div class="derafu-block-timeline__container derafu-block-timeline__container--{{ this.linePosition }}">
+        <div class="derafu-block-timeline__line"></div>
+
+        <div class="derafu-block-timeline__events">
+            {% set currentYear = null %}
+            {% for event in this.events %}
+                {# Mostrar año si es nuevo #}
+                {% if event.year != currentYear %}
+                    {% set currentYear = event.year %}
+                    <div class="derafu-block-timeline__year">{{ event.year }}</div>
+                {% endif %}
+
+                {# Para linePosition=center, alternamos izquierda y derecha #}
+                {% if this.linePosition == 'center' %}
+                    <div class="derafu-block-timeline__row">
+                        {% if loop.index is odd %}
+                            <div class="derafu-block-timeline__event derafu-block-timeline__event--left">
+                                {{ _self.eventContent(event, this.dateFormat ?? 'd/m/Y', this.monthFormat ?? 'm/Y') }}
+                            </div>
+                            <div class="derafu-block-timeline__event derafu-block-timeline__event--right"></div>
+                        {% else %}
+                            <div class="derafu-block-timeline__event derafu-block-timeline__event--left"></div>
+                            <div class="derafu-block-timeline__event derafu-block-timeline__event--right">
+                                {{ _self.eventContent(event, this.dateFormat ?? 'd/m/Y', this.monthFormat ?? 'm/Y') }}
+                            </div>
+                        {% endif %}
+                    </div>
+                {% else %}
+                    <div class="derafu-block-timeline__row">
+                        {% if this.linePosition == 'left' %}
+                            <div class="derafu-block-timeline__event derafu-block-timeline__event--right">
+                                {{ _self.eventContent(event, this.dateFormat ?? 'd/m/Y', this.monthFormat ?? 'm/Y') }}
+                            </div>
+                        {% else %}
+                            <div class="derafu-block-timeline__event derafu-block-timeline__event--left">
+                                {{ _self.eventContent(event, this.dateFormat ?? 'd/m/Y', this.monthFormat ?? 'm/Y') }}
+                            </div>
+                        {% endif %}
+                    </div>
+                {% endif %}
+            {% endfor %}
+        </div>
+    </div>
+</div>

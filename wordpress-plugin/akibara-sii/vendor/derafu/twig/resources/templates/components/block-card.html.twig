@@ -1,0 +1,22 @@
+{# templates/components/block-card.html.twig #}
+
+<div class="derafu-block-card {{ attributes.render('class') }}" {{ attributes }} id="{{ this.id }}">
+    <div class="card">
+        {% if this.image %}
+            <img src="{{ this.image }}" class="card-img-top" alt="{{ this.title }}">
+        {% endif %}
+        <div class="card-body">
+            {% if this.title %}
+                <h5 class="card-title">{{ this.title | raw }}</h5>
+            {% endif %}
+            {% if this.content %}
+                <p class="card-text">{{ this.content | raw }}</p>
+            {% endif %}
+            {% if this.buttonText %}
+                <a href="{{ this.buttonUrl }}" class="btn btn-primary {{ this.buttonUrl ? '' : 'disabled' }}">
+                    {{ this.buttonText }}
+                </a>
+            {% endif %}
+        </div>
+    </div>
+</div>

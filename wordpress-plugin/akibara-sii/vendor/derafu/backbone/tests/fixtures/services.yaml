@@ -1,0 +1,23 @@
+services:
+    _defaults:
+        autowire: true
+        autoconfigure: true
+        public: false
+
+    Derafu\Backbone\Contract\PackageRegistryInterface:
+        class: Derafu\ExamplesBackbone\PackageRegistry
+        public: true
+        arguments:
+            $packages:
+                example: '@Derafu\ExamplesBackbone\ExamplePackage'
+
+    Derafu\ExamplesBackbone\ExamplePackage: ~
+
+    Derafu\ExamplesBackbone\ExampleComponent: ~
+
+    Derafu\ExamplesBackbone\ExampleWorker:
+        arguments:
+            $jobs:
+                example: '@Derafu\ExamplesBackbone\ExampleJob'
+
+    Derafu\ExamplesBackbone\ExampleJob: ~

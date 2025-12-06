@@ -1,0 +1,216 @@
+/* ======================================
+   Base Variables
+   ====================================== */
+   :root {
+    /* Spacing */
+    --spacing-y: 2rem;
+
+    /* Structure */
+    --features-list-column-padding: 1rem;
+    --features-list-item-margin-bottom: 2rem;
+    --features-list-icon-padding: 0 1rem;
+    --features-list-divider-width: 1px;
+    --features-list-row-margin: -1rem;
+
+    /* Colors */
+    --features-list-divider-color: var(--bs-border-color, #dee2e6);
+    --features-list-icon-color: var(--bs-primary, #0d6efd);
+    --features-list-title-color: var(--bs-body-color, #212529);
+    --features-list-text-color: var(--bs-body-color, #212529);
+
+    /* Typography */
+    --features-list-icon-font-size: 2rem;
+    --features-list-title-font-size: 1.25rem;
+    --features-list-title-font-weight: 600;
+    --features-list-title-margin-bottom: 0.5rem;
+    --features-list-content-font-size: 0.9rem;
+    --features-list-content-line-height: 1.5;
+
+    /* Breakpoints */
+    --features-list-mobile-breakpoint: 768px;
+}
+
+/* ======================================
+   Component Container
+   ====================================== */
+.derafu-block-features-list {
+    margin: var(--spacing-y, 2rem) auto;
+}
+
+/* ======================================
+   Row Structure
+   ====================================== */
+.derafu-block-features-list__row {
+    display: flex;
+    flex-wrap: wrap;
+    margin: var(--features-list-row-margin);
+    position: relative;
+}
+
+/* Vertical divider */
+.derafu-block-features-list__row::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 50%;
+    width: var(--features-list-divider-width);
+    background-color: var(--features-list-divider-color);
+    transform: translateX(-50%);
+}
+
+/* ======================================
+   Column Structure
+   ====================================== */
+.derafu-block-features-list__column {
+    flex: 1 1 50%;
+    padding: var(--features-list-column-padding);
+}
+
+/* ======================================
+   Feature Item
+   ====================================== */
+.derafu-block-features-list__item {
+    display: flex;
+    align-items: flex-start;
+    margin-bottom: var(--features-list-item-margin-bottom);
+}
+
+/* Right-aligned feature */
+.derafu-block-features-list__item--right {
+    justify-content: flex-end;
+    text-align: right;
+}
+
+/* In right-aligned items, icon goes to the right of content */
+.derafu-block-features-list__item--right .derafu-block-features-list__content {
+    order: 1;
+}
+
+.derafu-block-features-list__item--right .derafu-block-features-list__icon {
+    order: 2;
+}
+
+/* ======================================
+   Feature Content
+   ====================================== */
+.derafu-block-features-list__content {
+    flex: 1;
+}
+
+.derafu-block-features-list__title {
+    color: var(--features-list-title-color);
+    font-size: var(--features-list-title-font-size);
+    font-weight: var(--features-list-title-font-weight);
+    margin-bottom: var(--features-list-title-margin-bottom);
+}
+
+.derafu-block-features-list__title a {
+    text-decoration: none;
+}
+
+.derafu-block-features-list__title a:hover {
+    text-decoration: underline;
+}
+
+.derafu-block-features-list__content {
+    color: var(--features-list-text-color);
+    font-size: var(--features-list-content-font-size);
+    line-height: var(--features-list-content-line-height);
+}
+
+.derafu-block-features-list__content a {
+    text-decoration: none;
+}
+
+.derafu-block-features-list__content a:hover {
+    text-decoration: underline;
+}
+
+/* ======================================
+   Feature Icon
+   ====================================== */
+.derafu-block-features-list__icon {
+    font-size: var(--features-list-icon-font-size);
+    color: var(--features-list-icon-color);
+    padding: var(--features-list-icon-padding);
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.derafu-block-features-list.container {
+    width: 100%;
+    margin-left: auto;
+    margin-right: auto;
+    padding-left: var(--spacing-md, 1.5rem);
+    padding-right: var(--spacing-md, 1.5rem);
+}
+
+/* ======================================
+   Responsive Styles
+   ====================================== */
+@media (max-width: 768px) {
+    /* Hide vertical divider */
+    .derafu-block-features-list__row::after {
+        display: none;
+    }
+
+    /* Stack columns */
+    .derafu-block-features-list__column {
+        flex: 1 1 100%;
+    }
+
+    /* Add horizontal divider between columns */
+    .derafu-block-features-list__column:first-child {
+        position: relative;
+        padding-bottom: 2rem;
+        margin-bottom: 2rem;
+    }
+
+    .derafu-block-features-list__column:first-child::after {
+        content: '';
+        position: absolute;
+        bottom: 0;
+        left: 1rem;
+        right: 1rem;
+        height: var(--features-list-divider-width);
+        background-color: var(--features-list-divider-color);
+    }
+
+    /* On mobile, ALL icons go to the left regardless */
+    .derafu-block-features-list__item,
+    .derafu-block-features-list__item--right {
+        justify-content: flex-start;
+        text-align: left;
+    }
+
+    /* Reset order so icon is always on the left */
+    .derafu-block-features-list__item--right .derafu-block-features-list__content {
+        order: 0;
+    }
+
+    .derafu-block-features-list__item--right .derafu-block-features-list__icon {
+        order: 0;
+    }
+
+    /* Add subtle separation between individual items */
+    .derafu-block-features-list__item:not(:last-child) {
+        border-bottom: 1px solid rgba(0,0,0,0.05);
+        padding-bottom: 1.5rem;
+    }
+
+    /* Maintain font size similar to desktop */
+    .derafu-block-features-list__title {
+        font-size: 1.2rem;
+    }
+
+    .derafu-block-features-list__content {
+        font-size: 0.9rem;
+    }
+
+    .derafu-block-features-list__icon {
+        font-size: 1.85rem;
+    }
+}

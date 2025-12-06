@@ -1,0 +1,179 @@
+{# templates/components/block-footer.html.twig #}
+
+<footer class="derafu-block-footer {{ attributes.render('class') }}" {{ attributes }} id="{{ this.id }}">
+    <div {% if fullWidth is empty %}class="container"{% endif %}>
+        <div class="row">
+            {# Column 1 #}
+            {% if col1Title or col1Html or col1Links is not empty or col1SocialIcons is not empty %}
+                <div class="col">
+                    {% if col1Title %}
+                        <h5 class="derafu-block-footer__title mb-4">{{ col1Title }}</h5>
+                    {% endif %}
+                    {% if col1Html %}
+                        <div class="derafu-block-footer__text mb-4">{{ col1Html|raw }}</div>
+                    {% endif %}
+                    {% if col1Links is not empty %}
+                        <ul class="derafu-block-footer__links list-unstyled">
+                            {% for link in col1Links %}
+                                <li>
+                                    <a href="{{ link.url }}" {% if link.targetBlank %}target="_blank" rel="noopener"{% endif %}>
+                                        {% if link.icon is defined %}
+                                            <i class="{{ link.icon }} me-2"></i>
+                                        {% endif %}
+                                        {{ link.text }}
+                                    </a>
+                                </li>
+                            {% endfor %}
+                        </ul>
+                    {% endif %}
+                    {% if col1SocialIcons is not empty %}
+                        <div class="derafu-block-footer__social mt-4">
+                            {% for icon in col1SocialIcons %}
+                                <a href="{{ icon.url }}"
+                                   {% if icon.targetBlank %}target="_blank" rel="noopener"{% endif %}
+                                   class="derafu-block-footer__social-icon {% if socialIconsCircular %}derafu-block-footer__social-icon--circular{% endif %}"
+                                   {% if icon.color is defined %}style="--social-icon-color: {{ icon.color }};"{% endif %}>
+                                    <i class="{{ icon.icon }} {% if icon.size is defined %}{{ icon.size }}{% endif %}"></i>
+                                </a>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                </div>
+            {% endif %}
+
+            {# Column 2 #}
+            {% if col2Title or col2Html or col2Links is not empty or col2SocialIcons is not empty %}
+                <div class="col">
+                    {% if col2Title %}
+                        <h5 class="derafu-block-footer__title mb-4">{{ col2Title }}</h5>
+                    {% endif %}
+                    {% if col2Html %}
+                        <div class="derafu-block-footer__text mb-4">{{ col2Html|raw }}</div>
+                    {% endif %}
+                    {% if col2Links is not empty %}
+                        <ul class="derafu-block-footer__links list-unstyled">
+                            {% for link in col2Links %}
+                                <li>
+                                    <a href="{{ link.url }}" {% if link.targetBlank %}target="_blank" rel="noopener"{% endif %}>
+                                        {% if link.icon is defined %}
+                                            <i class="{{ link.icon }} me-2"></i>
+                                        {% endif %}
+                                        {{ link.text }}
+                                    </a>
+                                </li>
+                            {% endfor %}
+                        </ul>
+                    {% endif %}
+                    {% if col2SocialIcons is not empty %}
+                        <div class="derafu-block-footer__social mt-4">
+                            {% for icon in col2SocialIcons %}
+                                <a href="{{ icon.url }}"
+                                   {% if icon.targetBlank %}target="_blank" rel="noopener"{% endif %}
+                                   class="derafu-block-footer__social-icon {% if socialIconsCircular %}derafu-block-footer__social-icon--circular{% endif %}"
+                                   {% if icon.color is defined %}style="--social-icon-color: {{ icon.color }};"{% endif %}>
+                                    <i class="{{ icon.icon }} {% if icon.size is defined %}{{ icon.size }}{% endif %}"></i>
+                                </a>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                </div>
+            {% endif %}
+
+            {# Column 3 #}
+            {% if col3Title or col3Html or col3Links is not empty or col3SocialIcons is not empty %}
+                <div class="col">
+                    {% if col3Title %}
+                        <h5 class="derafu-block-footer__title mb-4">{{ col3Title }}</h5>
+                    {% endif %}
+                    {% if col3Html %}
+                        <div class="derafu-block-footer__text mb-4">{{ col3Html|raw }}</div>
+                    {% endif %}
+                    {% if col3Links is not empty %}
+                        <ul class="derafu-block-footer__links list-unstyled">
+                            {% for link in col3Links %}
+                                <li>
+                                    <a href="{{ link.url }}" {% if link.targetBlank %}target="_blank" rel="noopener"{% endif %}>
+                                        {% if link.icon is defined %}
+                                            <i class="{{ link.icon }} me-2"></i>
+                                        {% endif %}
+                                        {{ link.text }}
+                                    </a>
+                                </li>
+                            {% endfor %}
+                        </ul>
+                    {% endif %}
+                    {% if col3SocialIcons is not empty %}
+                        <div class="derafu-block-footer__social mt-4">
+                            {% for icon in col3SocialIcons %}
+                                <a href="{{ icon.url }}"
+                                   {% if icon.targetBlank %}target="_blank" rel="noopener"{% endif %}
+                                   class="derafu-block-footer__social-icon {% if socialIconsCircular %}derafu-block-footer__social-icon--circular{% endif %}"
+                                   {% if icon.color is defined %}style="--social-icon-color: {{ icon.color }};"{% endif %}>
+                                    <i class="{{ icon.icon }} {% if icon.size is defined %}{{ icon.size }}{% endif %}"></i>
+                                </a>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                </div>
+            {% endif %}
+
+            {# Column 4 #}
+            {% if col4Title or col4Html or col4Links is not empty or col4SocialIcons is not empty %}
+                <div class="col">
+                    {% if col4Title %}
+                        <h5 class="derafu-block-footer__title mb-4">{{ col4Title }}</h5>
+                    {% endif %}
+                    {% if col4Html %}
+                        <div class="derafu-block-footer__text mb-4">{{ col4Html|raw }}</div>
+                    {% endif %}
+                    {% if col4Links is not empty %}
+                        <ul class="derafu-block-footer__links list-unstyled">
+                            {% for link in col4Links %}
+                                <li>
+                                    <a href="{{ link.url }}" {% if link.targetBlank %}target="_blank" rel="noopener"{% endif %}>
+                                        {% if link.icon is defined %}
+                                            <i class="{{ link.icon }} me-2"></i>
+                                        {% endif %}
+                                        {{ link.text }}
+                                    </a>
+                                </li>
+                            {% endfor %}
+                        </ul>
+                    {% endif %}
+                    {% if col4SocialIcons is not empty %}
+                        <div class="derafu-block-footer__social mt-4">
+                            {% for icon in col4SocialIcons %}
+                                <a href="{{ icon.url }}"
+                                   {% if icon.targetBlank %}target="_blank" rel="noopener"{% endif %}
+                                   class="derafu-block-footer__social-icon {% if socialIconsCircular %}derafu-block-footer__social-icon--circular{% endif %}"
+                                   {% if icon.color is defined %}style="--social-icon-color: {{ icon.color }};"{% endif %}>
+                                    <i class="{{ icon.icon }} {% if icon.size is defined %}{{ icon.size }}{% endif %}"></i>
+                                </a>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    {# Footer Bottom #}
+    {% if leftText or rightText %}
+        <div class="derafu-block-footer__bottom">
+            <div {% if fullWidth is empty %}class="container"{% endif %}>
+                <div class="row">
+                    <div class="col-md">
+                        {% if leftText %}
+                            <div class="derafu-block-footer__bottom-text">{{ leftText|raw }}</div>
+                        {% endif %}
+                    </div>
+                    <div class="col-md text-md-end">
+                        {% if rightText %}
+                            <div class="derafu-block-footer__bottom-text">{{ rightText|raw }}</div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    {% endif %}
+</footer>

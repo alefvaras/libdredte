@@ -1,0 +1,73 @@
+{# templates/components/block-tabs.html.twig #}
+
+<div
+    class="derafu-block-tabs {{ attributes.render('class') }}"
+    {{ attributes }}
+    id="{{ this.id }}"
+>
+    {% if this.position == 'horizontal' %}
+        <nav class="nav nav-pills nav-justified">
+            {% for tab in this.tabs %}
+                <button class="nav-link{% if (this.activeTab is null and loop.first) or this.activeTab == tab.id %} active{% endif %}"
+                        id="tab-{{ tab.id }}"
+                        data-bs-toggle="pill"
+                        data-bs-target="#content-{{ tab.id }}"
+                        type="button"
+                        role="tab"
+                        aria-controls="content-{{ tab.id }}"
+                        aria-selected="{% if (this.activeTab is null and loop.first) or this.activeTab == tab.id %}true{% else %}false{% endif %}">
+                    {% if tab.icon is defined %}
+                        <i class="{{ tab.icon }} me-2"></i>
+                    {% endif %}
+                    {{ tab.title }}
+                </button>
+            {% endfor %}
+        </nav>
+        <div class="tab-content{% if this.withShadow is defined and this.withShadow %} with-shadow{% endif %}">
+            {% for tab in this.tabs %}
+                <div class="tab-pane fade{% if (this.activeTab is null and loop.first) or this.activeTab == tab.id %} show active{% endif %}"
+                    id="content-{{ tab.id }}"
+                    role="tabpanel"
+                    aria-labelledby="tab-{{ tab.id }}"
+                    tabindex="0">
+                    {{ tab.content|raw }}
+                </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="row">
+            <div class="col-{{ this.cols }}">
+                <nav class="nav nav-pills flex-column">
+                    {% for tab in this.tabs %}
+                        <button class="nav-link text-start{% if (this.activeTab is null and loop.first) or this.activeTab == tab.id %} active{% endif %}"
+                                id="tab-{{ tab.id }}"
+                                data-bs-toggle="pill"
+                                data-bs-target="#content-{{ tab.id }}"
+                                type="button"
+                                role="tab"
+                                aria-controls="content-{{ tab.id }}"
+                                aria-selected="{% if (this.activeTab is null and loop.first) or this.activeTab == tab.id %}true{% else %}false{% endif %}">
+                            {% if tab.icon is defined %}
+                                <i class="{{ tab.icon }} me-2"></i>
+                            {% endif %}
+                            {{ tab.title }}
+                        </button>
+                    {% endfor %}
+                </nav>
+            </div>
+            <div class="col">
+                <div class="tab-content{% if this.withShadow is defined and this.withShadow %} with-shadow{% endif %}">
+                    {% for tab in this.tabs %}
+                        <div class="tab-pane fade{% if (this.activeTab is null and loop.first) or this.activeTab == tab.id %} show active{% endif %}"
+                            id="content-{{ tab.id }}"
+                            role="tabpanel"
+                            aria-labelledby="tab-{{ tab.id }}"
+                            tabindex="0">
+                            {{ tab.content|raw }}
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    {% endif %}
+</div>

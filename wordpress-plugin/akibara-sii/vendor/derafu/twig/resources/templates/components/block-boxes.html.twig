@@ -1,0 +1,37 @@
+{# templates/components/block-boxes.html.twig #}
+
+<div class="derafu-block-boxes {{ attributes.render('class') }} derafu-block-boxes--{{ this.align }}" {{ attributes }} id="{{ this.id }}">
+    <div class="row g-0">
+        {% for box in this.boxes %}
+            <div class="col-12 col-md-{{ 12 / this.cols }}">
+                <div class="derafu-block-boxes__box derafu-block-boxes__box--{{ loop.index }}">
+                    {# Icon #}
+                    <div class="derafu-block-boxes__icon-container">
+                        <div class="derafu-block-boxes__icon">
+                            <i class="{{ box.icon }}"></i>
+                        </div>
+                    </div>
+
+                    {# Content #}
+                    <div class="derafu-block-boxes__content">
+                        <h3 class="derafu-block-boxes__title">{{ box.title }}</h3>
+                        <p class="derafu-block-boxes__content">{{ box.content|raw }}</p>
+                    </div>
+
+                    {# Button - Only show if buttonText is not empty #}
+                    {% if box.buttonText %}
+                        <div class="derafu-block-boxes__action">
+                            <a
+                                href="{{ box.buttonUrl }}"
+                                class="derafu-block-boxes__button {% if not box.buttonUrl %}disabled{% endif %}"
+                                {% if not box.buttonUrl %}aria-disabled="true" tabindex="-1"{% endif %}
+                            >
+                                {{ box.buttonText }}
+                            </a>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+</div>

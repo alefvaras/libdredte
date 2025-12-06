@@ -1,0 +1,34 @@
+{# templates/components/block-quote.html.twig #}
+
+<div class="derafu-block-quote {{ attributes.render('class') }}" {{ attributes }} id="{{ this.id }}">
+    <div class="derafu-block-quote__container">
+        <figure class="derafu-block-quote__figure">
+            <div class="derafu-block-quote__icon derafu-block-quote__icon--left">
+                <i class="fa-solid fa-quote-left"></i>
+            </div>
+            <div class="derafu-block-quote__icon derafu-block-quote__icon--right">
+                <i class="fa-solid fa-quote-right"></i>
+            </div>
+            <blockquote class="derafu-block-quote__content">
+                <p>{{ this.content|raw }}</p>
+            </blockquote>
+            <div class="derafu-block-quote__author">
+                {% if this.image %}
+                    <img
+                        src="{{ this.image }}"
+                        alt="{{ this.author }}"
+                        class="derafu-block-quote__author-image"
+                    />
+                {% endif %}
+                <div class="derafu-block-quote__author-info">
+                    {% if this.author %}
+                        <span class="derafu-block-quote__author-name">{{ this.author|raw }}</span>
+                    {% endif %}
+                    {% if this.note %}
+                        <span class="derafu-block-quote__author-source">{{ this.note|raw }}</span>
+                    {% endif %}
+                </div>
+            </div>
+        </figure>
+    </div>
+</div>

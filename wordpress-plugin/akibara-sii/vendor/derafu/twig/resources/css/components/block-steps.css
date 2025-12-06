@@ -1,0 +1,157 @@
+/*
+ * Steps Block Responsive CSS
+ *
+ * Features:
+ * - Flexible and responsive step-by-step process display
+ * - Custom CSS variables for easy theming
+ * - Horizontal scrollable on mobile
+ * - Adaptive typography and layout
+ */
+
+/* Base Variables */
+:root {
+    /* Spacing Variables */
+    --spacing-y: var(--spacing-lg, 2rem);
+
+    /* Steps Structure Variables */
+    --steps-container-padding: var(--spacing-sm, 1rem) 0;
+    --steps-step-padding: var(--spacing-sm, 1rem);
+    --steps-step-min-width: 200px;
+    --steps-icon-size: calc(var(--spacing-lg, 2rem) * 2);
+    --steps-icon-border-radius: var(--border-radius-round, 50%);
+    --steps-icon-margin-bottom: var(--spacing-sm, 1rem);
+    --steps-title-margin-bottom: var(--spacing-xs, 0.5rem);
+    --steps-arrow-width: calc(var(--spacing-lg, 2rem) * 2);
+
+    /* Color Variables */
+    --steps-icon-bg: var(--bs-primary, #0d6efd);
+    --steps-icon-color: var(--bs-white, #fff);
+    --steps-title-color: var(--bs-gray-900, #212529);
+    --steps-text-color: var(--bs-dark, #343a40);
+    --steps-arrow-color: var(--bs-gray-600, #6c757d);
+
+    /* Typography Variables */
+    --steps-icon-font-size: var(--font-size-lg, 1.5rem);
+    --steps-title-font-size: var(--font-size-lg, 1.25rem);
+    --steps-title-font-weight: var(--font-weight-semibold, 600);
+    --steps-content-font-size: var(--font-size-sm, 0.875rem);
+    --steps-content-line-height: 1.5;
+
+    /* Responsive Variables */
+    --steps-mobile-breakpoint: 768px;
+    --steps-mobile-container-padding-bottom: var(--spacing-sm, 1rem);
+    --steps-mobile-arrow-width: calc(var(--spacing-lg, 2rem) * 1);
+}
+
+/* Main Steps Block Container */
+.derafu-block-steps {
+    margin: var(--spacing-y, 2rem) auto;
+}
+
+.derafu-block-steps__container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-wrap: nowrap;
+    overflow-x: auto; /* Allow horizontal scrolling on mobile */
+    padding: var(--steps-container-padding);
+    -webkit-overflow-scrolling: touch; /* Smooth scrolling on iOS */
+    scrollbar-width: none; /* Hide scrollbar in Firefox */
+}
+
+/* Hide scrollbar in WebKit but maintain functionality */
+.derafu-block-steps__container::-webkit-scrollbar {
+    display: none;
+}
+
+.derafu-block-steps__step {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    min-width: var(--steps-step-min-width);
+    padding: var(--steps-step-padding);
+}
+
+.derafu-block-steps__icon {
+    width: var(--steps-icon-size);
+    height: var(--steps-icon-size);
+    background-color: var(--steps-icon-bg);
+    color: var(--steps-icon-color);
+    border-radius: var(--steps-icon-border-radius);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: var(--steps-icon-margin-bottom);
+    font-size: var(--steps-icon-font-size);
+}
+
+.derafu-block-steps__title {
+    color: var(--steps-title-color);
+    font-size: var(--steps-title-font-size);
+    font-weight: var(--steps-title-font-weight);
+    margin-bottom: var(--steps-title-margin-bottom);
+}
+
+.derafu-block-steps__content {
+    color: var(--steps-text-color);
+    font-size: var(--steps-content-font-size);
+    line-height: var(--steps-content-line-height);
+}
+
+.derafu-block-steps__content a {
+    text-decoration: none;
+}
+
+.derafu-block-steps__content a:hover {
+    text-decoration: underline;
+}
+
+.derafu-block-steps__arrow {
+    width: var(--steps-arrow-width);
+    color: var(--steps-arrow-color);
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Button Styling within Content */
+.derafu-block-steps__content .btn {
+    padding: 0.4rem 4rem;
+    font-size: 0.875em;
+    vertical-align: baseline;
+    margin: 0.8rem 0.5rem 0;
+}
+
+/* Responsive Styles */
+@media (max-width: 768px) {
+    .derafu-block-steps__container {
+        padding-bottom: var(--steps-mobile-container-padding-bottom);
+    }
+
+    .derafu-block-steps__step {
+        /* Maintain original minimum width */
+        min-width: var(--steps-step-min-width);
+    }
+
+    .derafu-block-steps__arrow {
+        width: var(--steps-mobile-arrow-width);
+    }
+
+    .derafu-block-steps__content .btn {
+        display: inline-block;
+    }
+}
+
+/* Specific Improvements for Very Small Screens */
+@media (max-width: 480px) {
+    .derafu-block-steps__container {
+        justify-content: flex-start;
+    }
+
+    .derafu-block-steps__step {
+        /* Slightly smaller, but maintains readability */
+        min-width: 180px;
+    }
+}

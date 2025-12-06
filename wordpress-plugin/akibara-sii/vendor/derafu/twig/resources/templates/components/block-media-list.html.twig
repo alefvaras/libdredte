@@ -1,0 +1,27 @@
+<div
+    class="block-media-list bg-secondary-subtle py-5 {{ attributes.render('class') }}"
+    {{ attributes }}
+    id="{{ this.id }}"
+>
+    <div class="{{ this.container | default('container') }}">
+        {% for item in this.items %}
+            <div class="media-item bg-white mb-4 overflow-hidden {{ this.rounded ? 'rounded' : '' }}">
+                <div class="row">
+                    <div class="media-item-image col-md-4">
+                        <img src="{{ item.image }}" alt="{{ item.title | default('') }}" class="img-fluid">
+                    </div>
+                    <div class="media-item-content col-md-8">
+                        <div class="p-3">
+                            {% if item.title is defined and item.title %}
+                                <h{{ this.titleLevel }} class="media-item-content-title">{{ item.title }}</h{{ this.titleLevel }}>
+                            {% endif %}
+                            <div class="media-item-content-content">
+                                {{ item.content | raw }}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+</div>
