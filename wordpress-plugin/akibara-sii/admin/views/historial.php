@@ -16,12 +16,12 @@ $where = "WHERE DATE(fecha_emision) BETWEEN %s AND %s";
 $params = array($fecha_desde, $fecha_hasta);
 
 if ($estado_filtro) {
-    $where .= " AND estado_sii = %s";
+    $where .= " AND estado = %s";
     $params[] = $estado_filtro;
 }
 
 if ($buscar) {
-    $where .= " AND (folio LIKE %s OR receptor_rut LIKE %s OR receptor_razon LIKE %s)";
+    $where .= " AND (folio LIKE %s OR rut_receptor LIKE %s OR razon_social_receptor LIKE %s)";
     $params[] = '%' . $wpdb->esc_like($buscar) . '%';
     $params[] = '%' . $wpdb->esc_like($buscar) . '%';
     $params[] = '%' . $wpdb->esc_like($buscar) . '%';
@@ -58,10 +58,10 @@ $stats = $wpdb->get_row($wpdb->prepare(
         SUM(monto_neto) as monto_neto,
         SUM(monto_iva) as monto_iva,
         SUM(monto_exento) as monto_exento,
-        SUM(CASE WHEN estado_sii = 'aceptado' THEN 1 ELSE 0 END) as aceptadas,
-        SUM(CASE WHEN estado_sii = 'rechazado' THEN 1 ELSE 0 END) as rechazadas,
-        SUM(CASE WHEN estado_sii = 'pendiente' THEN 1 ELSE 0 END) as pendientes,
-        SUM(CASE WHEN estado_sii = 'generado' THEN 1 ELSE 0 END) as sin_enviar
+        SUM(CASE WHEN estado = 'aceptado' THEN 1 ELSE 0 END) as aceptadas,
+        SUM(CASE WHEN estado = 'rechazado' THEN 1 ELSE 0 END) as rechazadas,
+        SUM(CASE WHEN estado = 'pendiente' OR estado = 'enviado' THEN 1 ELSE 0 END) as pendientes,
+        SUM(CASE WHEN estado = 'generado' THEN 1 ELSE 0 END) as sin_enviar
     FROM $table_boletas $where",
     $params
 ));
@@ -180,8 +180,8 @@ $stats = $wpdb->get_row($wpdb->prepare(
                     <td><strong><?php echo $boleta->folio; ?></strong></td>
                     <td><?php echo date('d/m/Y H:i', strtotime($boleta->fecha_emision)); ?></td>
                     <td>
-                        <span title="<?php echo esc_attr($boleta->receptor_razon); ?>">
-                            <?php echo esc_html($boleta->receptor_rut); ?>
+                        <span title="<?php echo esc_attr($boleta->razon_social_receptor); ?>">
+                            <?php echo esc_html($boleta->rut_receptor); ?>
                         </span>
                     </td>
                     <td class="numero">$<?php echo number_format($boleta->monto_neto, 0, ',', '.'); ?></td>
@@ -189,8 +189,8 @@ $stats = $wpdb->get_row($wpdb->prepare(
                     <td class="numero">$<?php echo number_format($boleta->monto_exento, 0, ',', '.'); ?></td>
                     <td class="numero"><strong>$<?php echo number_format($boleta->monto_total, 0, ',', '.'); ?></strong></td>
                     <td>
-                        <span class="estado-badge estado-<?php echo $boleta->estado_sii; ?>">
-                            <?php echo ucfirst($boleta->estado_sii); ?>
+                        <span class="estado-badge estado-<?php echo $boleta->estado; ?>">
+                            <?php echo ucfirst($boleta->estado); ?>
                         </span>
                     </td>
                     <td>
@@ -209,7 +209,7 @@ $stats = $wpdb->get_row($wpdb->prepare(
                                 data-id="<?php echo $boleta->id; ?>" title="Ver Detalle">
                             <span class="dashicons dashicons-visibility"></span>
                         </button>
-                        <?php if ($boleta->estado_sii === 'generado'): ?>
+                        <?php if ($boleta->estado === 'generado'): ?>
                         <button type="button" class="button button-small btn-enviar-sii"
                                 data-id="<?php echo $boleta->id; ?>" title="Enviar al SII">
                             <span class="dashicons dashicons-upload"></span>
@@ -310,8 +310,8 @@ jQuery(document).ready(function($) {
                     html += '<div class="detalle-seccion">';
                     html += '<h3>Receptor</h3>';
                     html += '<table class="form-table">';
-                    html += '<tr><th>RUT:</th><td>' + b.receptor_rut + '</td></tr>';
-                    html += '<tr><th>Razon Social:</th><td>' + (b.receptor_razon || '-') + '</td></tr>';
+                    html += '<tr><th>RUT:</th><td>' + b.rut_receptor + '</td></tr>';
+                    html += '<tr><th>Razon Social:</th><td>' + (b.razon_social_receptor || '-') + '</td></tr>';
                     html += '</table></div>';
 
                     html += '<div class="detalle-seccion">';
@@ -326,7 +326,7 @@ jQuery(document).ready(function($) {
                     html += '<div class="detalle-seccion">';
                     html += '<h3>Estado SII</h3>';
                     html += '<table class="form-table">';
-                    html += '<tr><th>Estado:</th><td><span class="estado-badge estado-' + b.estado_sii + '">' + b.estado_sii.toUpperCase() + '</span></td></tr>';
+                    html += '<tr><th>Estado:</th><td><span class="estado-badge estado-' + b.estado + '">' + b.estado.toUpperCase() + '</span></td></tr>';
                     html += '<tr><th>Track ID:</th><td>' + (b.track_id || '-') + '</td></tr>';
                     html += '<tr><th>Fecha Envio:</th><td>' + (b.fecha_envio || '-') + '</td></tr>';
                     html += '</table></div>';
@@ -342,7 +342,7 @@ jQuery(document).ready(function($) {
 
                     // Acciones
                     html += '<div class="detalle-acciones">';
-                    if (b.estado_sii === 'generado') {
+                    if (b.estado === 'generado') {
                         html += '<button type="button" class="button button-primary btn-enviar-sii" data-id="' + b.id + '">Enviar al SII</button> ';
                     } else if (b.track_id) {
                         html += '<button type="button" class="button button-primary btn-consultar-sii" data-id="' + b.id + '">Consultar Estado SII</button> ';

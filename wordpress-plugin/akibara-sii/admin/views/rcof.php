@@ -48,7 +48,7 @@ $boletas_hoy = $wpdb->get_row($wpdb->prepare(
         SUM(monto_exento) as exento,
         MIN(folio) as folio_min,
         MAX(folio) as folio_max,
-        SUM(CASE WHEN estado_sii = 'aceptado' THEN 1 ELSE 0 END) as aceptadas
+        SUM(CASE WHEN estado = 'aceptado' THEN 1 ELSE 0 END) as aceptadas
     FROM $table_boletas
     WHERE DATE(fecha_emision) = %s",
     $hoy
@@ -141,7 +141,6 @@ $rcof_automatico = get_option('akibara_rcof_automatico', 0);
                     <th>Monto Total</th>
                     <th>Estado</th>
                     <th>Track ID</th>
-                    <th>Estado SII</th>
                     <th>Acciones</th>
                 </tr>
             </thead>
@@ -149,7 +148,7 @@ $rcof_automatico = get_option('akibara_rcof_automatico', 0);
                 <?php foreach ($historial as $rcof): ?>
                 <tr>
                     <td><strong><?php echo date('d/m/Y', strtotime($rcof->fecha)); ?></strong></td>
-                    <td><?php echo $rcof->folio_inicial; ?> - <?php echo $rcof->folio_final; ?></td>
+                    <td><?php echo $rcof->rango_inicial; ?> - <?php echo $rcof->rango_final; ?></td>
                     <td><?php echo $rcof->cantidad_boletas; ?></td>
                     <td>$<?php echo number_format($rcof->monto_total, 0, ',', '.'); ?></td>
                     <td>
@@ -158,15 +157,6 @@ $rcof_automatico = get_option('akibara_rcof_automatico', 0);
                         </span>
                     </td>
                     <td><?php echo $rcof->track_id ?: '-'; ?></td>
-                    <td>
-                        <?php if ($rcof->estado_sii): ?>
-                        <span class="estado-badge estado-<?php echo $rcof->estado_sii; ?>">
-                            <?php echo ucfirst($rcof->estado_sii); ?>
-                        </span>
-                        <?php else: ?>
-                        -
-                        <?php endif; ?>
-                    </td>
                     <td>
                         <?php if ($rcof->estado === 'generado'): ?>
                         <form method="post" style="display:inline;">
