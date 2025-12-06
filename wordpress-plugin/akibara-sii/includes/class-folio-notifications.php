@@ -107,10 +107,12 @@ class Akibara_Folio_Notifications {
     public static function get_folio_status() {
         global $wpdb;
         $table_caf = $wpdb->prefix . 'akibara_caf';
+        $ambiente = get_option('akibara_ambiente', 'certificacion');
 
-        $caf_activo = $wpdb->get_row(
-            "SELECT * FROM $table_caf WHERE tipo_dte = 39 AND estado = 'activo' ORDER BY folio_desde DESC LIMIT 1"
-        );
+        $caf_activo = $wpdb->get_row($wpdb->prepare(
+            "SELECT * FROM $table_caf WHERE tipo_dte = 39 AND ambiente = %s AND activo = 1 ORDER BY folio_desde DESC LIMIT 1",
+            $ambiente
+        ));
 
         if (!$caf_activo) {
             return [
@@ -123,7 +125,7 @@ class Akibara_Folio_Notifications {
             ];
         }
 
-        $folio_actual = get_option('akibara_folio_actual_39', $caf_activo->folio_desde);
+        $folio_actual = $caf_activo->folio_actual;
         $disponibles = $caf_activo->folio_hasta - $folio_actual + 1;
         $rango_total = $caf_activo->folio_hasta - $caf_activo->folio_desde + 1;
         $usados = $folio_actual - $caf_activo->folio_desde;

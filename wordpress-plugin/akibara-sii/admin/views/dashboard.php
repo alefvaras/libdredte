@@ -20,14 +20,14 @@ $monto_hoy = $wpdb->get_var($wpdb->prepare(
     date('Y-m-d')
 ));
 
-$caf_activo = $wpdb->get_row(
-    "SELECT * FROM $table_caf WHERE tipo_dte = 39 AND estado = 'activo' ORDER BY folio_desde DESC LIMIT 1"
-);
+$caf_activo = $wpdb->get_row($wpdb->prepare(
+    "SELECT * FROM $table_caf WHERE tipo_dte = 39 AND ambiente = %s AND activo = 1 ORDER BY folio_desde DESC LIMIT 1",
+    $ambiente
+));
 
 $folios_disponibles = 0;
 if ($caf_activo) {
-    $folio_actual = get_option('akibara_folio_actual_39', $caf_activo->folio_desde);
-    $folios_disponibles = $caf_activo->folio_hasta - $folio_actual + 1;
+    $folios_disponibles = $caf_activo->folio_hasta - $caf_activo->folio_actual + 1;
 }
 ?>
 
@@ -121,15 +121,15 @@ if ($caf_activo) {
             </tr>
             <tr>
                 <th>Folio Actual</th>
-                <td><?php echo get_option('akibara_folio_actual_39', $caf_activo->folio_desde); ?></td>
+                <td><?php echo $caf_activo->folio_actual; ?></td>
             </tr>
             <tr>
                 <th>Folios Disponibles</th>
                 <td><?php echo $folios_disponibles; ?></td>
             </tr>
             <tr>
-                <th>Fecha Autorizacion</th>
-                <td><?php echo $caf_activo->fecha_autorizacion; ?></td>
+                <th>Fecha Carga</th>
+                <td><?php echo date('d/m/Y', strtotime($caf_activo->created_at)); ?></td>
             </tr>
         </table>
     </div>

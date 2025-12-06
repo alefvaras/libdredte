@@ -7,13 +7,14 @@ $envio_automatico = get_option('akibara_envio_automatico', 0);
 // Verificar CAF
 global $wpdb;
 $table_caf = $wpdb->prefix . 'akibara_caf';
-$caf_activo = $wpdb->get_row(
-    "SELECT * FROM $table_caf WHERE tipo_dte = 39 AND estado = 'activo' ORDER BY folio_desde DESC LIMIT 1"
-);
+$caf_activo = $wpdb->get_row($wpdb->prepare(
+    "SELECT * FROM $table_caf WHERE tipo_dte = 39 AND ambiente = %s AND activo = 1 ORDER BY folio_desde DESC LIMIT 1",
+    $ambiente
+));
 
 $siguiente_folio = 0;
 if ($caf_activo) {
-    $siguiente_folio = get_option('akibara_folio_actual_39', $caf_activo->folio_desde);
+    $siguiente_folio = $caf_activo->folio_actual;
 }
 ?>
 

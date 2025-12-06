@@ -3,6 +3,7 @@ if (!defined('ABSPATH')) exit;
 
 global $wpdb;
 $table_caf = $wpdb->prefix . 'akibara_caf';
+$ambiente_actual = get_option('akibara_ambiente', 'certificacion');
 
 // Procesar subida de CAF
 if (isset($_POST['akibara_upload_caf']) && wp_verify_nonce($_POST['_wpnonce'], 'akibara_caf')) {
@@ -20,39 +21,37 @@ if (isset($_POST['akibara_upload_caf']) && wp_verify_nonce($_POST['_wpnonce'], '
                 file_put_contents($caf_dir . '.htaccess', 'deny from all');
             }
 
-            $filename = 'CAF_T' . $caf_data['tipo_dte'] . '_' . $caf_data['folio_desde'] . '-' . $caf_data['folio_hasta'] . '.xml';
+            $filename = 'CAF_T' . $caf_data['tipo_dte'] . '_' . $caf_data['folio_desde'] . '-' . $caf_data['folio_hasta'] . '_' . $ambiente_actual . '.xml';
             file_put_contents($caf_dir . $filename, $xml_content);
 
             // Verificar si ya existe
             $existe = $wpdb->get_var($wpdb->prepare(
-                "SELECT id FROM $table_caf WHERE tipo_dte = %d AND folio_desde = %d AND folio_hasta = %d",
-                $caf_data['tipo_dte'], $caf_data['folio_desde'], $caf_data['folio_hasta']
+                "SELECT id FROM $table_caf WHERE tipo_dte = %d AND folio_desde = %d AND folio_hasta = %d AND ambiente = %s",
+                $caf_data['tipo_dte'], $caf_data['folio_desde'], $caf_data['folio_hasta'], $ambiente_actual
             ));
 
             if ($existe) {
-                echo '<div class="notice notice-warning"><p>Este CAF ya estaba registrado.</p></div>';
+                echo '<div class="notice notice-warning"><p>Este CAF ya estaba registrado para el ambiente ' . strtoupper($ambiente_actual) . '.</p></div>';
             } else {
-                // Insertar en BD
-                $wpdb->insert($table_caf, array(
+                // Insertar en BD con esquema correcto
+                $inserted = $wpdb->insert($table_caf, array(
                     'tipo_dte' => $caf_data['tipo_dte'],
                     'folio_desde' => $caf_data['folio_desde'],
                     'folio_hasta' => $caf_data['folio_hasta'],
-                    'fecha_autorizacion' => $caf_data['fecha_autorizacion'],
-                    'rut_emisor' => $caf_data['rut_emisor'],
-                    'xml_caf' => $xml_content,
+                    'folio_actual' => $caf_data['folio_desde'],
+                    'fecha_vencimiento' => $caf_data['fecha_autorizacion'],
                     'archivo' => $filename,
-                    'estado' => 'activo',
-                    'fecha_carga' => current_time('mysql')
-                ));
+                    'ambiente' => $ambiente_actual,
+                    'activo' => 1,
+                    'created_at' => current_time('mysql')
+                ), array('%d', '%d', '%d', '%d', '%s', '%s', '%s', '%d', '%s'));
 
-                // Actualizar folio actual si es necesario
-                $folio_actual = get_option('akibara_folio_actual_' . $caf_data['tipo_dte'], 0);
-                if ($folio_actual < $caf_data['folio_desde']) {
-                    update_option('akibara_folio_actual_' . $caf_data['tipo_dte'], $caf_data['folio_desde']);
+                if ($inserted) {
+                    echo '<div class="notice notice-success"><p>CAF cargado correctamente para <strong>' . strtoupper($ambiente_actual) . '</strong>. Folios: ' .
+                         $caf_data['folio_desde'] . ' - ' . $caf_data['folio_hasta'] . '</p></div>';
+                } else {
+                    echo '<div class="notice notice-error"><p>Error al guardar el CAF en la base de datos.</p></div>';
                 }
-
-                echo '<div class="notice notice-success"><p>CAF cargado correctamente. Folios: ' .
-                     $caf_data['folio_desde'] . ' - ' . $caf_data['folio_hasta'] . '</p></div>';
             }
         } else {
             echo '<div class="notice notice-error"><p>Error al parsear el archivo CAF. Verifica que sea un XML valido.</p></div>';
@@ -91,31 +90,40 @@ function parsear_caf($xml_content) {
     }
 }
 
-// Obtener CAFs
-$cafs = $wpdb->get_results(
-    "SELECT * FROM $table_caf WHERE tipo_dte = 39 ORDER BY folio_desde DESC"
-);
+// Obtener CAFs del ambiente actual
+$cafs = $wpdb->get_results($wpdb->prepare(
+    "SELECT * FROM $table_caf WHERE tipo_dte = 39 AND ambiente = %s ORDER BY folio_desde DESC",
+    $ambiente_actual
+));
+
+// Obtener CAF activo
+$caf_activo = $wpdb->get_row($wpdb->prepare(
+    "SELECT * FROM $table_caf WHERE tipo_dte = 39 AND ambiente = %s AND activo = 1 ORDER BY folio_desde DESC LIMIT 1",
+    $ambiente_actual
+));
 
 // Calcular estadisticas de folios
-$folio_actual = get_option('akibara_folio_actual_39', 0);
 $total_folios = 0;
 $folios_usados = 0;
 $folios_disponibles = 0;
-$caf_activo = null;
 
 foreach ($cafs as $caf) {
     $rango = $caf->folio_hasta - $caf->folio_desde + 1;
     $total_folios += $rango;
-
-    if ($caf->estado === 'activo' && $folio_actual >= $caf->folio_desde && $folio_actual <= $caf->folio_hasta) {
-        $caf_activo = $caf;
-        $folios_disponibles = $caf->folio_hasta - $folio_actual + 1;
-    }
 }
 
-// Contar boletas emitidas
+// Folios disponibles del CAF activo
+if ($caf_activo) {
+    $folios_disponibles = $caf_activo->folio_hasta - $caf_activo->folio_actual + 1;
+    $folios_usados = $caf_activo->folio_actual - $caf_activo->folio_desde;
+}
+
+// Contar boletas emitidas en este ambiente
 $table_boletas = $wpdb->prefix . 'akibara_boletas';
-$folios_usados = $wpdb->get_var("SELECT COUNT(*) FROM $table_boletas WHERE tipo_dte = 39");
+$total_boletas = $wpdb->get_var($wpdb->prepare(
+    "SELECT COUNT(*) FROM $table_boletas WHERE tipo_dte = 39 AND ambiente = %s",
+    $ambiente_actual
+));
 
 // Alerta de folios bajos
 $alerta_folios = ($folios_disponibles > 0 && $folios_disponibles < 50);
@@ -157,21 +165,30 @@ $alerta_folios = ($folios_disponibles > 0 && $folios_disponibles < 50);
         <div class="folio-card activo">
             <span class="folio-icon"><span class="dashicons dashicons-yes-alt"></span></span>
             <div class="folio-info">
-                <span class="folio-numero"><?php echo $folio_actual; ?></span>
+                <span class="folio-numero"><?php echo $caf_activo->folio_actual; ?></span>
                 <span class="folio-label">Proximo Folio</span>
             </div>
         </div>
         <?php endif; ?>
     </div>
 
+    <!-- Indicador de ambiente -->
+    <div class="notice notice-info">
+        <p><strong>Ambiente actual:</strong> <?php echo strtoupper($ambiente_actual); ?>
+        <?php if ($ambiente_actual === 'certificacion'): ?>
+        - Los CAF que subas se asociaran a este ambiente.
+        <?php endif; ?>
+        </p>
+    </div>
+
     <!-- Barra de progreso -->
     <?php if ($caf_activo): ?>
     <div class="card progreso-card">
-        <h2>CAF Activo: <?php echo $caf_activo->folio_desde; ?> - <?php echo $caf_activo->folio_hasta; ?></h2>
+        <h2>CAF Activo (<?php echo strtoupper($ambiente_actual); ?>): <?php echo $caf_activo->folio_desde; ?> - <?php echo $caf_activo->folio_hasta; ?></h2>
         <?php
         $rango_total = $caf_activo->folio_hasta - $caf_activo->folio_desde + 1;
-        $usados_en_caf = $folio_actual - $caf_activo->folio_desde;
-        $porcentaje = round(($usados_en_caf / $rango_total) * 100, 1);
+        $usados_en_caf = $caf_activo->folio_actual - $caf_activo->folio_desde;
+        $porcentaje = $rango_total > 0 ? round(($usados_en_caf / $rango_total) * 100, 1) : 0;
         ?>
         <div class="progreso-bar">
             <div class="progreso-fill <?php echo $porcentaje > 80 ? 'danger' : ($porcentaje > 50 ? 'warning' : ''); ?>"
@@ -222,9 +239,8 @@ $alerta_folios = ($folios_disponibles > 0 && $folios_disponibles < 50);
                     <th>Tipo DTE</th>
                     <th>Rango Folios</th>
                     <th>Cantidad</th>
+                    <th>Folio Actual</th>
                     <th>Disponibles</th>
-                    <th>Fecha Autorizacion</th>
-                    <th>RUT Emisor</th>
                     <th>Estado</th>
                     <th>Fecha Carga</th>
                     <th>Acciones</th>
@@ -233,17 +249,14 @@ $alerta_folios = ($folios_disponibles > 0 && $folios_disponibles < 50);
             <tbody>
                 <?php foreach ($cafs as $caf):
                     $rango = $caf->folio_hasta - $caf->folio_desde + 1;
-                    $disponibles_caf = 0;
-                    if ($folio_actual >= $caf->folio_desde && $folio_actual <= $caf->folio_hasta) {
-                        $disponibles_caf = $caf->folio_hasta - $folio_actual + 1;
-                    } elseif ($folio_actual < $caf->folio_desde) {
-                        $disponibles_caf = $rango;
-                    }
+                    $disponibles_caf = $caf->folio_hasta - $caf->folio_actual + 1;
+                    if ($disponibles_caf < 0) $disponibles_caf = 0;
                 ?>
                 <tr>
                     <td>39 - Boleta</td>
                     <td><strong><?php echo $caf->folio_desde; ?> - <?php echo $caf->folio_hasta; ?></strong></td>
                     <td><?php echo number_format($rango); ?></td>
+                    <td><?php echo $caf->folio_actual; ?></td>
                     <td>
                         <?php if ($disponibles_caf > 0): ?>
                         <span class="disponibles <?php echo $disponibles_caf < 20 ? 'bajo' : ''; ?>">
@@ -253,14 +266,12 @@ $alerta_folios = ($folios_disponibles > 0 && $folios_disponibles < 50);
                         <span class="agotado">Agotado</span>
                         <?php endif; ?>
                     </td>
-                    <td><?php echo $caf->fecha_autorizacion; ?></td>
-                    <td><?php echo $caf->rut_emisor; ?></td>
                     <td>
-                        <span class="estado-caf estado-<?php echo $caf->estado; ?>">
-                            <?php echo ucfirst($caf->estado); ?>
+                        <span class="estado-caf estado-<?php echo $caf->activo ? 'activo' : 'inactivo'; ?>">
+                            <?php echo $caf->activo ? 'Activo' : 'Inactivo'; ?>
                         </span>
                     </td>
-                    <td><?php echo date('d/m/Y H:i', strtotime($caf->fecha_carga)); ?></td>
+                    <td><?php echo date('d/m/Y H:i', strtotime($caf->created_at)); ?></td>
                     <td>
                         <button type="button" class="button button-small btn-ver-caf" data-id="<?php echo $caf->id; ?>">
                             <span class="dashicons dashicons-visibility"></span>

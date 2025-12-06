@@ -35,6 +35,8 @@ class Akibara_Database {
             respuesta_sii text,
             enviado_sii tinyint(1) DEFAULT 0,
             fecha_envio datetime DEFAULT NULL,
+            email_enviado datetime DEFAULT NULL,
+            email_destinatario varchar(100) DEFAULT NULL,
             created_at datetime DEFAULT CURRENT_TIMESTAMP,
             updated_at datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
             PRIMARY KEY (id),
