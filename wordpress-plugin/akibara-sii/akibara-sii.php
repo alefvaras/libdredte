@@ -101,6 +101,27 @@ class Akibara_SII {
 
     public function init() {
         load_plugin_textdomain('akibara-sii', false, dirname(plugin_basename(__FILE__)) . '/languages');
+
+        // Auto-crear tablas si no existen (fallback si activación falló)
+        $this->maybe_create_tables();
+    }
+
+    /**
+     * Verificar y crear tablas si no existen
+     */
+    private function maybe_create_tables() {
+        global $wpdb;
+        $table_caf = $wpdb->prefix . 'akibara_caf';
+
+        // Verificar si la tabla CAF existe
+        $table_exists = $wpdb->get_var("SHOW TABLES LIKE '$table_caf'") === $table_caf;
+
+        if (!$table_exists) {
+            Akibara_Database::create_tables();
+
+            // Log para debug
+            error_log('Akibara SII: Tablas creadas automáticamente (fallback)');
+        }
     }
 
     public function admin_menu() {
