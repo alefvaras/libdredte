@@ -103,14 +103,20 @@ class Akibara_SII_Client {
             return new WP_Error('cert_not_found', 'Archivo de certificado no encontrado');
         }
 
+        // Si es archivo PEM, cargarlo directamente
+        $extension = strtolower(pathinfo($cert_path, PATHINFO_EXTENSION));
+        if ($extension === 'pem') {
+            return $this->load_certificate_from_pem($cert_path);
+        }
+
         try {
-            // Intentar cargar normalmente
+            // Intentar cargar .p12 normalmente
             return $this->certificate_loader->loadFromFile($cert_path, $cert_password);
         } catch (Exception $e) {
             $error_msg = $e->getMessage();
 
             // Si falla por algoritmo no soportado (OpenSSL 3.0 + certificado legacy)
-            // Códigos de error comunes: 0308010C, 03000082, 0308010C
+            // Códigos de error comunes: 0308010C, 03000082
             $is_legacy_error = (
                 strpos($error_msg, '0308010C') !== false ||
                 strpos($error_msg, '03000082') !== false ||
@@ -130,10 +136,9 @@ class Akibara_SII_Client {
                 return new WP_Error(
                     'cert_legacy_error',
                     'El certificado usa cifrado legacy (RC2/3DES) no compatible con OpenSSL 3.x. ' .
-                    'Solución: Convierta el certificado ejecutando en su PC: ' .
-                    'openssl pkcs12 -in certificado.p12 -out certificado.pem -nodes -legacy && ' .
-                    'openssl pkcs12 -export -in certificado.pem -out certificado_nuevo.p12 -legacy ' .
-                    '(Error legacy: ' . $legacy_result->get_error_message() . ')'
+                    'Solución: Suba un archivo .pem o convierta ejecutando en su PC: ' .
+                    'openssl pkcs12 -in certificado.p12 -out certificado.pem -nodes -legacy ' .
+                    '(Error: ' . $legacy_result->get_error_message() . ')'
                 );
             }
             return new WP_Error('cert_error', 'Error cargando certificado: ' . $error_msg);
@@ -319,15 +324,34 @@ class Akibara_SII_Client {
     }
 
     /**
-     * Validar certificado
+     * Validar certificado (.p12, .pfx o .pem)
      */
     public function validate_certificate($filepath, $password) {
         if (!$this->certificate_loader) {
             return new WP_Error('no_libredte', 'LibreDTE no está disponible');
         }
 
+        $extension = strtolower(pathinfo($filepath, PATHINFO_EXTENSION));
+
         try {
-            $cert = $this->certificate_loader->loadFromFile($filepath, $password);
+            // Si es PEM, cargarlo de forma especial
+            if ($extension === 'pem') {
+                $cert = $this->load_certificate_from_pem($filepath);
+                if (is_wp_error($cert)) {
+                    return $cert;
+                }
+            } else {
+                // Intentar cargar .p12/.pfx
+                try {
+                    $cert = $this->certificate_loader->loadFromFile($filepath, $password);
+                } catch (Exception $e) {
+                    // Si falla, intentar método legacy
+                    $cert = $this->load_certificate_legacy($filepath, $password);
+                    if (is_wp_error($cert)) {
+                        return $cert;
+                    }
+                }
+            }
 
             return [
                 'nombre' => $cert->getName(),
@@ -335,6 +359,7 @@ class Akibara_SII_Client {
                 'vigente' => $cert->isActive(),
                 'valido_desde' => $cert->getFrom(),
                 'valido_hasta' => $cert->getTo(),
+                'formato' => ($extension === 'pem') ? 'PEM' : 'PKCS#12',
             ];
         } catch (Exception $e) {
             return new WP_Error('cert_invalid', 'Certificado inválido: ' . $e->getMessage());
