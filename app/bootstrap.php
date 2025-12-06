@@ -7,7 +7,7 @@
 declare(strict_types=1);
 
 // Autoloader de Composer
-require_once __DIR__ . '/../libredte-lib-core-master/vendor/autoload.php';
+require_once __DIR__ . '/../wordpress-plugin/akibara-sii/vendor/autoload.php';
 
 // Cargar configuración
 $config = require __DIR__ . '/config/config.php';
