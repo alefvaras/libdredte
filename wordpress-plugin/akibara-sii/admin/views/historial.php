@@ -205,6 +205,11 @@ $stats = $wpdb->get_row($wpdb->prepare(
                             <span class="dashicons dashicons-update"></span>
                         </button>
                         <?php endif; ?>
+                        <button type="button" class="button button-small btn-enviar-email"
+                                data-id="<?php echo $boleta->id; ?>" data-folio="<?php echo $boleta->folio; ?>"
+                                title="Enviar por Email">
+                            <span class="dashicons dashicons-email"></span>
+                        </button>
                         <a href="#" class="button button-small btn-descargar-xml"
                            data-id="<?php echo $boleta->id; ?>" title="Descargar XML">
                             <span class="dashicons dashicons-download"></span>
@@ -322,6 +327,7 @@ jQuery(document).ready(function($) {
                     } else if (b.track_id) {
                         html += '<button type="button" class="button button-primary btn-consultar-sii" data-id="' + b.id + '">Consultar Estado SII</button> ';
                     }
+                    html += '<button type="button" class="button btn-enviar-email" data-id="' + b.id + '" data-folio="' + b.folio + '"><span class="dashicons dashicons-email"></span> Enviar por Email</button> ';
                     html += '<button type="button" class="button btn-descargar-xml" data-id="' + b.id + '">Descargar XML</button>';
                     html += '</div>';
 
@@ -463,6 +469,48 @@ jQuery(document).ready(function($) {
             },
             complete: function() {
                 $btn.prop('disabled', false).html('<span class="dashicons dashicons-upload"></span> Enviar Sin Enviar al SII');
+            }
+        });
+    });
+
+    // Enviar por email
+    $(document).on('click', '.btn-enviar-email', function() {
+        var id = $(this).data('id');
+        var folio = $(this).data('folio');
+        var email = prompt('Ingrese el email del destinatario para la Boleta #' + folio + ':');
+
+        if (!email) return;
+
+        // Validar email básico
+        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+            alert('Email inválido');
+            return;
+        }
+
+        var $btn = $(this);
+        $btn.prop('disabled', true);
+
+        $.ajax({
+            url: ajaxurl,
+            method: 'POST',
+            data: {
+                action: 'akibara_enviar_email_boleta',
+                nonce: '<?php echo wp_create_nonce('akibara_nonce'); ?>',
+                id: id,
+                email: email
+            },
+            success: function(response) {
+                if (response.success) {
+                    alert('Email enviado correctamente a ' + email + '\nSe adjuntó el PDF de la boleta.');
+                } else {
+                    alert('Error: ' + response.data);
+                }
+            },
+            error: function() {
+                alert('Error de conexión');
+            },
+            complete: function() {
+                $btn.prop('disabled', false);
             }
         });
     });
