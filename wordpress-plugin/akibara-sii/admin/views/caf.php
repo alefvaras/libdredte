@@ -5,6 +5,22 @@ global $wpdb;
 $table_caf = $wpdb->prefix . 'akibara_caf';
 $ambiente_actual = get_option('akibara_ambiente', 'certificacion');
 
+// Procesar reparación de tablas
+if (isset($_POST['akibara_repair_tables']) && wp_verify_nonce($_POST['_wpnonce'], 'akibara_repair')) {
+    Akibara_Database::create_tables();
+    echo '<div class="notice notice-success"><p>Tablas reparadas/creadas correctamente.</p></div>';
+}
+
+// Verificar si las tablas existen
+$tables_ok = $wpdb->get_var("SHOW TABLES LIKE '$table_caf'") === $table_caf;
+if (!$tables_ok) {
+    echo '<div class="notice notice-error"><p><strong>Error:</strong> Las tablas del plugin no existen.</p>';
+    echo '<form method="post" style="display:inline;">';
+    wp_nonce_field('akibara_repair');
+    echo '<button type="submit" name="akibara_repair_tables" class="button button-primary">Crear Tablas Ahora</button>';
+    echo '</form></div>';
+}
+
 // Procesar subida de CAF
 if (isset($_POST['akibara_upload_caf']) && wp_verify_nonce($_POST['_wpnonce'], 'akibara_caf')) {
     if (!empty($_FILES['caf_file']['tmp_name'])) {
