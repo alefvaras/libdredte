@@ -328,49 +328,14 @@ class Akibara_WooCommerce_Integration {
     }
 
     /**
-     * Enviar boleta por email usando wp_mail (WooCommerce)
+     * Enviar boleta por email usando la clase centralizada
      */
     public static function send_boleta_email($order_id, $boleta_id) {
-        $order = wc_get_order($order_id);
-        $boleta = Akibara_Database::get_boleta($boleta_id);
-
-        if (!$order || !$boleta) {
-            return false;
-        }
-
-        $email = $order->get_billing_email();
-        if (!$email) {
-            return false;
-        }
-
-        // Generar PDF
-        $pdf_path = self::generate_pdf_file($boleta_id);
-        $attachments = [];
-        if ($pdf_path && file_exists($pdf_path)) {
-            $attachments[] = $pdf_path;
-        }
-
-        // Preparar email
-        $emisor = Akibara_SII::get_emisor_config();
-        $subject = sprintf(
-            __('Boleta Electrónica N° %d - %s', 'akibara-sii'),
-            $boleta->folio,
-            $emisor['RznSoc'] ?? 'AKIBARA SPA'
-        );
-
-        $message = self::get_email_template($order, $boleta);
-
-        // Headers para HTML
-        $headers = [
-            'Content-Type: text/html; charset=UTF-8',
-            'From: ' . ($emisor['RznSoc'] ?? 'AKIBARA SPA') . ' <' . get_option('admin_email') . '>',
-        ];
-
-        // Enviar usando wp_mail (WooCommerce)
-        $sent = wp_mail($email, $subject, $message, $headers, $attachments);
+        // Usar la clase centralizada de email
+        $sent = Akibara_Email_Boleta::enviar_woocommerce($boleta_id, $order_id);
 
         if ($sent) {
-            // Marcar como enviado
+            // Marcar como enviado en el pedido
             update_post_meta($order_id, '_akibara_boleta_email_sent', current_time('mysql'));
         }
 

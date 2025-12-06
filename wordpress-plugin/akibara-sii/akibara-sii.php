@@ -48,6 +48,7 @@ class Akibara_SII {
         require_once AKIBARA_SII_PATH . 'includes/class-boleta.php';
         require_once AKIBARA_SII_PATH . 'includes/class-rcof.php';
         require_once AKIBARA_SII_PATH . 'includes/class-folio-notifications.php';
+        require_once AKIBARA_SII_PATH . 'includes/class-email-boleta.php';
 
         // WooCommerce integration (carga condicional)
         if (class_exists('WooCommerce') || in_array('woocommerce/woocommerce.php', apply_filters('active_plugins', get_option('active_plugins')))) {
@@ -66,6 +67,7 @@ class Akibara_SII {
         // AJAX handlers
         add_action('wp_ajax_akibara_emitir_boleta', [$this, 'ajax_emitir_boleta']);
         add_action('wp_ajax_akibara_enviar_boleta', [$this, 'ajax_enviar_boleta']);
+        add_action('wp_ajax_akibara_enviar_email_boleta', [$this, 'ajax_enviar_email_boleta']);
         add_action('wp_ajax_akibara_detalle_boleta', [$this, 'ajax_detalle_boleta']);
         add_action('wp_ajax_akibara_consultar_estado', [$this, 'ajax_consultar_estado']);
         add_action('wp_ajax_akibara_consultar_masivo', [$this, 'ajax_consultar_masivo']);
@@ -353,6 +355,35 @@ class Akibara_SII {
         }
 
         wp_send_json_success($result);
+    }
+
+    /**
+     * AJAX: Enviar boleta por email al cliente
+     */
+    public function ajax_enviar_email_boleta() {
+        check_ajax_referer('akibara_nonce', 'nonce');
+
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error('Sin permisos');
+        }
+
+        $id = intval($_POST['id']);
+        $email = sanitize_email($_POST['email'] ?? '');
+
+        if (empty($email)) {
+            wp_send_json_error('Email no proporcionado');
+        }
+
+        $enviado = Akibara_Email_Boleta::enviar_manual($id, $email);
+
+        if ($enviado) {
+            wp_send_json_success([
+                'message' => 'Email enviado correctamente a ' . $email,
+                'email' => $email,
+            ]);
+        } else {
+            wp_send_json_error('Error al enviar el email. Verifique la configuracion de correo de WordPress.');
+        }
     }
 
     /**

@@ -37,6 +37,64 @@ if (isset($_POST['enviar_boleta_prueba']) && wp_verify_nonce($_POST['_wpnonce'],
 }
 
 /**
+ * Generar PDF de boleta para certificación
+ */
+function generar_pdf_certificacion($boleta_id) {
+    $boleta = Akibara_Database::get_boleta($boleta_id);
+    if (!$boleta) {
+        return false;
+    }
+
+    // Directorio de PDFs
+    $pdf_dir = AKIBARA_SII_UPLOADS . 'pdf/';
+    if (!file_exists($pdf_dir)) {
+        wp_mkdir_p($pdf_dir);
+    }
+
+    $pdf_path = $pdf_dir . 'boleta_cert_' . $boleta->folio . '.pdf';
+
+    // Si ya existe, retornarlo
+    if (file_exists($pdf_path)) {
+        return $pdf_path;
+    }
+
+    try {
+        if (!class_exists('libredte\lib\Core\Application')) {
+            return false;
+        }
+
+        $app = \libredte\lib\Core\Application::getInstance(environment: 'dev', debug: false);
+        $billingPackage = $app->getPackageRegistry()->getBillingPackage();
+        $documentComponent = $billingPackage->getDocumentComponent();
+        $loaderWorker = $documentComponent->getLoaderWorker();
+        $rendererWorker = $documentComponent->getRendererWorker();
+
+        // Cargar documento desde XML
+        $documentBag = $loaderWorker->loadXml($boleta->xml_documento);
+
+        // Configurar renderer para PDF
+        $documentBag->setOptions([
+            'renderer' => [
+                'format' => 'pdf',
+                'template' => 'estandar',
+            ],
+        ]);
+
+        // Generar PDF
+        $pdfContent = $rendererWorker->render($documentBag);
+
+        // Guardar archivo
+        file_put_contents($pdf_path, $pdfContent);
+
+        return $pdf_path;
+
+    } catch (Exception $e) {
+        error_log('Akibara SII Certificacion: Error generando PDF - ' . $e->getMessage());
+        return false;
+    }
+}
+
+/**
  * Ejecutar SET completo de pruebas de certificación
  */
 function ejecutar_set_pruebas_certificacion($email) {
@@ -45,6 +103,7 @@ function ejecutar_set_pruebas_certificacion($email) {
         'casos' => [],
         'errores' => [],
         'track_ids' => [],
+        'pdf_paths' => [],
         'email_enviado' => false,
     ];
 
@@ -107,9 +166,19 @@ function ejecutar_set_pruebas_certificacion($email) {
                 $resultado_caso['estado'] = 'emitida';
                 $resultado_caso['folio'] = $resultado['folio'] ?? null;
                 $resultado_caso['track_id'] = $resultado['track_id'] ?? null;
+                $resultado_caso['boleta_id'] = $resultado['boleta_id'] ?? null;
 
                 if ($resultado_caso['track_id']) {
                     $resultados['track_ids'][] = $resultado_caso['track_id'];
+                }
+
+                // Generar PDF
+                if ($resultado_caso['boleta_id']) {
+                    $pdf_path = generar_pdf_certificacion($resultado_caso['boleta_id']);
+                    if ($pdf_path && file_exists($pdf_path)) {
+                        $resultado_caso['pdf_path'] = $pdf_path;
+                        $resultados['pdf_paths'][] = $pdf_path;
+                    }
                 }
 
             } catch (Exception $e) {
@@ -125,9 +194,9 @@ function ejecutar_set_pruebas_certificacion($email) {
             usleep(500000); // 0.5 segundos
         }
 
-        // Enviar email con resultados
+        // Enviar email con resultados y PDFs adjuntos
         if (!empty($email)) {
-            $email_enviado = enviar_email_certificacion($email, $resultados);
+            $email_enviado = enviar_email_certificacion($email, $resultados, $resultados['pdf_paths']);
             $resultados['email_enviado'] = $email_enviado;
         }
 
@@ -148,6 +217,7 @@ function emitir_boleta_prueba($email) {
         'casos' => [],
         'errores' => [],
         'track_ids' => [],
+        'pdf_paths' => [],
         'email_enviado' => false,
     ];
 
@@ -171,20 +241,32 @@ function emitir_boleta_prueba($email) {
             throw new Exception($resultado->get_error_message());
         }
 
-        $resultados['casos'][] = [
+        $caso = [
             'nombre' => 'Boleta de Prueba',
             'estado' => 'emitida',
             'folio' => $resultado['folio'] ?? null,
             'track_id' => $resultado['track_id'] ?? null,
+            'boleta_id' => $resultado['boleta_id'] ?? null,
         ];
+
+        // Generar PDF
+        if (!empty($caso['boleta_id'])) {
+            $pdf_path = generar_pdf_certificacion($caso['boleta_id']);
+            if ($pdf_path && file_exists($pdf_path)) {
+                $caso['pdf_path'] = $pdf_path;
+                $resultados['pdf_paths'][] = $pdf_path;
+            }
+        }
+
+        $resultados['casos'][] = $caso;
 
         if (!empty($resultado['track_id'])) {
             $resultados['track_ids'][] = $resultado['track_id'];
         }
 
-        // Enviar email
+        // Enviar email con PDF adjunto
         if (!empty($email)) {
-            $resultados['email_enviado'] = enviar_email_certificacion($email, $resultados);
+            $resultados['email_enviado'] = enviar_email_certificacion($email, $resultados, $resultados['pdf_paths']);
         }
 
     } catch (Exception $e) {
@@ -196,9 +278,9 @@ function emitir_boleta_prueba($email) {
 }
 
 /**
- * Enviar email con resultados de certificación
+ * Enviar email con resultados de certificación y PDFs adjuntos
  */
-function enviar_email_certificacion($email, $resultados) {
+function enviar_email_certificacion($email, $resultados, $pdf_paths = []) {
     $emisor = get_option('akibara_emisor_razon_social', 'Empresa');
 
     $subject = "[Certificacion SII] Resultados de pruebas - $emisor";
@@ -221,18 +303,26 @@ function enviar_email_certificacion($email, $resultados) {
     // Detalle de casos
     $body .= "<h3>Detalle de Casos</h3>";
     $body .= "<table border='1' cellpadding='5' cellspacing='0' style='border-collapse: collapse;'>";
-    $body .= "<tr><th>Caso</th><th>Estado</th><th>Folio</th><th>Track ID</th></tr>";
+    $body .= "<tr><th>Caso</th><th>Estado</th><th>Folio</th><th>Track ID</th><th>PDF</th></tr>";
 
     foreach ($resultados['casos'] as $caso) {
         $color = $caso['estado'] === 'emitida' ? 'green' : 'red';
+        $tiene_pdf = !empty($caso['pdf_path']) ? 'Adjunto' : '-';
         $body .= "<tr>";
         $body .= "<td>{$caso['nombre']}</td>";
         $body .= "<td style='color:$color'>{$caso['estado']}</td>";
         $body .= "<td>" . ($caso['folio'] ?? '-') . "</td>";
         $body .= "<td>" . ($caso['track_id'] ?? '-') . "</td>";
+        $body .= "<td>$tiene_pdf</td>";
         $body .= "</tr>";
     }
     $body .= "</table>";
+
+    // Indicar PDFs adjuntos
+    if (!empty($pdf_paths)) {
+        $body .= "<h3>Boletas PDF Adjuntas</h3>";
+        $body .= "<p>Se adjuntan " . count($pdf_paths) . " boleta(s) en formato PDF.</p>";
+    }
 
     // Track IDs para seguimiento
     if (!empty($resultados['track_ids'])) {
@@ -261,7 +351,17 @@ function enviar_email_certificacion($email, $resultados) {
 
     $headers = ['Content-Type: text/html; charset=UTF-8'];
 
-    return wp_mail($email, $subject, $body, $headers);
+    // Preparar adjuntos (PDFs)
+    $attachments = [];
+    if (!empty($pdf_paths)) {
+        foreach ($pdf_paths as $pdf) {
+            if (file_exists($pdf)) {
+                $attachments[] = $pdf;
+            }
+        }
+    }
+
+    return wp_mail($email, $subject, $body, $headers, $attachments);
 }
 ?>
 
