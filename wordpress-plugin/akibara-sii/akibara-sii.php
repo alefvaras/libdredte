@@ -11,6 +11,35 @@
 
 defined('ABSPATH') || exit;
 
+// Verificar version minima de PHP
+define('AKIBARA_SII_MIN_PHP_VERSION', '8.4.0');
+
+if (version_compare(PHP_VERSION, AKIBARA_SII_MIN_PHP_VERSION, '<')) {
+    add_action('admin_notices', function() {
+        $message = sprintf(
+            '<strong>Akibara SII</strong> requiere PHP %s o superior. Tu version actual es PHP %s. Por favor actualiza PHP en tu servidor.',
+            AKIBARA_SII_MIN_PHP_VERSION,
+            PHP_VERSION
+        );
+        echo '<div class="notice notice-error"><p>' . $message . '</p></div>';
+    });
+
+    // Desactivar el plugin si se intenta activar con version incorrecta
+    add_action('admin_init', function() {
+        if (is_plugin_active(plugin_basename(__FILE__))) {
+            deactivate_plugins(plugin_basename(__FILE__));
+            if (isset($_GET['activate'])) {
+                unset($_GET['activate']);
+            }
+            add_action('admin_notices', function() {
+                echo '<div class="notice notice-error"><p><strong>Akibara SII</strong> ha sido desactivado porque requiere PHP ' . AKIBARA_SII_MIN_PHP_VERSION . ' o superior.</p></div>';
+            });
+        }
+    });
+
+    return; // No cargar el resto del plugin
+}
+
 // Constantes del plugin
 define('AKIBARA_SII_VERSION', '1.0.0');
 define('AKIBARA_SII_PATH', plugin_dir_path(__FILE__));
