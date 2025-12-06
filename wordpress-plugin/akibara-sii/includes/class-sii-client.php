@@ -659,26 +659,49 @@ class Akibara_SII_Client {
             $caratula->appendChild($dom->createElement('SecEnvio', (string) $data['sec_envio']));
             $caratula->appendChild($dom->createElement('TmstFirmaEnv', $timestamp));
 
-            // Resumen
-            $resumen = $dom->createElement('Resumen');
-            $docCF->appendChild($resumen);
+            // Resumen por cada tipo de documento (39, 41, 61)
+            // Si hay datos agrupados por tipo, generar un Resumen por cada uno
+            $tipos_documento = isset($data['por_tipo']) ? $data['por_tipo'] : [39 => $data];
 
-            $resumen->appendChild($dom->createElement('TipoDocumento', '39'));
-            $resumen->appendChild($dom->createElement('MntNeto', (string) $data['neto']));
-            $resumen->appendChild($dom->createElement('MntIva', (string) $data['iva']));
-            $resumen->appendChild($dom->createElement('TasaIVA', '19'));
-            $resumen->appendChild($dom->createElement('MntExento', (string) $data['exento']));
-            $resumen->appendChild($dom->createElement('MntTotal', (string) $data['total']));
-            $resumen->appendChild($dom->createElement('FoliosEmitidos', (string) $data['cantidad']));
-            $resumen->appendChild($dom->createElement('FoliosAnulados', '0'));
-            $resumen->appendChild($dom->createElement('FoliosUtilizados', (string) $data['cantidad']));
+            foreach ($tipos_documento as $tipo_dte => $tipo_data) {
+                $resumen = $dom->createElement('Resumen');
+                $docCF->appendChild($resumen);
 
-            // RangoUtilizados
-            if ($data['folio_inicial'] && $data['folio_final']) {
-                $rangoEl = $dom->createElement('RangoUtilizados');
-                $rangoEl->appendChild($dom->createElement('Inicial', (string) $data['folio_inicial']));
-                $rangoEl->appendChild($dom->createElement('Final', (string) $data['folio_final']));
-                $resumen->appendChild($rangoEl);
+                $resumen->appendChild($dom->createElement('TipoDocumento', (string) $tipo_dte));
+
+                // Para boletas afectas (39) incluir neto, iva, tasa
+                if ($tipo_dte == 39) {
+                    $resumen->appendChild($dom->createElement('MntNeto', (string) ($tipo_data['neto'] ?? $data['neto'])));
+                    $resumen->appendChild($dom->createElement('MntIva', (string) ($tipo_data['iva'] ?? $data['iva'])));
+                    $resumen->appendChild($dom->createElement('TasaIVA', '19'));
+                }
+
+                // Para boletas exentas (41) solo monto exento
+                if ($tipo_dte == 41) {
+                    $resumen->appendChild($dom->createElement('MntExento', (string) ($tipo_data['exento'] ?? $tipo_data['total'] ?? 0)));
+                } else {
+                    $mnt_exento = $tipo_data['exento'] ?? $data['exento'] ?? 0;
+                    if ($mnt_exento > 0) {
+                        $resumen->appendChild($dom->createElement('MntExento', (string) $mnt_exento));
+                    }
+                }
+
+                $resumen->appendChild($dom->createElement('MntTotal', (string) ($tipo_data['total'] ?? $data['total'])));
+
+                $cantidad = $tipo_data['cantidad'] ?? $data['cantidad'];
+                $resumen->appendChild($dom->createElement('FoliosEmitidos', (string) $cantidad));
+                $resumen->appendChild($dom->createElement('FoliosAnulados', '0'));
+                $resumen->appendChild($dom->createElement('FoliosUtilizados', (string) $cantidad));
+
+                // RangoUtilizados
+                $folio_ini = $tipo_data['folio_min'] ?? $data['folio_inicial'] ?? null;
+                $folio_fin = $tipo_data['folio_max'] ?? $data['folio_final'] ?? null;
+                if ($folio_ini && $folio_fin) {
+                    $rangoEl = $dom->createElement('RangoUtilizados');
+                    $rangoEl->appendChild($dom->createElement('Inicial', (string) $folio_ini));
+                    $rangoEl->appendChild($dom->createElement('Final', (string) $folio_fin));
+                    $resumen->appendChild($rangoEl);
+                }
             }
 
             // Firmar documento

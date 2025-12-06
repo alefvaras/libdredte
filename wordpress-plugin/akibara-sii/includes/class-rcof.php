@@ -136,8 +136,42 @@ class Akibara_RCOF {
 
     /**
      * Calcula el resumen de boletas para el RCOF
+     * Agrupa por tipo de documento (39, 41, 61)
      */
     private function calcular_resumen($boletas) {
+        // Agrupar boletas por tipo de documento
+        $por_tipo = [];
+
+        foreach ($boletas as $boleta) {
+            $tipo = (int) $boleta->tipo_dte;
+            if (!isset($por_tipo[$tipo])) {
+                $por_tipo[$tipo] = [
+                    'neto' => 0,
+                    'iva' => 0,
+                    'exento' => 0,
+                    'total' => 0,
+                    'cantidad' => 0,
+                    'folio_min' => null,
+                    'folio_max' => null,
+                ];
+            }
+
+            $por_tipo[$tipo]['neto'] += (int) $boleta->monto_neto;
+            $por_tipo[$tipo]['iva'] += (int) $boleta->monto_iva;
+            $por_tipo[$tipo]['exento'] += (int) $boleta->monto_exento;
+            $por_tipo[$tipo]['total'] += (int) $boleta->monto_total;
+            $por_tipo[$tipo]['cantidad']++;
+
+            $folio = (int) $boleta->folio;
+            if ($por_tipo[$tipo]['folio_min'] === null || $folio < $por_tipo[$tipo]['folio_min']) {
+                $por_tipo[$tipo]['folio_min'] = $folio;
+            }
+            if ($por_tipo[$tipo]['folio_max'] === null || $folio > $por_tipo[$tipo]['folio_max']) {
+                $por_tipo[$tipo]['folio_max'] = $folio;
+            }
+        }
+
+        // Calcular totales generales para compatibilidad
         $neto = 0;
         $iva = 0;
         $exento = 0;
@@ -145,17 +179,16 @@ class Akibara_RCOF {
         $folio_min = null;
         $folio_max = null;
 
-        foreach ($boletas as $boleta) {
-            $neto += (int) $boleta->monto_neto;
-            $iva += (int) $boleta->monto_iva;
-            $exento += (int) $boleta->monto_exento;
-            $total += (int) $boleta->monto_total;
-
-            if ($folio_min === null || $boleta->folio < $folio_min) {
-                $folio_min = $boleta->folio;
+        foreach ($por_tipo as $tipo => $data) {
+            $neto += $data['neto'];
+            $iva += $data['iva'];
+            $exento += $data['exento'];
+            $total += $data['total'];
+            if ($folio_min === null || $data['folio_min'] < $folio_min) {
+                $folio_min = $data['folio_min'];
             }
-            if ($folio_max === null || $boleta->folio > $folio_max) {
-                $folio_max = $boleta->folio;
+            if ($folio_max === null || $data['folio_max'] > $folio_max) {
+                $folio_max = $data['folio_max'];
             }
         }
 
@@ -167,6 +200,7 @@ class Akibara_RCOF {
             'cantidad' => count($boletas),
             'folio_inicial' => $folio_min,
             'folio_final' => $folio_max,
+            'por_tipo' => $por_tipo, // Detalle por tipo de documento
         ];
     }
 
