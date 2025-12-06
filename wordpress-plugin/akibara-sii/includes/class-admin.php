@@ -186,8 +186,8 @@ class Akibara_Admin {
     public function render_rcof() {
         $ambiente = Akibara_SII::get_ambiente();
 
-        // RCOF solo disponible en producción
-        if ($ambiente !== 'produccion') {
+        // RCOF solo disponible en certificación
+        if ($ambiente !== 'certificacion') {
             include AKIBARA_SII_PATH . 'admin/views/rcof-no-disponible.php';
             return;
         }
@@ -196,7 +196,7 @@ class Akibara_Admin {
 
         // Obtener boletas del día para resumen
         $hoy = date('Y-m-d');
-        $boletas_hoy = Akibara_Database::get_boletas_by_date($hoy, 'produccion');
+        $boletas_hoy = Akibara_Database::get_boletas_by_date($hoy, 'certificacion');
 
         // Calcular totales
         $totales = [
@@ -225,16 +225,23 @@ class Akibara_Admin {
         }
 
         // RCOF enviado hoy
-        $rcof_hoy = Akibara_Database::get_rcof_by_date($hoy, 'produccion');
+        $rcof_hoy = Akibara_Database::get_rcof_by_date($hoy, 'certificacion');
 
         // Historial de RCOF
         global $wpdb;
         $table = $wpdb->prefix . 'akibara_rcof';
         $rcof_historial = $wpdb->get_results($wpdb->prepare(
             "SELECT * FROM $table WHERE ambiente = %s ORDER BY fecha DESC LIMIT 30",
-            'produccion'
+            'certificacion'
         ));
 
         include AKIBARA_SII_PATH . 'admin/views/rcof.php';
+    }
+
+    /**
+     * Render Certificacion SII
+     */
+    public function render_certificacion_sii() {
+        include AKIBARA_SII_PATH . 'admin/views/certificacion.php';
     }
 }
