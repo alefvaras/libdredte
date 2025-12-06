@@ -1,5 +1,6 @@
 *.p12
 caf_*.xml
+*.zip
 app/output/*.xml
 app/output/*.pdf
 app/credentials/
