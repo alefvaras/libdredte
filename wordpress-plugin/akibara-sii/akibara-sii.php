@@ -336,8 +336,8 @@ class Akibara_SII {
         $extension = strtolower(pathinfo($original_name, PATHINFO_EXTENSION));
 
         // Validar extensión permitida
-        if (!in_array($extension, ['p12', 'pfx', 'pem'])) {
-            wp_send_json_error(['message' => 'Formato no soportado. Use .p12, .pfx o .pem']);
+        if (!in_array($extension, ['p12', 'pem'])) {
+            wp_send_json_error(['message' => 'Formato no soportado. Use .p12 o .pem']);
         }
 
         $filename = 'cert_' . $ambiente . '_' . time() . '.' . $extension;

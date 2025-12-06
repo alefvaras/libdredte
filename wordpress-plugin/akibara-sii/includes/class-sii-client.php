@@ -246,16 +246,44 @@ class Akibara_SII_Client {
         try {
             $pem_content = file_get_contents($pem_path);
 
-            preg_match('/-----BEGIN CERTIFICATE-----.*?-----END CERTIFICATE-----/s', $pem_content, $cert_match);
-            preg_match('/-----BEGIN PRIVATE KEY-----.*?-----END PRIVATE KEY-----/s', $pem_content, $key_match);
-
-            // También buscar RSA PRIVATE KEY
-            if (empty($key_match[0])) {
-                preg_match('/-----BEGIN RSA PRIVATE KEY-----.*?-----END RSA PRIVATE KEY-----/s', $pem_content, $key_match);
+            if (empty($pem_content)) {
+                return new WP_Error('pem_empty', 'El archivo PEM está vacío');
             }
 
-            if (empty($cert_match[0]) || empty($key_match[0])) {
-                return new WP_Error('pem_invalid', 'El archivo PEM no contiene certificado y clave válidos');
+            // Buscar certificado
+            preg_match('/-----BEGIN CERTIFICATE-----.*?-----END CERTIFICATE-----/s', $pem_content, $cert_match);
+
+            // Buscar clave privada (varios formatos)
+            $key_match = [];
+            if (preg_match('/-----BEGIN PRIVATE KEY-----.*?-----END PRIVATE KEY-----/s', $pem_content, $key_match)) {
+                // Formato PKCS#8
+            } elseif (preg_match('/-----BEGIN RSA PRIVATE KEY-----.*?-----END RSA PRIVATE KEY-----/s', $pem_content, $key_match)) {
+                // Formato RSA tradicional
+            }
+
+            // Validar que tenga ambos componentes
+            $has_cert = !empty($cert_match[0]);
+            $has_key = !empty($key_match[0]);
+
+            if (!$has_cert && !$has_key) {
+                return new WP_Error('pem_invalid',
+                    'El archivo PEM no contiene certificado ni clave privada. ' .
+                    'Asegúrese de generar el PEM con: openssl pkcs12 -in cert.p12 -out cert.pem -nodes -legacy'
+                );
+            }
+
+            if (!$has_cert) {
+                return new WP_Error('pem_no_cert',
+                    'El archivo PEM no contiene el CERTIFICADO (solo tiene la clave privada). ' .
+                    'Regenere el PEM con: openssl pkcs12 -in cert.p12 -out cert.pem -nodes -legacy'
+                );
+            }
+
+            if (!$has_key) {
+                return new WP_Error('pem_no_key',
+                    'El archivo PEM no contiene la CLAVE PRIVADA (solo tiene el certificado). ' .
+                    'Regenere el PEM con: openssl pkcs12 -in cert.p12 -out cert.pem -nodes -legacy'
+                );
             }
 
             return $this->certificate_loader->loadFromKeys($cert_match[0], $key_match[0]);
@@ -324,7 +352,7 @@ class Akibara_SII_Client {
     }
 
     /**
-     * Validar certificado (.p12, .pfx o .pem)
+     * Validar certificado (.p12 o .pem)
      */
     public function validate_certificate($filepath, $password) {
         if (!$this->certificate_loader) {
@@ -341,7 +369,7 @@ class Akibara_SII_Client {
                     return $cert;
                 }
             } else {
-                // Intentar cargar .p12/.pfx
+                // Intentar cargar .p12
                 try {
                     $cert = $this->certificate_loader->loadFromFile($filepath, $password);
                 } catch (Exception $e) {

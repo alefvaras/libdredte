@@ -45,8 +45,8 @@ if (isset($_POST['akibara_upload_cert']) && wp_verify_nonce($_POST['_wpnonce'], 
         $extension = strtolower(pathinfo($original_name, PATHINFO_EXTENSION));
 
         // Validar extensión
-        if (!in_array($extension, ['p12', 'pfx', 'pem'])) {
-            echo '<div class="notice notice-error is-dismissible"><p><strong>Formato no soportado.</strong> Use .p12, .pfx o .pem</p></div>';
+        if (!in_array($extension, ['p12', 'pem'])) {
+            echo '<div class="notice notice-error is-dismissible"><p><strong>Formato no soportado.</strong> Use .p12 o .pem</p></div>';
         } else {
             $cert_filename = 'certificado_' . $cert_ambiente . '.' . $extension;
             $cert_file = $cert_dir . $cert_filename;
@@ -336,9 +336,9 @@ $cert_produccion_file = get_option('akibara_cert_produccion_file', '');
                         </td>
                     </tr>
                     <tr>
-                        <th><label for="certificado">Archivo (.p12, .pfx o .pem)</label></th>
+                        <th><label for="certificado">Archivo (.p12 o .pem)</label></th>
                         <td>
-                            <input type="file" id="certificado" name="certificado" accept=".p12,.pfx,.pem" required>
+                            <input type="file" id="certificado" name="certificado" accept=".p12,.pem" required>
                             <p class="description">Suba su certificado digital. Si tiene problemas con .p12, conviertalo a .pem</p>
                         </td>
                     </tr>
@@ -346,7 +346,7 @@ $cert_produccion_file = get_option('akibara_cert_produccion_file', '');
                         <th><label for="cert_password">Contrasena</label></th>
                         <td>
                             <input type="password" id="cert_password" name="cert_password" class="regular-text">
-                            <p class="description">Requerida para .p12/.pfx. No necesaria para .pem</p>
+                            <p class="description">Requerida para .p12. No necesaria para .pem</p>
                         </td>
                     </tr>
                 </table>
