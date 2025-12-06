@@ -34,7 +34,7 @@ class Akibara_Emisor_Provider implements EmisorProviderInterface
         $rut = get_option('akibara_emisor_rut', '');
         $razon_social = get_option('akibara_emisor_razon_social', '');
         $giro = get_option('akibara_emisor_giro', '');
-        $actividad_economica = get_option('akibara_emisor_actividad_economica', 726000);
+        $actividad_economica = get_option('akibara_emisor_acteco', 726000);
         $direccion = get_option('akibara_emisor_direccion', '');
         $comuna = get_option('akibara_emisor_comuna', '');
         $telefono = get_option('akibara_emisor_telefono', '');
