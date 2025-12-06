@@ -443,7 +443,9 @@ class Akibara_SII_Client {
     /**
      * Crear sobre de envío para boleta (EnvioBOLETA)
      *
-     * Genera el sobre XML firmado con la Carátula requerida por el SII
+     * Genera el sobre XML firmado con la Carátula requerida por el SII.
+     * IMPORTANTE: Usa el XML original del documento que ya contiene la firma,
+     * en lugar de parsearlo y regenerarlo (lo cual perdería la firma).
      */
     public function crear_sobre_boleta($boleta) {
         if (!$this->app) {
@@ -457,38 +459,77 @@ class Akibara_SII_Client {
         }
 
         try {
-            $billingPackage = $this->app->getPackageRegistry()->getBillingPackage();
-            $documentComponent = $billingPackage->getDocumentComponent();
+            // Obtener datos del emisor y configuración
+            $emisor = Akibara_SII::get_emisor_config();
+            $autorizacion = Akibara_SII::get_autorizacion_config();
 
-            // Cargar documento desde XML guardado
-            $loaderWorker = $documentComponent->getLoaderWorker();
-            $documentBag = $loaderWorker->loadXml($boleta->xml_documento);
+            // El XML del documento ya tiene la firma del DTE
+            $xmlDte = $boleta->xml_documento;
 
-            // Asignar certificado al bag
-            $documentBag->setCertificate($certificate);
-
-            // Asignar autorización DTE al emisor (requerido para la Carátula)
-            $emisor = $documentBag->getEmisor();
-            if ($emisor) {
-                $autorizacionConfig = Akibara_SII::get_autorizacion_config();
-                $autorizacionDte = new AutorizacionDte(
-                    $autorizacionConfig['fechaResolucion'],
-                    $autorizacionConfig['numeroResolucion']
-                );
-                $emisor->setAutorizacionDte($autorizacionDte);
+            // Verificar que el DTE tenga la firma
+            if (strpos($xmlDte, '<Signature') === false) {
+                return new WP_Error('dte_sin_firma', 'El documento DTE no tiene firma digital');
             }
 
-            // Crear sobre usando el DispatcherWorker (genera EnvioBOLETA firmado)
-            $dispatcherWorker = $documentComponent->getDispatcherWorker();
-            $envelope = $dispatcherWorker->create($documentBag);
+            // Remover declaración XML si existe (se agregará al sobre)
+            $xmlDte = preg_replace('/<\?xml[^>]+\?>\s*/', '', $xmlDte);
 
-            // Obtener XML del sobre firmado
-            $xmlDocument = $envelope->getXmlDocument();
-            $xmlSobre = $xmlDocument->saveXML();
+            // Obtener RUT del mandatario (quien envía) desde el certificado
+            $rutEnvia = $certificate->getId();
+
+            // Timestamp de la firma del sobre
+            $timestamp = date('Y-m-d\TH:i:s');
+
+            // Construir la Carátula
+            $caratula = <<<XML
+    <Caratula version="1.0">
+      <RutEmisor>{$emisor['RUTEmisor']}</RutEmisor>
+      <RutEnvia>{$rutEnvia}</RutEnvia>
+      <RutReceptor>60803000-K</RutReceptor>
+      <FchResol>{$autorizacion['fechaResolucion']}</FchResol>
+      <NroResol>{$autorizacion['numeroResolucion']}</NroResol>
+      <TmstFirmaEnv>{$timestamp}</TmstFirmaEnv>
+      <SubTotDTE>
+        <TpoDTE>39</TpoDTE>
+        <NroDTE>1</NroDTE>
+      </SubTotDTE>
+    </Caratula>
+XML;
+
+            // Construir el sobre EnvioBOLETA completo
+            $xmlSobre = <<<XML
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<EnvioBOLETA xmlns="http://www.sii.cl/SiiDte" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.sii.cl/SiiDte EnvioBOLETA_v11.xsd" version="1.0">
+  <SetDTE ID="LibreDTE_SetDoc">
+{$caratula}
+{$xmlDte}
+  </SetDTE>
+</EnvioBOLETA>
+XML;
+
+            // Cargar el XML en un documento para firmarlo
+            $xmlDocument = new \Derafu\Xml\XmlDocument();
+            $xmlDocument->loadXml($xmlSobre);
+
+            // Obtener el servicio de firma desde LibreDTE
+            $billingPackage = $this->app->getPackageRegistry()->getBillingPackage();
+            $documentComponent = $billingPackage->getDocumentComponent();
+            $dispatcherWorker = $documentComponent->getDispatcherWorker();
+
+            // Acceder al signatureService mediante reflexión
+            $reflection = new \ReflectionClass($dispatcherWorker);
+            $property = $reflection->getProperty('signatureService');
+            $property->setAccessible(true);
+            $signatureService = $property->getValue($dispatcherWorker);
+
+            // Firmar el sobre (SetDTE)
+            $xmlSigned = $signatureService->signXml($xmlDocument, $certificate, 'LibreDTE_SetDoc');
+
+            // Obtener XML firmado (puede ser string o XmlDocument)
+            $xmlSobreFirmado = is_string($xmlSigned) ? $xmlSigned : $xmlSigned->saveXML();
 
             return [
-                'xml' => $xmlSobre,
-                'envelope' => $envelope,
+                'xml' => $xmlSobreFirmado,
             ];
         } catch (Exception $e) {
             return new WP_Error('sobre_error', 'Error creando sobre: ' . $e->getMessage());
