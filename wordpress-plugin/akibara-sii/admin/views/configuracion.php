@@ -225,36 +225,41 @@ $cert_produccion_file = get_option('akibara_cert_produccion_file', '');
                     </div>
                 </div>
 
-                <table class="form-table">
-                    <tr>
-                        <th><label for="cert_ambiente">Ambiente del Certificado</label></th>
-                        <td>
-                            <select id="cert_ambiente" name="cert_ambiente" class="regular-text">
-                                <option value="certificacion">Certificacion (Pruebas)</option>
-                                <option value="produccion">Produccion</option>
-                            </select>
-                            <p class="description">Selecciona el ambiente para el certificado que vas a subir</p>
-                        </td>
-                    </tr>
-                    <tr>
-                        <th><label for="certificado">Archivo Certificado (.p12)</label></th>
-                        <td>
-                            <input type="file" id="certificado" name="certificado" accept=".p12,.pfx">
-                            <p class="description">Sube tu certificado digital en formato .p12 o .pfx</p>
-                        </td>
-                    </tr>
-                    <tr>
-                        <th><label for="cert_password">Contrasena del Certificado</label></th>
-                        <td>
-                            <input type="password" id="cert_password" name="cert_password" class="regular-text">
-                        </td>
-                    </tr>
-                </table>
-                <p class="submit">
-                    <button type="submit" name="akibara_upload_cert" class="button button-secondary">
-                        Subir Certificado
-                    </button>
-                </p>
+                <!-- Formulario separado para certificado -->
+                <form method="post" enctype="multipart/form-data" class="cert-upload-form">
+                    <?php wp_nonce_field('akibara_config'); ?>
+                    <table class="form-table">
+                        <tr>
+                            <th><label for="cert_ambiente">Ambiente del Certificado</label></th>
+                            <td>
+                                <select id="cert_ambiente" name="cert_ambiente" class="regular-text">
+                                    <option value="certificacion">Certificacion (Pruebas)</option>
+                                    <option value="produccion">Produccion</option>
+                                </select>
+                                <p class="description">Selecciona el ambiente para el certificado que vas a subir</p>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th><label for="certificado">Archivo Certificado (.p12)</label></th>
+                            <td>
+                                <input type="file" id="certificado" name="certificado" accept=".p12,.pfx" required>
+                                <p class="description">Sube tu certificado digital en formato .p12 o .pfx</p>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th><label for="cert_password">Contrasena del Certificado</label></th>
+                            <td>
+                                <input type="password" id="cert_password" name="cert_password" class="regular-text" required>
+                            </td>
+                        </tr>
+                    </table>
+                    <p class="submit">
+                        <button type="submit" name="akibara_upload_cert" class="button button-primary">
+                            <span class="dashicons dashicons-upload" style="vertical-align: middle;"></span>
+                            Subir Certificado
+                        </button>
+                    </p>
+                </form>
             </div>
         </div>
 
