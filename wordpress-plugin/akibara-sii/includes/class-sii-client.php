@@ -87,14 +87,13 @@ class Akibara_SII_Client {
     }
 
     /**
-     * Cargar certificado
+     * Cargar certificado (solo PEM)
      */
     private function load_certificate($ambiente) {
         $cert_file = get_option("akibara_cert_{$ambiente}_file", '');
-        $cert_password = base64_decode(get_option("akibara_cert_{$ambiente}_password", ''));
 
         if (empty($cert_file)) {
-            return new WP_Error('no_cert', 'No hay certificado configurado');
+            return new WP_Error('no_cert', 'No hay certificado configurado. Suba su certificado en formato PEM.');
         }
 
         $cert_path = AKIBARA_SII_UPLOADS . 'certs/' . $cert_file;
@@ -103,46 +102,7 @@ class Akibara_SII_Client {
             return new WP_Error('cert_not_found', 'Archivo de certificado no encontrado');
         }
 
-        // Si es archivo PEM, cargarlo directamente
-        $extension = strtolower(pathinfo($cert_path, PATHINFO_EXTENSION));
-        if ($extension === 'pem') {
-            return $this->load_certificate_from_pem($cert_path);
-        }
-
-        try {
-            // Intentar cargar .p12 normalmente
-            return $this->certificate_loader->loadFromFile($cert_path, $cert_password);
-        } catch (Exception $e) {
-            $error_msg = $e->getMessage();
-
-            // Si falla por algoritmo no soportado (OpenSSL 3.0 + certificado legacy)
-            // Códigos de error comunes: 0308010C, 03000082
-            $is_legacy_error = (
-                strpos($error_msg, '0308010C') !== false ||
-                strpos($error_msg, '03000082') !== false ||
-                strpos($error_msg, 'invalid key length') !== false ||
-                strpos($error_msg, 'Unsupported') !== false ||
-                strpos($error_msg, 'digital envelope') !== false ||
-                strpos($error_msg, 'RC2') !== false
-            );
-
-            if ($is_legacy_error) {
-                // Intentar con método legacy usando shell
-                $legacy_result = $this->load_certificate_legacy($cert_path, $cert_password);
-                if (!is_wp_error($legacy_result)) {
-                    return $legacy_result;
-                }
-                // Si también falló el método legacy, mostrar mensaje útil
-                return new WP_Error(
-                    'cert_legacy_error',
-                    'El certificado usa cifrado legacy (RC2/3DES) no compatible con OpenSSL 3.x. ' .
-                    'Solución: Suba un archivo .pem o convierta ejecutando en su PC: ' .
-                    'openssl pkcs12 -in certificado.p12 -out certificado.pem -nodes -legacy ' .
-                    '(Error: ' . $legacy_result->get_error_message() . ')'
-                );
-            }
-            return new WP_Error('cert_error', 'Error cargando certificado: ' . $error_msg);
-        }
+        return $this->load_certificate_from_pem($cert_path);
     }
 
     /**
@@ -246,16 +206,44 @@ class Akibara_SII_Client {
         try {
             $pem_content = file_get_contents($pem_path);
 
-            preg_match('/-----BEGIN CERTIFICATE-----.*?-----END CERTIFICATE-----/s', $pem_content, $cert_match);
-            preg_match('/-----BEGIN PRIVATE KEY-----.*?-----END PRIVATE KEY-----/s', $pem_content, $key_match);
-
-            // También buscar RSA PRIVATE KEY
-            if (empty($key_match[0])) {
-                preg_match('/-----BEGIN RSA PRIVATE KEY-----.*?-----END RSA PRIVATE KEY-----/s', $pem_content, $key_match);
+            if (empty($pem_content)) {
+                return new WP_Error('pem_empty', 'El archivo PEM está vacío');
             }
 
-            if (empty($cert_match[0]) || empty($key_match[0])) {
-                return new WP_Error('pem_invalid', 'El archivo PEM no contiene certificado y clave válidos');
+            // Buscar certificado
+            preg_match('/-----BEGIN CERTIFICATE-----.*?-----END CERTIFICATE-----/s', $pem_content, $cert_match);
+
+            // Buscar clave privada (varios formatos)
+            $key_match = [];
+            if (preg_match('/-----BEGIN PRIVATE KEY-----.*?-----END PRIVATE KEY-----/s', $pem_content, $key_match)) {
+                // Formato PKCS#8
+            } elseif (preg_match('/-----BEGIN RSA PRIVATE KEY-----.*?-----END RSA PRIVATE KEY-----/s', $pem_content, $key_match)) {
+                // Formato RSA tradicional
+            }
+
+            // Validar que tenga ambos componentes
+            $has_cert = !empty($cert_match[0]);
+            $has_key = !empty($key_match[0]);
+
+            if (!$has_cert && !$has_key) {
+                return new WP_Error('pem_invalid',
+                    'El archivo PEM no contiene certificado ni clave privada. ' .
+                    'Asegúrese de generar el PEM con: openssl pkcs12 -in cert.p12 -out cert.pem -nodes -legacy'
+                );
+            }
+
+            if (!$has_cert) {
+                return new WP_Error('pem_no_cert',
+                    'El archivo PEM no contiene el CERTIFICADO (solo tiene la clave privada). ' .
+                    'Regenere el PEM con: openssl pkcs12 -in cert.p12 -out cert.pem -nodes -legacy'
+                );
+            }
+
+            if (!$has_key) {
+                return new WP_Error('pem_no_key',
+                    'El archivo PEM no contiene la CLAVE PRIVADA (solo tiene el certificado). ' .
+                    'Regenere el PEM con: openssl pkcs12 -in cert.p12 -out cert.pem -nodes -legacy'
+                );
             }
 
             return $this->certificate_loader->loadFromKeys($cert_match[0], $key_match[0]);
@@ -324,7 +312,7 @@ class Akibara_SII_Client {
     }
 
     /**
-     * Validar certificado (.p12, .pfx o .pem)
+     * Validar certificado (.p12 o .pem)
      */
     public function validate_certificate($filepath, $password) {
         if (!$this->certificate_loader) {
@@ -341,7 +329,7 @@ class Akibara_SII_Client {
                     return $cert;
                 }
             } else {
-                // Intentar cargar .p12/.pfx
+                // Intentar cargar .p12
                 try {
                     $cert = $this->certificate_loader->loadFromFile($filepath, $password);
                 } catch (Exception $e) {
