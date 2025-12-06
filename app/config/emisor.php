@@ -39,7 +39,7 @@ return [
     // Para CERTIFICACION: usar fecha de autorización y número 0
     // Para PRODUCCION: usar fecha/numero de resolución real del SII
     'autorizacionDte' => [
-        'fechaResolucion' => '2025-11-18',
+        'fechaResolucion' => '2025-12-05',
         'numeroResolucion' => 0,
     ],
 ];

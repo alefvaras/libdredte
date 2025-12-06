@@ -81,8 +81,10 @@ $emisor = [
     'Acteco' => 476101,
 ];
 
+// NOTA: La fecha de resolución debe ser la fecha de autorización del SII,
+// NO la fecha del timbraje del CAF
 $autorizacionConfig = [
-    'fechaResolucion' => '2025-11-18',
+    'fechaResolucion' => '2025-11-18', // Fecha autorización según portal SII
     'numeroResolucion' => 0,
 ];
 
@@ -194,7 +196,8 @@ try {
                 'Receptor' => ['RUTRecep' => '66666666-6', 'RznSocRecep' => 'CONSUMIDOR FINAL', 'DirRecep' => 'Santiago', 'CmnaRecep' => 'Santiago'],
             ],
             'Detalle' => $items,
-            'Referencia' => [['TpoDocRef' => 'SET', 'FolioRef' => $folio, 'FchRef' => date('Y-m-d'), 'RazonRef' => $caso]],
+            // Referencia con CodRef según instrucciones SII (no TpoDocRef)
+            'Referencia' => [['CodRef' => 'SET', 'RazonRef' => $caso]],
         ];
 
         $documentBag = $documentComponent->bill(data: $datosBoleta, caf: $caf, certificate: $certificate);
