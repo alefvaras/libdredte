@@ -280,7 +280,7 @@ jQuery(document).ready(function($) {
                     html = '<div class="notice notice-success"><h3>Boleta Emitida Correctamente</h3>';
                     html += '<p><strong>Folio:</strong> ' + response.data.folio + '</p>';
                     html += '<p><strong>Total:</strong> $' + response.data.total.toLocaleString('es-CL') + '</p>';
-                    if (response.data.track_id) {
+                    if (response.data.track_id && response.data.track_id !== '0' && parseInt(response.data.track_id) > 0) {
                         html += '<p><strong>Track ID SII:</strong> ' + response.data.track_id + '</p>';
                     }
                     html += '<p><a href="' + response.data.pdf_url + '" target="_blank" class="button">Ver PDF</a>';
